@@ -1,0 +1,154 @@
+================================================================================
+ESCA HSE AI AGENT — NEW PC SETUP & MODEL CONFIGURATION GUIDE
+================================================================================
+
+This document provides clear, step-by-step instructions on how to set up and run 
+the Python FastAPI AI Agent service on a brand new PC that:
+  - Does NOT have an existing Groq API key, OR
+  - Does NOT have Ollama installed/configured, OR
+  - Needs to run completely offline or in standalone mode with GPU acceleration.
+
+--------------------------------------------------------------------------------
+1. QUICKSTART: INSTALLATION (ON ANY NEW PC)
+--------------------------------------------------------------------------------
+
+Prerequisites: Python 3.11+ or 3.12+ (Windows / Linux / macOS)
+
+Step 1: Open a terminal in the `ai-agent` directory:
+    cd ai-agent
+
+Step 2: Create and activate a Python virtual environment:
+    # On Windows (PowerShell):
+    python -m venv venv
+    .\venv\Scripts\Activate.ps1
+
+    # On Windows (Command Prompt):
+    python -m venv venv
+    .\venv\Scripts\activate.bat
+
+    # On Linux / macOS:
+    python3 -m venv venv
+    source venv/bin/activate
+
+Step 3: Install dependencies:
+    pip install -r requirements.txt
+
+Step 4: Create your `.env` configuration file from `.env.example`:
+    # On Windows PowerShell:
+    Copy-Item .env.example .env
+
+    # On Linux / macOS / CMD:
+    cp .env.example .env
+
+--------------------------------------------------------------------------------
+2. CHOOSING YOUR AI ASSISTANT RUNTIME MODE
+--------------------------------------------------------------------------------
+
+The ESCA HSE Agent supports two AI engines:
+  Option A: ONLINE MODE (Groq Cloud API — Recommended for high speed & reasoning)
+  Option B: LOCAL OFFLINE MODE (Ollama GPU/CPU Instance — 100% Private / Offline)
+  Option C: DATABASE & AUTOMATION ONLY (No LLM keys needed)
+
+--------------------------------------------------------------------------------
+OPTION A: SETUP ONLINE MODE WITH GROQ (FREE, 1-MINUTE SETUP)
+--------------------------------------------------------------------------------
+
+If you want fast, state-of-the-art responses with natural Arabic and English:
+
+1. Create a free account at Groq Console:
+   -> https://console.groq.com/keys
+
+2. Click "Create API Key", copy your key (`gsk_...`).
+
+3. Open `ai-agent/.env` and paste your key:
+   GROQ_API_KEY=gsk_your_actual_key_here
+   GROQ_BASE_URL=https://api.groq.com/openai/v1
+   GROQ_MODEL=openai/gpt-oss-120b
+
+4. Supported Online Models:
+   - `openai/gpt-oss-120b`     (Default: Best general reasoning and SQL tool calling)
+   - `openai/gpt-oss-20b`      (Fast fallback)
+   - `llama-3.3-70b-versatile` (Top-tier Meta LLaMA 3.3 70B)
+   - `llama-3.1-8b-instant`    (Ultra fast, low latency)
+   - `qwen/qwen3.6-27b`        (Strong bilingual Arabic/English technical reasoning)
+   - `allam-2-7b`              (Specialized Arabic model)
+
+--------------------------------------------------------------------------------
+OPTION B: SETUP LOCAL OFFLINE MODE WITH OLLAMA (NO API KEY REQUIRED)
+--------------------------------------------------------------------------------
+
+If you don't have internet access or want private local execution with your GPU:
+
+1. Download and install Ollama for your OS:
+   -> https://ollama.com/download
+
+2. Choose the right model size based on your GPU VRAM:
+
+   A) For GPUs with 4 GB VRAM (RTX 3050, GTX 1650, MX series, or Laptops):
+      Run in terminal:
+         ollama pull qwen2.5:3b-instruct-q4_K_M
+
+      Then build the custom GPU-optimized ESCA assistant:
+         cd ai-agent
+         ollama create esca-agent-local -f Modelfile
+
+      *Note: The 3B model is ~1.9 GB and fits 100% inside 4 GB VRAM, giving 
+             fast ~3-5s response times without overheating or high fan noise.*
+
+   B) For GPUs with 8 GB+ VRAM (RTX 3070/4060/4070/4080, etc.):
+      Run in terminal:
+         ollama pull qwen2.5:7b-instruct-q4_K_M
+
+3. Configure your `ai-agent/.env`:
+   LOCAL_LLM_ENABLED=true
+   LOCAL_LLM_BASE_URL=http://localhost:11434/v1
+   LOCAL_LLM_MODEL=esca-agent-local
+
+4. Managing Local Models & Disk Space:
+   - To list installed models:
+        ollama list
+   - To remove old or large models to free up disk space:
+        ollama rm qwen2.5:7b-instruct-q4_K_M
+
+--------------------------------------------------------------------------------
+OPTION C: RUNNING WITHOUT ANY LLM KEY OR OLLAMA (DATABASE & AUTOMATION)
+--------------------------------------------------------------------------------
+
+Even on a PC with NO LLM API key and NO Ollama installed:
+  * The agent server will still start and run normally!
+  * All database tools, live MySQL queries, and schema inspectors will function.
+  * The Automated Rules Engine (AUT-001 to AUT-004) and background scheduler 
+    run 100% locally against the MySQL database and DO NOT require any LLM.
+  * If a conversational question is sent without LLM configured, the agent will 
+    safely retrieve the relevant MySQL database records directly and format them
+    into clean Arabic tables automatically.
+
+--------------------------------------------------------------------------------
+3. STARTING THE AI AGENT SERVICE
+--------------------------------------------------------------------------------
+
+Run the FastAPI Uvicorn server:
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+Or simply use the root launcher:
+    .\start-agent.bat
+
+Verify the server is running by opening in your browser:
+    http://localhost:8000/health
+    Expected output: {"status":"ok","engine":"MySQL","database":"railway",...}
+
+    http://localhost:8000/health/ready
+    Expected output: {"status":"ready","database_connected":true,...}
+
+--------------------------------------------------------------------------------
+4. RUNNING THE VERIFICATION TESTS ON A NEW PC
+--------------------------------------------------------------------------------
+
+To test that everything is working properly on the new machine:
+    cd ai-agent
+    .\venv\Scripts\python.exe -m pytest -v
+
+Expected output:
+    13 passed in ~5 seconds (All tests green)
+
+================================================================================

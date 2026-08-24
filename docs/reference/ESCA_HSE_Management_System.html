@@ -1,0 +1,2098 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elsewedy Cables — ESCA HSE | نظام إدارة السلامة والصحة المهنية</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --steel:#0B1526;
+  --steel-2:#122036;
+  --steel-3:#1B2E4A;
+  --line:#27405F;
+  --hi:#9E1B32;
+  --hi-2:#C42440;
+  --hi-dim:#5E101D;
+  --safe:#38B87C;
+  --warn:#F09030;
+  --crit:#E0483C;
+  --info:#4A9DD8;
+  --txt:#E9EFF7;
+  --txt-2:#93A9C4;
+  --txt-3:#5E7794;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans Arabic',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--steel);color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:var(--steel)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:var(--hi-dim)}
+
+/* ===== HAZARD STRIPE ===== */
+.stripe{height:6px;background:linear-gradient(90deg,#9E1B32 0%,#C42440 50%,#9E1B32 100%)}
+
+/* ===== HEADER ===== */
+header{background:var(--steel-2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px}
+.logo-wrap{display:flex;align-items:center}
+.wordmark{position:relative;padding-bottom:9px;line-height:1}
+.wordmark .w1{display:block;font-family:var(--sans);font-weight:700;font-size:15.5px;letter-spacing:5.2px;color:#fff}
+.wordmark .rule{display:block;height:2px;background:#fff;margin:4px 0 4px;width:100%}
+.wordmark .w2{display:block;font-family:var(--sans);font-weight:700;font-size:15.5px;letter-spacing:9.5px;color:#fff;text-align:center;padding-right:5px}
+.wordmark .smile{position:absolute;left:0;right:0;bottom:-2px;width:100%;height:11px}
+.wordmark.foot{transform:scale(.62);transform-origin:right center;margin-left:-46px}
+.divider-v{width:1px;height:40px;background:var(--line);margin:0 16px}
+.brand h1{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.brand span{display:block;font-size:11px;color:var(--txt-3);font-family:var(--mono);letter-spacing:.6px;margin-top:1px}
+.hdr-meta{display:flex;align-items:center;gap:20px;font-family:var(--mono);font-size:11px;color:var(--txt-2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--safe);display:inline-block;margin-left:6px;animation:blip 2s infinite}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.35}}
+.user{display:flex;align-items:center;gap:9px;background:var(--steel-3);padding:6px 12px;border-radius:4px;border:1px solid var(--line)}
+.avt{width:26px;height:26px;border-radius:50%;background:var(--info);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+
+/* ===== NAV ===== */
+nav{display:flex;gap:2px;padding:0 22px;background:var(--steel-2);overflow-x:auto}
+.tab{padding:11px 17px;font-size:13px;font-weight:500;color:var(--txt-2);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:7px}
+.tab:hover{color:var(--txt);background:rgba(158,27,50,.10)}
+.tab.on{color:#fff;border-bottom-color:var(--hi);background:rgba(158,27,50,.18)}
+.tab .badge{background:var(--crit);color:#fff;font-size:10px;padding:1px 6px;border-radius:9px;font-family:var(--mono);font-weight:600}
+
+/* ===== LAYOUT ===== */
+main{padding:22px;max-width:1600px;margin:0 auto}
+.page{display:none;animation:fade .25s}
+.page.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.ph h2{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.ph p{font-size:12px;color:var(--txt-3);margin-top:3px;font-family:var(--mono)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--steel-3);border:1px solid var(--line);color:var(--txt);padding:8px 15px;border-radius:4px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:.15s;display:flex;align-items:center;gap:6px}
+.btn:hover{background:var(--line);border-color:var(--txt-3)}
+.btn.pri{background:var(--hi);color:#fff;border-color:var(--hi);font-weight:600}
+.btn.pri:hover{background:#c42440}
+.btn.dgr{background:var(--crit);border-color:var(--crit);color:#fff}
+.btn.dgr:hover{background:#f0584c}
+.btn.sm{padding:5px 11px;font-size:11.5px}
+
+/* ===== KPI ===== */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--steel-2);border:1px solid var(--line);border-radius:5px;padding:15px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;background:var(--accent,var(--info))}
+.kpi .lbl{font-size:11px;color:var(--txt-3);text-transform:uppercase;letter-spacing:.7px;font-family:var(--mono);margin-bottom:7px}
+.kpi .val{font-size:30px;font-weight:700;font-family:var(--mono);letter-spacing:-1.5px;line-height:1}
+.kpi .sub{font-size:11px;color:var(--txt-2);margin-top:6px;display:flex;align-items:center;gap:5px}
+.up{color:var(--safe)}.dn{color:var(--crit)}
+
+/* ===== CARDS / GRID ===== */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.card{background:var(--steel-2);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.card-h{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,.15)}
+.card-h h3{font-size:13.5px;font-weight:600}
+.card-h .hint{font-size:11px;color:var(--txt-3);font-family:var(--mono)}
+.card-b{padding:16px}
+
+/* ===== TABLE ===== */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:right;padding:9px 12px;background:var(--steel-3);color:var(--txt-2);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid rgba(46,61,78,.5);vertical-align:middle}
+tbody tr{transition:.12s;cursor:pointer}
+tbody tr:hover{background:rgba(158,27,50,.07)}
+.mono{font-family:var(--mono);font-size:12px;color:var(--txt-2)}
+
+/* ===== PILL ===== */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2.5px 9px;border-radius:11px;font-size:11px;font-weight:600;white-space:nowrap;font-family:var(--mono)}
+.p-ok{background:rgba(56,184,124,.14);color:var(--safe);border:1px solid rgba(56,184,124,.3)}
+.p-wn{background:rgba(240,144,48,.14);color:var(--warn);border:1px solid rgba(240,144,48,.3)}
+.p-cr{background:rgba(224,72,60,.14);color:var(--crit);border:1px solid rgba(224,72,60,.3)}
+.p-in{background:rgba(74,157,216,.14);color:var(--info);border:1px solid rgba(74,157,216,.3)}
+.p-nu{background:rgba(143,163,184,.12);color:var(--txt-2);border:1px solid var(--line)}
+
+/* ===== BARS ===== */
+.bar{height:7px;background:var(--steel-3);border-radius:4px;overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;border-radius:4px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.brow{margin-bottom:14px}
+.brow:last-child{margin-bottom:0}
+.brow .t{display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px}
+.brow .t b{font-family:var(--mono);font-weight:600}
+
+/* ===== DEPT TILES ===== */
+.dept{background:var(--steel-3);border:1px solid var(--line);border-radius:5px;padding:14px;cursor:pointer;transition:.18s;border-right:4px solid var(--dc,var(--info))}
+.dept:hover{transform:translateY(-2px);border-color:var(--txt-3);box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.dept .dn2{font-size:13.5px;font-weight:600;margin-bottom:2px}
+.dept .dm{font-size:11px;color:var(--txt-3);font-family:var(--mono);margin-bottom:10px}
+.dept .ds{display:flex;justify-content:space-between;font-size:11.5px;padding:3px 0;color:var(--txt-2)}
+.dept .ds b{font-family:var(--mono);color:var(--txt)}
+
+/* ===== EXTINGUISHER GRID ===== */
+.fx{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px}
+.fxc{background:var(--steel-3);border:1px solid var(--line);border-radius:5px;padding:11px;text-align:center;cursor:pointer;transition:.15s;position:relative}
+.fxc:hover{transform:scale(1.04);z-index:2;border-color:var(--txt-3)}
+.fxc .ico{font-size:22px;margin-bottom:4px}
+.fxc .id{font-family:var(--mono);font-size:11.5px;font-weight:600;margin-bottom:2px}
+.fxc .lo{font-size:10.5px;color:var(--txt-3);margin-bottom:7px;min-height:26px}
+.fxc.ok{border-top:3px solid var(--safe)}
+.fxc.wn{border-top:3px solid var(--warn)}
+.fxc.cr{border-top:3px solid var(--crit);animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,72,60,.4)}50%{box-shadow:0 0 0 7px rgba(224,72,60,0)}}
+
+/* ===== TIMELINE ===== */
+.tl{position:relative;padding-right:22px}
+.tl::before{content:'';position:absolute;right:6px;top:5px;bottom:5px;width:2px;background:var(--line)}
+.tli{position:relative;padding-bottom:17px}
+.tli::before{content:'';position:absolute;right:-20px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--c,var(--info));border:2px solid var(--steel-2)}
+.tli .tt{font-size:11px;color:var(--txt-3);font-family:var(--mono)}
+.tli .tb{font-size:12.5px;margin-top:2px}
+.tli .tb b{font-weight:600}
+
+/* ===== FORM ===== */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11.5px;color:var(--txt-2);margin-bottom:5px;font-weight:500}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--steel);border:1px solid var(--line);color:var(--txt);padding:9px 11px;border-radius:4px;font-size:13px;font-family:var(--sans);transition:.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--hi);box-shadow:0 0 0 3px rgba(158,27,50,.20)}
+.fg textarea{resize:vertical;min-height:78px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ===== MODAL ===== */
+.ov{display:none;position:fixed;inset:0;background:rgba(6,10,14,.82);z-index:900;backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px}
+.ov.on{display:flex}
+.mdl{background:var(--steel-2);border:1px solid var(--line);border-radius:7px;width:100%;max-width:620px;max-height:88vh;overflow-y:auto;animation:pop .22s}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(14px)}to{opacity:1;transform:none}}
+.mdl-h{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--steel-2);z-index:2}
+.mdl-h h3{font-size:15px;font-weight:600}
+.x{background:none;border:none;color:var(--txt-3);font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+.x:hover{color:var(--crit)}
+.mdl-b{padding:20px}
+.mdl-f{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-start;gap:9px;background:rgba(0,0,0,.15)}
+
+/* ===== MISC ===== */
+.risk{display:grid;grid-template-columns:auto repeat(5,1fr);gap:3px;font-family:var(--mono);font-size:11px}
+.risk div{padding:9px 4px;text-align:center;border-radius:3px}
+.rh{background:var(--steel-3);color:var(--txt-2);font-size:10px}
+.rc{cursor:pointer;font-weight:600;transition:.15s;color:#0d1218}
+.rc:hover{transform:scale(1.09);z-index:2}
+.matrix-wrap{overflow-x:auto}
+.toast{position:fixed;bottom:22px;left:22px;background:var(--steel-3);border:1px solid var(--safe);border-right:4px solid var(--safe);padding:12px 18px;border-radius:5px;z-index:999;transform:translateY(90px);opacity:0;transition:.3s;font-size:13px;box-shadow:0 8px 26px rgba(0,0,0,.45)}
+.toast.on{transform:none;opacity:1}
+.empty{text-align:center;padding:38px 20px;color:var(--txt-3)}
+.empty .ei{font-size:40px;margin-bottom:10px;opacity:.4}
+.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:11.5px;color:var(--txt-2);margin-top:12px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block;margin-left:5px}
+.stat-line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(46,61,78,.4);font-size:12.5px}
+.stat-line:last-child{border:none}
+.stat-line b{font-family:var(--mono)}
+.chip{display:inline-block;background:var(--steel-3);border:1px solid var(--line);padding:3px 9px;border-radius:3px;font-size:11px;margin:2px;font-family:var(--mono)}
+.days{font-family:var(--mono);font-size:44px;font-weight:700;color:var(--safe);letter-spacing:-2px;line-height:1}
+.gauge{display:flex;align-items:center;gap:12px}
+.donut{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.donut::after{content:'';position:absolute;width:70px;height:70px;background:var(--steel-2);border-radius:50%}
+.donut span{position:relative;z-index:2;font-family:var(--mono);font-weight:700;font-size:19px}
+
+/* ==== ADDED ==== */
+.hm{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.hmc{aspect-ratio:1.35;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;cursor:pointer;transition:.15s;padding:3px;text-align:center;line-height:1.2}
+.hmc:hover{transform:scale(1.09);z-index:3;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.hmc b{font-size:13px}
+.step{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(39,64,95,.5)}
+.step:last-child{border:none}
+.step .num{width:26px;height:26px;border-radius:50%;background:var(--hi);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;flex-shrink:0}
+.step .sc{flex:1}
+.step .sc h4{font-size:13px;font-weight:600;margin-bottom:4px}
+.step .sc p{font-size:11.5px;color:var(--txt-2);line-height:1.7}
+.fish{display:flex;align-items:stretch;gap:0;font-size:11px}
+.fish-b{flex:1;border-top:2px solid var(--line);padding-top:8px}
+.arch{display:flex;flex-direction:column;gap:9px}
+.layer{background:var(--steel-3);border:1px solid var(--line);border-radius:5px;padding:12px 14px;border-right:4px solid var(--lc,var(--info))}
+.layer h4{font-size:12.5px;font-weight:600;margin-bottom:6px}
+.layer .lt{display:flex;flex-wrap:wrap;gap:5px}
+.arrow{text-align:center;color:var(--txt-3);font-size:16px;line-height:1}
+.sig{border:1px dashed var(--line);border-radius:5px;padding:14px;text-align:center;background:rgba(0,0,0,.15)}
+.sig .sg{font-family:'Segoe Script',cursive;font-size:20px;color:var(--info);margin-bottom:5px}
+.sig .st{font-family:var(--mono);font-size:10px;color:var(--txt-3)}
+.live{display:flex;align-items:center;gap:6px;font-size:10.5px;font-family:var(--mono);color:var(--crit)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--crit);animation:blip 1.2s infinite}
+.cam{background:#0a0f16;border:1px solid var(--line);border-radius:5px;aspect-ratio:16/10;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.cam .grid-o{position:absolute;inset:0;background-image:linear-gradient(rgba(158,27,50,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(158,27,50,.07) 1px,transparent 1px);background-size:22px 22px}
+.bbox{position:absolute;border:2px solid var(--crit);border-radius:2px}
+.bbox span{position:absolute;top:-19px;right:0;background:var(--crit);color:#fff;font-size:9.5px;padding:1px 6px;font-family:var(--mono);white-space:nowrap;border-radius:2px}
+.bbox.ok{border-color:var(--safe)}
+.bbox.ok span{background:var(--safe);color:#06180f}
+.cam .lbl2{position:absolute;top:7px;right:9px;font-family:var(--mono);font-size:10px;color:var(--txt-2);z-index:2}
+.sensor{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(39,64,95,.45)}
+.sensor:last-child{border:none}
+.sensor .si{width:34px;height:34px;border-radius:5px;background:var(--steel-3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sensor .sb{flex:1}
+.sensor .sv{font-family:var(--mono);font-weight:700;font-size:15px}
+.mini{height:26px;display:flex;align-items:flex-end;gap:2px}
+.mini i{flex:1;background:var(--info);border-radius:1px;opacity:.75}
+.tag{display:inline-block;background:rgba(11,60,126,.25);border:1px solid #27405F;color:var(--txt-2);padding:2px 8px;border-radius:3px;font-size:10.5px;font-family:var(--mono);margin:2px}
+.tag.g{background:rgba(56,184,124,.14);border-color:rgba(56,184,124,.35);color:var(--safe)}
+.tag.r{background:rgba(158,27,50,.18);border-color:rgba(158,27,50,.4);color:#e8697f}
+.log{font-family:var(--mono);font-size:11px;line-height:2;color:var(--txt-2);max-height:280px;overflow-y:auto}
+.log span{color:var(--txt-3)}
+.log b{color:var(--txt)}
+.ghs{width:52px;height:52px;transform:rotate(45deg);border:2.5px solid var(--crit);background:#fff;display:flex;align-items:center;justify-content:center;margin:9px auto}
+.ghs span{transform:rotate(-45deg);font-size:22px}
+.compat td{text-align:center;font-family:var(--mono);font-weight:600}
+@media(max-width:640px){.frow{grid-template-columns:1fr}main{padding:14px}.ph h2{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+
+<header>
+  <div class="hdr-top">
+    <div class="brand">
+      <div class="logo-wrap">
+        <div class="wordmark">
+          <span class="w1">ELSEWEDY</span>
+          <span class="rule"></span>
+          <span class="w2">CABLES</span>
+          <svg class="smile" viewBox="0 0 240 26" preserveAspectRatio="none"><path d="M2 2 C 60 30, 180 30, 238 2 C 180 22, 60 22, 2 2 Z" fill="#9E1B32"/></svg>
+        </div>
+      </div>
+      <div class="divider-v"></div>
+      <div>
+        <h1>نظام إدارة السلامة والصحة المهنية</h1>
+        <span>CABLE ACCESSORIES — ESCA · HSE-MS v2.4 · ISO 45001</span>
+      </div>
+    </div>
+    <div class="hdr-meta">
+      <div><span class="dot"></span>النظام يعمل</div>
+      <div id="clock">--:--:--</div>
+      <div class="user"><div class="avt">ر.ص</div><div><div style="font-size:12px;font-weight:600">رافع صابر</div><div style="font-size:10px;color:var(--txt-3)">HSE Manager</div></div></div>
+    </div>
+  </div>
+  <nav>
+    <div class="tab on" data-p="dash">📊 لوحة القيادة</div>
+    <div class="tab" data-p="dept">🏭 الأقسام والمناطق</div>
+    <div class="tab" data-p="inc">⚠️ الحوادث والبلاغات <span class="badge" id="incBadge">3</span></div>
+    <div class="tab" data-p="fire">🧯 معدات الحريق <span class="badge" id="fireBadge">4</span></div>
+    <div class="tab" data-p="equip">🦺 معدات الوقاية</div>
+    <div class="tab" data-p="insp">🔍 التفتيش والجولات</div>
+    <div class="tab" data-p="risk">🎯 تقييم المخاطر</div>
+    <div class="tab" data-p="perm">📋 تصاريح العمل</div>
+    <div class="tab" data-p="jsa">🧩 JSA وتحليل المهام</div>
+    <div class="tab" data-p="hazmat">🧪 المواد الخطرة</div>
+    <div class="tab" data-p="health">🏥 الصحة المهنية</div>
+    <div class="tab" data-p="train">🎓 التدريب والتأهيل</div>
+    <div class="tab" data-p="ai">🤖 AI &amp; IoT <span class="badge" id="aiBadge">2</span></div>
+    <div class="tab" data-p="integ">🔗 التكامل</div>
+    <div class="tab" data-p="sec">🔐 الأمن والتدقيق</div>
+    <div class="tab" data-p="arch">⚙️ معمارية النظام</div>
+    <div class="tab" data-p="rep">📈 التقارير</div>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="page on" id="dash">
+  <div class="ph">
+    <div><h2>لوحة قيادة السلامة</h2><p>REAL-TIME OVERVIEW · ALL SITES · UPDATED LIVE</p></div>
+    <div class="acts">
+      <button class="btn" onclick="toast('تم تحديث كل البيانات')">🔄 تحديث</button>
+      <button class="btn pri" onclick="open_('mIncident')">＋ تسجيل حادث</button>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">Days Without LTI</div><div class="val" id="k1">148</div><div class="sub"><span class="up">▲ أفضل رقم: 212 يوم</span></div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">حوادث مفتوحة</div><div class="val">3</div><div class="sub"><span class="dn">1 عالية الخطورة</span></div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">إجراءات متأخرة</div><div class="val">7</div><div class="sub">من إجمالي 42 إجراء</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">TRIR (معدل الإصابات)</div><div class="val">0.84</div><div class="sub"><span class="up">▼ 0.21 عن 2025</span></div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">جاهزية الطفايات</div><div class="val">91%</div><div class="sub">142 من 156 صالحة</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">الالتزام بالـ PPE</div><div class="val">94%</div><div class="sub">آخر جولة: أمس</div></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>الأداء الشهري — الحوادث والبلاغات 2026</h3><span class="hint">JAN – AUG</span></div>
+      <div class="card-b"><canvas id="chart1" height="200"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--crit)"></i>حوادث مسجّلة</span>
+          <span><i style="background:var(--warn)"></i>أشباه حوادث (Near Miss)</span>
+          <span><i style="background:var(--safe)"></i>ملاحظات سلامة</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>مؤشر السلامة حسب القسم</h3><span class="hint">SAFETY SCORE</span></div>
+      <div class="card-b">
+        <div class="brow"><div class="t"><span>خط إنتاج الأكسسوارات — A</span><b style="color:var(--warn)">76%</b></div><div class="bar"><i style="width:76%;background:var(--warn)"></i></div></div>
+        <div class="brow"><div class="t"><span>خط إنتاج الأكسسوارات — B</span><b style="color:var(--safe)">92%</b></div><div class="bar"><i style="width:92%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>ورشة الصيانة الميكانيكية</span><b style="color:var(--crit)">61%</b></div><div class="bar"><i style="width:61%;background:var(--crit)"></i></div></div>
+        <div class="brow"><div class="t"><span>المخازن والخام</span><b style="color:var(--safe)">88%</b></div><div class="bar"><i style="width:88%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>معمل الجودة والاختبارات</span><b style="color:var(--safe)">95%</b></div><div class="bar"><i style="width:95%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>المبنى الإداري</span><b style="color:var(--safe)">97%</b></div><div class="bar"><i style="width:97%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>محطة الكهرباء والمرافق</span><b style="color:var(--warn)">79%</b></div><div class="bar"><i style="width:79%;background:var(--warn)"></i></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card">
+      <div class="card-h"><h3>عداد الأمان</h3></div>
+      <div class="card-b" style="text-align:center;padding:26px 16px">
+        <div class="days" id="ctr">148</div>
+        <div style="font-size:12px;color:var(--txt-2);margin-top:8px">يوم بدون إصابة مُعطِّلة عن العمل</div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+          <div class="stat-line"><span>آخر حادث مُعطِّل</span><b>2026-03-10</b></div>
+          <div class="stat-line"><span>الرقم القياسي</span><b style="color:var(--hi)">212 يوم</b></div>
+          <div class="stat-line"><span>ساعات عمل آمنة</span><b>1,284,600</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>تنبيهات عاجلة</h3><span class="pill p-cr">4 عاجل</span></div>
+      <div class="card-b">
+        <div class="tl">
+          <div class="tli" style="--c:var(--crit)"><div class="tt">منذ 12 دقيقة</div><div class="tb"><b>طفاية FE-A-014</b> — منتهية الصلاحية منذ 18 يوم · خط الإنتاج A</div></div>
+          <div class="tli" style="--c:var(--crit)"><div class="tt">منذ ساعتين</div><div class="tb"><b>INC-2026-0089</b> — بلاغ إصابة يد في ورشة الصيانة · بانتظار التحقيق</div></div>
+          <div class="tli" style="--c:var(--warn)"><div class="tt">اليوم 08:30</div><div class="tb"><b>3 تصاريح عمل ساخن</b> تنتهي صلاحيتها خلال 6 ساعات</div></div>
+          <div class="tli" style="--c:var(--warn)"><div class="tt">أمس</div><div class="tb"><b>14 موظف</b> شهادة تدريب السلامة الخاصة بهم تنتهي هذا الشهر</div></div>
+          <div class="tli" style="--c:var(--info)"><div class="tt">أمس</div><div class="tb"><b>جولة تفتيش</b> مجدولة على المخازن — غداً 10:00 ص</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>هرم السلامة (Heinrich)</h3><span class="hint">YTD 2026</span></div>
+      <div class="card-b">
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:center;margin-bottom:14px">
+          <div style="width:26%;background:var(--crit);padding:7px;text-align:center;border-radius:3px 3px 0 0;font-family:var(--mono);font-weight:700;font-size:13px;color:#fff">2</div>
+          <div style="width:44%;background:#c0603a;padding:7px;text-align:center;font-family:var(--mono);font-weight:700;font-size:13px;color:#fff">11</div>
+          <div style="width:64%;background:var(--warn);padding:7px;text-align:center;font-family:var(--mono);font-weight:700;font-size:13px;color:#1a1a1a">48</div>
+          <div style="width:82%;background:#9aa832;padding:7px;text-align:center;font-family:var(--mono);font-weight:700;font-size:13px;color:#1a1a1a">126</div>
+          <div style="width:100%;background:var(--safe);padding:7px;text-align:center;border-radius:0 0 3px 3px;font-family:var(--mono);font-weight:700;font-size:13px;color:#0d1a12">394</div>
+        </div>
+        <div style="font-size:11.5px;color:var(--txt-2);line-height:2">
+          <div>🔴 <b>2</b> — إصابات مُعطِّلة (LTI)</div>
+          <div>🟠 <b>11</b> — إصابات إسعافات أولية</div>
+          <div>🟡 <b>48</b> — أشباه حوادث</div>
+          <div>🟢 <b>126</b> — أوضاع غير آمنة</div>
+          <div>🟩 <b>394</b> — ملاحظات سلوكية</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEPARTMENTS ============ -->
+<section class="page" id="dept">
+  <div class="ph">
+    <div><h2>الأقسام والمناطق</h2><p>PRODUCTION & ADMINISTRATIVE ZONES · 9 AREAS</p></div>
+    <div class="acts"><button class="btn">🗺️ خريطة المصنع</button><button class="btn pri">＋ إضافة منطقة</button></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>قطاع الإنتاج</h3><span class="hint">PRODUCTION · 4 ZONES · 218 عامل</span></div>
+    <div class="card-b">
+      <div class="grid g4">
+        <div class="dept" style="--dc:var(--warn)" onclick="deptView('خط إنتاج الأكسسوارات A')">
+          <div class="dn2">خط إنتاج الأكسسوارات — A</div><div class="dm">ZONE-PRD-A · 64 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--warn)">76%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>4</b></div>
+          <div class="ds"><span>الطفايات</span><b>28 / 31 ✓</b></div>
+          <div class="ds"><span>آخر تفتيش</span><b>2026-07-29</b></div>
+          <div style="margin-top:9px"><span class="pill p-wn">يحتاج متابعة</span></div>
+        </div>
+        <div class="dept" style="--dc:var(--safe)" onclick="deptView('خط إنتاج الأكسسوارات B')">
+          <div class="dn2">خط إنتاج الأكسسوارات — B</div><div class="dm">ZONE-PRD-B · 58 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--safe)">92%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>1</b></div>
+          <div class="ds"><span>الطفايات</span><b>26 / 26 ✓</b></div>
+          <div class="ds"><span>آخر تفتيش</span><b>2026-08-01</b></div>
+          <div style="margin-top:9px"><span class="pill p-ok">مطابق</span></div>
+        </div>
+        <div class="dept" style="--dc:var(--crit)" onclick="deptView('ورشة الصيانة الميكانيكية')">
+          <div class="dn2">ورشة الصيانة الميكانيكية</div><div class="dm">ZONE-MNT-01 · 34 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--crit)">61%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b style="color:var(--crit)">6</b></div>
+          <div class="ds"><span>الطفايات</span><b>15 / 19 ⚠</b></div>
+          <div class="ds"><span>آخر تفتيش</span><b>2026-07-15</b></div>
+          <div style="margin-top:9px"><span class="pill p-cr">منطقة حرجة</span></div>
+        </div>
+        <div class="dept" style="--dc:var(--safe)" onclick="deptView('معمل الجودة والاختبارات')">
+          <div class="dn2">معمل الجودة والاختبارات</div><div class="dm">ZONE-QC-01 · 22 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--safe)">95%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>0</b></div>
+          <div class="ds"><span>الطفايات</span><b>9 / 9 ✓</b></div>
+          <div class="ds"><span>آخر تفتيش</span><b>2026-08-02</b></div>
+          <div style="margin-top:9px"><span class="pill p-ok">مطابق</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>المخازن والمرافق</h3><span class="hint">WAREHOUSE & UTILITIES · 3 ZONES · 76 عامل</span></div>
+    <div class="card-b">
+      <div class="grid g4">
+        <div class="dept" style="--dc:var(--safe)" onclick="deptView('مخزن الخامات')">
+          <div class="dn2">مخزن الخامات</div><div class="dm">ZONE-WH-RAW · 31 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--safe)">88%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>2</b></div>
+          <div class="ds"><span>الطفايات</span><b>22 / 24 ✓</b></div>
+          <div class="ds"><span>مخاطر رئيسية</span><b>رافعات شوكية</b></div>
+          <div style="margin-top:9px"><span class="pill p-ok">مطابق</span></div>
+        </div>
+        <div class="dept" style="--dc:var(--safe)" onclick="deptView('مخزن المنتج التام')">
+          <div class="dn2">مخزن المنتج التام</div><div class="dm">ZONE-WH-FG · 24 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--safe)">90%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>1</b></div>
+          <div class="ds"><span>الطفايات</span><b>18 / 18 ✓</b></div>
+          <div class="ds"><span>مخاطر رئيسية</span><b>تخزين مرتفع</b></div>
+          <div style="margin-top:9px"><span class="pill p-ok">مطابق</span></div>
+        </div>
+        <div class="dept" style="--dc:var(--warn)" onclick="deptView('محطة الكهرباء والمرافق')">
+          <div class="dn2">محطة الكهرباء والمرافق</div><div class="dm">ZONE-UTL-01 · 21 عامل</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--warn)">79%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>2</b></div>
+          <div class="ds"><span>الطفايات</span><b>11 / 13 ⚠</b></div>
+          <div class="ds"><span>مخاطر رئيسية</span><b>جهد عالي</b></div>
+          <div style="margin-top:9px"><span class="pill p-wn">يحتاج متابعة</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>الأقسام الإدارية</h3><span class="hint">ADMINISTRATIVE · 2 ZONES · 94 موظف</span></div>
+    <div class="card-b">
+      <div class="grid g4">
+        <div class="dept" style="--dc:var(--safe)" onclick="deptView('المبنى الإداري')">
+          <div class="dn2">المبنى الإداري</div><div class="dm">ZONE-ADM-01 · 78 موظف</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--safe)">97%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>0</b></div>
+          <div class="ds"><span>الطفايات</span><b>13 / 13 ✓</b></div>
+          <div class="ds"><span>مخاطر رئيسية</span><b>إخلاء / ergonomics</b></div>
+          <div style="margin-top:9px"><span class="pill p-ok">مطابق</span></div>
+        </div>
+        <div class="dept" style="--dc:var(--safe)" onclick="deptView('العيادة والكانتين')">
+          <div class="dn2">العيادة والكانتين</div><div class="dm">ZONE-ADM-02 · 16 موظف</div>
+          <div class="ds"><span>مؤشر السلامة</span><b style="color:var(--safe)">93%</b></div>
+          <div class="ds"><span>حوادث 2026</span><b>0</b></div>
+          <div class="ds"><span>الطفايات</span><b>3 / 3 ✓</b></div>
+          <div class="ds"><span>مخاطر رئيسية</span><b>سلامة غذائية / غاز</b></div>
+          <div style="margin-top:9px"><span class="pill p-ok">مطابق</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INCIDENTS ============ -->
+<section class="page" id="inc">
+  <div class="ph">
+    <div><h2>الحوادث والبلاغات</h2><p>INCIDENT REGISTER · 68 RECORDS · 3 OPEN</p></div>
+    <div class="acts">
+      <button class="btn">⬇ تصدير Excel</button>
+      <button class="btn dgr" onclick="open_('mIncident')">🚨 تسجيل حادث جديد</button>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">إجمالي الحوادث YTD</div><div class="val">13</div><div class="sub">2 مُعطِّلة · 11 إسعاف أولي</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">أشباه حوادث</div><div class="val">48</div><div class="sub"><span class="up">▲ إبلاغ نشط</span></div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">أيام ضائعة</div><div class="val">27</div><div class="sub">من حادثين</div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">متوسط زمن الإغلاق</div><div class="val">6.2</div><div class="sub">يوم / الهدف ≤ 7</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>سجل الحوادث</h3>
+      <div style="display:flex;gap:7px">
+        <button class="btn sm">الكل</button><button class="btn sm">مفتوح</button><button class="btn sm">تحت التحقيق</button><button class="btn sm">مغلق</button>
+      </div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>الرقم</th><th>التاريخ</th><th>القسم</th><th>النوع</th><th>الوصف</th><th>الخطورة</th><th>المصاب</th><th>الحالة</th><th>المسؤول</th></tr></thead>
+        <tbody>
+          <tr onclick="incView('INC-2026-0089')"><td class="mono">INC-2026-0089</td><td class="mono">2026-08-05</td><td>ورشة الصيانة</td><td>إصابة</td><td>جرح قطعي في اليد اليسرى أثناء استخدام مفتاح ربط</td><td><span class="pill p-cr">عالية</span></td><td>محمود عبد الله</td><td><span class="pill p-wn">تحت التحقيق</span></td><td>م. أحمد سامي</td></tr>
+          <tr onclick="incView('INC-2026-0088')"><td class="mono">INC-2026-0088</td><td class="mono">2026-08-03</td><td>خط الإنتاج A</td><td>Near Miss</td><td>سقوط بكرة كابل من رف علوي بدون إصابات</td><td><span class="pill p-wn">متوسطة</span></td><td>—</td><td><span class="pill p-in">إجراء تصحيحي</span></td><td>م. هبة فؤاد</td></tr>
+          <tr onclick="incView('INC-2026-0087')"><td class="mono">INC-2026-0087</td><td class="mono">2026-08-01</td><td>محطة الكهرباء</td><td>وضع غير آمن</td><td>لوحة كهربائية بدون غطاء حماية في غرفة الجهد المتوسط</td><td><span class="pill p-cr">عالية</span></td><td>—</td><td><span class="pill p-wn">مفتوح</span></td><td>م. كريم رشاد</td></tr>
+          <tr onclick="incView('INC-2026-0086')"><td class="mono">INC-2026-0086</td><td class="mono">2026-07-28</td><td>مخزن الخامات</td><td>إصابة</td><td>التواء في الكاحل بسبب أرضية غير مستوية</td><td><span class="pill p-wn">متوسطة</span></td><td>سيد إبراهيم</td><td><span class="pill p-ok">مغلق</span></td><td>م. هبة فؤاد</td></tr>
+          <tr onclick="incView('INC-2026-0085')"><td class="mono">INC-2026-0085</td><td class="mono">2026-07-24</td><td>ورشة الصيانة</td><td>حريق بسيط</td><td>شرارة لحام أشعلت قطعة قماش زيتية — أُطفئت فوراً</td><td><span class="pill p-cr">عالية</span></td><td>—</td><td><span class="pill p-ok">مغلق</span></td><td>م. أحمد سامي</td></tr>
+          <tr onclick="incView('INC-2026-0084')"><td class="mono">INC-2026-0084</td><td class="mono">2026-07-19</td><td>خط الإنتاج B</td><td>Near Miss</td><td>عامل بدون نظارة واقية أثناء تشغيل ماكينة القطع</td><td><span class="pill p-wn">متوسطة</span></td><td>—</td><td><span class="pill p-ok">مغلق</span></td><td>م. هبة فؤاد</td></tr>
+          <tr onclick="incView('INC-2026-0083')"><td class="mono">INC-2026-0083</td><td class="mono">2026-07-12</td><td>خط الإنتاج A</td><td>إصابة</td><td>حرق سطحي من الدرجة الأولى — قالب حقن ساخن</td><td><span class="pill p-wn">متوسطة</span></td><td>عمرو حسن</td><td><span class="pill p-ok">مغلق</span></td><td>م. أحمد سامي</td></tr>
+          <tr onclick="incView('INC-2026-0082')"><td class="mono">INC-2026-0082</td><td class="mono">2026-07-05</td><td>المخازن</td><td>Near Miss</td><td>رافعة شوكية تسير بسرعة زائدة في ممر المشاة</td><td><span class="pill p-nu">منخفضة</span></td><td>—</td><td><span class="pill p-ok">مغلق</span></td><td>م. كريم رشاد</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h3>تحليل الأسباب الجذرية — YTD</h3><span class="hint">ROOT CAUSE</span></div>
+      <div class="card-b">
+        <div class="brow"><div class="t"><span>عدم الالتزام بإجراءات العمل</span><b>31%</b></div><div class="bar"><i style="width:31%;background:var(--crit)"></i></div></div>
+        <div class="brow"><div class="t"><span>نقص أو سوء استخدام PPE</span><b>24%</b></div><div class="bar"><i style="width:24%;background:var(--warn)"></i></div></div>
+        <div class="brow"><div class="t"><span>عطل/نقص صيانة المعدات</span><b>18%</b></div><div class="bar"><i style="width:18%;background:var(--warn)"></i></div></div>
+        <div class="brow"><div class="t"><span>ترتيب ونظافة المكان (5S)</span><b>14%</b></div><div class="bar"><i style="width:14%;background:var(--info)"></i></div></div>
+        <div class="brow"><div class="t"><span>نقص التدريب / التأهيل</span><b>9%</b></div><div class="bar"><i style="width:9%;background:var(--info)"></i></div></div>
+        <div class="brow"><div class="t"><span>أخرى</span><b>4%</b></div><div class="bar"><i style="width:4%;background:var(--txt-3)"></i></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>الإجراءات التصحيحية (CAPA)</h3><span class="hint">42 ACTIONS</span></div>
+      <div class="card-b">
+        <div class="tw">
+          <table>
+            <thead><tr><th>الإجراء</th><th>المسؤول</th><th>الموعد</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>تركيب حواجز أمان على ماكينة القطع #3</td><td>الصيانة</td><td class="mono">2026-08-10</td><td><span class="pill p-wn">جاري</span></td></tr>
+              <tr><td>تجديد تدريب LOTO لفريق الصيانة</td><td>HSE</td><td class="mono">2026-08-15</td><td><span class="pill p-in">مجدول</span></td></tr>
+              <tr><td>استبدال أغطية اللوحات الكهربائية</td><td>الكهرباء</td><td class="mono">2026-08-07</td><td><span class="pill p-cr">متأخر</span></td></tr>
+              <tr><td>إعادة تخطيط ممرات المشاة بالمخزن</td><td>المخازن</td><td class="mono">2026-08-20</td><td><span class="pill p-wn">جاري</span></td></tr>
+              <tr><td>تسوية أرضية منطقة التحميل</td><td>الصيانة</td><td class="mono">2026-07-30</td><td><span class="pill p-ok">مكتمل</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h3>دورة حياة البلاغ</h3><span class="hint">INCIDENT LIFECYCLE</span></div>
+      <div class="card-b">
+        <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;font-size:11px;font-family:var(--mono);margin-bottom:16px">
+          <span class="pill p-in">Reported</span><span style="color:var(--txt-3);padding:0 6px">◄</span>
+          <span class="pill p-in">Classified</span><span style="color:var(--txt-3);padding:0 6px">◄</span>
+          <span class="pill p-wn">Investigation</span><span style="color:var(--txt-3);padding:0 6px">◄</span>
+          <span class="pill p-wn">CAPA Assigned</span><span style="color:var(--txt-3);padding:0 6px">◄</span>
+          <span class="pill p-in">Pending Verification</span><span style="color:var(--txt-3);padding:0 6px">◄</span>
+          <span class="pill p-ok">Closed</span>
+        </div>
+        <p style="font-size:12px;color:var(--txt-2);line-height:1.9;margin-bottom:14px">التسجيل الميداني مصمَّم ليتم في <b>أقل من 60 ثانية</b> — 4 حقول إلزامية فقط، والباقي يُستكمل لاحقاً. التصنيف يتم تلقائياً حسب الشدة:</p>
+        <div><span class="tag g">First Aid</span><span class="tag">Near Miss</span><span class="tag">Property Damage</span><span class="tag r">Lost Time Injury (LTI)</span><span class="tag r">Fatality</span></div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+          <div style="font-size:12.5px;font-weight:600;margin-bottom:9px">📄 قوالب الإبلاغ الخارجي</div>
+          <div class="stat-line"><span>نموذج مكتب العمل — إخطار إصابة</span><button class="btn sm" onclick="toast('تم توليد النموذج — جاهز للطباعة')">توليد</button></div>
+          <div class="stat-line"><span>نموذج التأمينات الاجتماعية</span><button class="btn sm" onclick="toast('تم توليد النموذج — جاهز للطباعة')">توليد</button></div>
+          <div class="stat-line"><span>مطالبة شركة التأمين</span><button class="btn sm" onclick="toast('تم توليد النموذج — جاهز للطباعة')">توليد</button></div>
+          <div class="stat-line"><span>إخطار جهاز شؤون البيئة</span><button class="btn sm" onclick="toast('تم توليد النموذج — جاهز للطباعة')">توليد</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>أدوات التحقيق — INC-2026-0089</h3><span class="hint">RCA TOOLKIT</span></div>
+      <div class="card-b">
+        <div style="display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn sm pri" onclick="rcaTab(0,this)">5 Whys</button>
+          <button class="btn sm" onclick="rcaTab(1,this)">Fishbone</button>
+          <button class="btn sm" onclick="rcaTab(2,this)">Tripod Beta</button>
+        </div>
+        <div id="rca0">
+          <div class="step"><div class="num">1</div><div class="sc"><h4>لماذا حدث الجرح القطعي؟</h4><p>لأن مفتاح الربط انزلق من على الصامولة أثناء شد عزم عالٍ.</p></div></div>
+          <div class="step"><div class="num">2</div><div class="sc"><h4>لماذا انزلق المفتاح؟</h4><p>لأن مقاس المفتاح المستخدم أكبر من مقاس الصامولة (مفتاح إنجليزي بدل مقاس ثابت).</p></div></div>
+          <div class="step"><div class="num">3</div><div class="sc"><h4>لماذا استُخدم مفتاح غير مناسب؟</h4><p>لأن طقم المفاتيح الثابتة الخاص بالورشة ناقص قطعتين منذ أسبوعين.</p></div></div>
+          <div class="step"><div class="num">4</div><div class="sc"><h4>لماذا لم يُستبدل الطقم الناقص؟</h4><p>لأن طلب الشراء لم يُرفع — لا يوجد فحص دوري موثّق لعُدد الورشة.</p></div></div>
+          <div class="step"><div class="num">5</div><div class="sc"><h4>لماذا لا يوجد فحص دوري للعُدد؟</h4><p><b style="color:var(--crit)">السبب الجذري:</b> عدم وجود إجراء موثّق لجرد وفحص العُدد اليدوية ضمن نظام السلامة.</p></div></div>
+        </div>
+        <div id="rca1" style="display:none">
+          <div class="grid g2">
+            <div><div style="font-size:12px;font-weight:600;color:var(--crit);margin-bottom:7px">👤 الإنسان (Man)</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.9">• استخدام أداة غير مناسبة<br>• عدم الإبلاغ عن نقص العُدد<br>• قفاز مقاوم للقطع غير مرتدى</div></div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--warn);margin-bottom:7px">🔧 المعدة (Machine)</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.9">• طقم مفاتيح ناقص<br>• مفتاح إنجليزي مهترئ الفك</div></div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--info);margin-bottom:7px">📋 الطريقة (Method)</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.9">• لا يوجد إجراء جرد للعُدد<br>• JSA لا يغطي المهمة</div></div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--safe)">🏭 البيئة (Environment)</div><div style="font-size:11.5px;color:var(--txt-2);line-height:1.9">• إضاءة موضعية ضعيفة<br>• مساحة عمل ضيقة</div></div>
+          </div>
+        </div>
+        <div id="rca2" style="display:none">
+          <div class="step"><div class="num">A</div><div class="sc"><h4>العامل (Agent)</h4><p>الطاقة الميكانيكية — الحافة الحادة للصامولة والمفتاح المنزلق.</p></div></div>
+          <div class="step"><div class="num">E</div><div class="sc"><h4>الحدث (Event)</h4><p>ملامسة يد الفني للحافة الحادة بسرعة وقوة.</p></div></div>
+          <div class="step"><div class="num">B</div><div class="sc"><h4>الحواجز الفاشلة (Failed Barriers)</h4><p>❌ قفاز مقاوم للقطع L5 — لم يُرتدَ<br>❌ الأداة الصحيحة — غير متوفرة<br>❌ JSA للمهمة — غير موجود</p></div></div>
+          <div class="step"><div class="num">P</div><div class="sc"><h4>الشروط الكامنة (Preconditions)</h4><p>ثقافة قبول العمل بأدوات بديلة · ضغط وقت لإنهاء الإصلاح قبل الوردية التالية.</p></div></div>
+          <div class="step"><div class="num">O</div><div class="sc"><h4>العيوب التنظيمية (Latent Failures)</h4><p>غياب إجراء إدارة العُدد · ضعف الإشراف الميداني · عدم ربط JSA بأوامر الصيانة.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIRE ============ -->
+<section class="page" id="fire">
+  <div class="ph">
+    <div><h2>مراقبة معدات الحريق</h2><p>FIRE EQUIPMENT REGISTER · 156 EXTINGUISHERS · 24 HYDRANTS</p></div>
+    <div class="acts"><button class="btn">📅 جدول الفحص</button><button class="btn">⬇ تقرير الجاهزية</button><button class="btn pri" onclick="open_('mFire')">✓ تسجيل فحص</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">صالحة للاستخدام</div><div class="val">142</div><div class="sub">91% من الإجمالي</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">تنتهي خلال 30 يوم</div><div class="val">10</div><div class="sub">تحتاج جدولة إعادة تعبئة</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">منتهية / معطلة</div><div class="val">4</div><div class="sub"><span class="dn">إجراء فوري مطلوب</span></div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">حنفيات الحريق</div><div class="val">24</div><div class="sub">آخر اختبار ضغط: يوليو</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">كواشف الدخان</div><div class="val">212</div><div class="sub">208 تعمل · 4 تحت الصيانة</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">صناديق الإسعاف</div><div class="val">38</div><div class="sub">35 مكتملة · 3 ناقصة</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>خريطة الطفايات — خط الإنتاج A</h3><span class="hint">اضغط على أي طفاية لعرض التفاصيل</span></div>
+    <div class="card-b">
+      <div class="fx" id="fxGrid"></div>
+      <div class="legend">
+        <span><i style="background:var(--safe)"></i>صالحة</span>
+        <span><i style="background:var(--warn)"></i>تنتهي قريباً (&lt; 30 يوم)</span>
+        <span><i style="background:var(--crit)"></i>منتهية / معطلة</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>الطفايات التي تحتاج إجراء فوري</h3><span class="pill p-cr">4 بند</span></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>الكود</th><th>الموقع</th><th>النوع</th><th>تاريخ الانتهاء</th><th>المشكلة</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">FE-A-014</td><td>خط الإنتاج A / عمود 4</td><td>مسحوق جاف 6kg</td><td class="mono" style="color:var(--crit)">2026-07-18</td><td>منتهية منذ 18 يوم</td><td><button class="btn sm dgr" onclick="event.stopPropagation();toast('تم إصدار أمر شغل للاستبدال')">استبدال</button></td></tr>
+            <tr><td class="mono">FE-M-007</td><td>ورشة الصيانة / بوابة 2</td><td>CO₂ 5kg</td><td class="mono" style="color:var(--crit)">2026-06-30</td><td>ضغط منخفض · المؤشر أحمر</td><td><button class="btn sm dgr" onclick="event.stopPropagation();toast('تم إصدار أمر شغل للاستبدال')">استبدال</button></td></tr>
+            <tr><td class="mono">FE-M-011</td><td>ورشة الصيانة / منطقة اللحام</td><td>رغوة 9L</td><td class="mono" style="color:var(--crit)">2026-07-05</td><td>خرطوم متشقق</td><td><button class="btn sm dgr" onclick="event.stopPropagation();toast('تم إصدار أمر شغل للاستبدال')">استبدال</button></td></tr>
+            <tr><td class="mono">FE-U-003</td><td>محطة الكهرباء / غرفة MV</td><td>CO₂ 10kg</td><td class="mono" style="color:var(--crit)">2026-07-22</td><td>مفقودة من مكانها</td><td><button class="btn sm dgr" onclick="event.stopPropagation();toast('تم فتح بلاغ مفقودات')">بلاغ</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>توزيع المعدات حسب القسم</h3><span class="hint">156 EXTINGUISHERS</span></div>
+      <div class="card-b">
+        <div class="tw">
+          <table>
+            <thead><tr><th>القسم</th><th>العدد</th><th>صالحة</th><th>الجاهزية</th></tr></thead>
+            <tbody>
+              <tr><td>خط الإنتاج A</td><td class="mono">31</td><td class="mono">28</td><td><div class="bar" style="width:78px"><i style="width:90%;background:var(--safe)"></i></div></td></tr>
+              <tr><td>خط الإنتاج B</td><td class="mono">26</td><td class="mono">26</td><td><div class="bar" style="width:78px"><i style="width:100%;background:var(--safe)"></i></div></td></tr>
+              <tr><td>ورشة الصيانة</td><td class="mono">19</td><td class="mono">15</td><td><div class="bar" style="width:78px"><i style="width:79%;background:var(--crit)"></i></div></td></tr>
+              <tr><td>مخزن الخامات</td><td class="mono">24</td><td class="mono">22</td><td><div class="bar" style="width:78px"><i style="width:92%;background:var(--safe)"></i></div></td></tr>
+              <tr><td>مخزن المنتج التام</td><td class="mono">18</td><td class="mono">18</td><td><div class="bar" style="width:78px"><i style="width:100%;background:var(--safe)"></i></div></td></tr>
+              <tr><td>محطة الكهرباء</td><td class="mono">13</td><td class="mono">11</td><td><div class="bar" style="width:78px"><i style="width:85%;background:var(--warn)"></i></div></td></tr>
+              <tr><td>معمل الجودة</td><td class="mono">9</td><td class="mono">9</td><td><div class="bar" style="width:78px"><i style="width:100%;background:var(--safe)"></i></div></td></tr>
+              <tr><td>المبنى الإداري</td><td class="mono">13</td><td class="mono">13</td><td><div class="bar" style="width:78px"><i style="width:100%;background:var(--safe)"></i></div></td></tr>
+              <tr><td>العيادة والكانتين</td><td class="mono">3</td><td class="mono">3</td><td><div class="bar" style="width:78px"><i style="width:100%;background:var(--safe)"></i></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EQUIPMENT / PPE ============ -->
+<section class="page" id="equip">
+  <div class="ph">
+    <div><h2>معدات الوقاية الشخصية والسلامة</h2><p>PPE & SAFETY EQUIPMENT INVENTORY</p></div>
+    <div class="acts"><button class="btn">📦 طلب توريد</button><button class="btn pri">＋ تسجيل صرف</button></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>مخزون معدات الوقاية</h3><span class="hint">PPE STOCK</span></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>الصنف</th><th>الكود</th><th>الرصيد</th><th>حد الطلب</th><th>معدل الاستهلاك</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr><td>خوذة أمان (Hard Hat)</td><td class="mono">PPE-HD-01</td><td class="mono">184</td><td class="mono">80</td><td class="mono">22 / شهر</td><td><span class="pill p-ok">كافٍ</span></td></tr>
+            <tr><td>نظارة واقية</td><td class="mono">PPE-EY-01</td><td class="mono">62</td><td class="mono">100</td><td class="mono">48 / شهر</td><td><span class="pill p-cr">تحت الحد</span></td></tr>
+            <tr><td>قفاز عزل كهربائي 1000V</td><td class="mono">PPE-GL-EL</td><td class="mono">28</td><td class="mono">25</td><td class="mono">6 / شهر</td><td><span class="pill p-wn">قريب من الحد</span></td></tr>
+            <tr><td>قفاز مقاوم للقطع L5</td><td class="mono">PPE-GL-C5</td><td class="mono">340</td><td class="mono">150</td><td class="mono">85 / شهر</td><td><span class="pill p-ok">كافٍ</span></td></tr>
+            <tr><td>حذاء أمان بمقدمة صلب</td><td class="mono">PPE-FT-01</td><td class="mono">96</td><td class="mono">60</td><td class="mono">18 / شهر</td><td><span class="pill p-ok">كافٍ</span></td></tr>
+            <tr><td>واقي أذن (Ear Muff)</td><td class="mono">PPE-HR-01</td><td class="mono">41</td><td class="mono">50</td><td class="mono">12 / شهر</td><td><span class="pill p-cr">تحت الحد</span></td></tr>
+            <tr><td>كمامة نصف وجه + فلتر</td><td class="mono">PPE-RS-01</td><td class="mono">128</td><td class="mono">70</td><td class="mono">34 / شهر</td><td><span class="pill p-ok">كافٍ</span></td></tr>
+            <tr><td>حزام أمان للعمل بالمرتفعات</td><td class="mono">PPE-FA-01</td><td class="mono">19</td><td class="mono">15</td><td class="mono">2 / شهر</td><td><span class="pill p-wn">قريب من الحد</span></td></tr>
+            <tr><td>أفرول مقاوم للهب (FR)</td><td class="mono">PPE-CV-FR</td><td class="mono">73</td><td class="mono">40</td><td class="mono">9 / شهر</td><td><span class="pill p-ok">كافٍ</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>معدات السلامة الثابتة</h3><span class="hint">FIXED SAFETY ASSETS</span></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>المعدة</th><th>العدد</th><th>تعمل</th><th>آخر اختبار</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr><td>دش الطوارئ / غسيل العيون</td><td class="mono">14</td><td class="mono">13</td><td class="mono">2026-07-20</td><td><span class="pill p-wn">1 معطل</span></td></tr>
+            <tr><td>مخارج الطوارئ</td><td class="mono">22</td><td class="mono">22</td><td class="mono">2026-08-01</td><td><span class="pill p-ok">سليم</span></td></tr>
+            <tr><td>إنارة الطوارئ</td><td class="mono">86</td><td class="mono">81</td><td class="mono">2026-07-25</td><td><span class="pill p-wn">5 معطلة</span></td></tr>
+            <tr><td>نقاط التجمع</td><td class="mono">6</td><td class="mono">6</td><td class="mono">2026-06-15</td><td><span class="pill p-ok">سليم</span></td></tr>
+            <tr><td>أجهزة إنذار يدوي</td><td class="mono">31</td><td class="mono">31</td><td class="mono">2026-08-01</td><td><span class="pill p-ok">سليم</span></td></tr>
+            <tr><td>كاشفات الغاز الثابتة</td><td class="mono">18</td><td class="mono">17</td><td class="mono">2026-07-10</td><td><span class="pill p-wn">1 معايرة</span></td></tr>
+            <tr><td>أجهزة AED</td><td class="mono">4</td><td class="mono">4</td><td class="mono">2026-07-28</td><td><span class="pill p-ok">سليم</span></td></tr>
+            <tr><td>لوحات LOTO</td><td class="mono">12</td><td class="mono">12</td><td class="mono">2026-08-02</td><td><span class="pill p-ok">سليم</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>مصفوفة PPE المطلوبة حسب المنطقة</h3><span class="hint">PPE MATRIX</span></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>المنطقة</th><th>خوذة</th><th>نظارة</th><th>حذاء</th><th>قفاز</th><th>واقي أذن</th><th>كمامة</th><th>أفرول FR</th><th>حزام أمان</th></tr></thead>
+        <tbody>
+          <tr><td>خط الإنتاج A</td><td>✅</td><td>✅</td><td>✅</td><td>✅ L5</td><td>✅</td><td>⭕</td><td>—</td><td>—</td></tr>
+          <tr><td>خط الإنتاج B</td><td>✅</td><td>✅</td><td>✅</td><td>✅ L5</td><td>✅</td><td>⭕</td><td>—</td><td>—</td></tr>
+          <tr><td>ورشة الصيانة</td><td>✅</td><td>✅</td><td>✅</td><td>✅ عزل</td><td>⭕</td><td>⭕</td><td>✅</td><td>⭕</td></tr>
+          <tr><td>مخزن الخامات</td><td>✅</td><td>⭕</td><td>✅</td><td>✅</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>مخزن المنتج التام</td><td>✅</td><td>⭕</td><td>✅</td><td>✅</td><td>—</td><td>—</td><td>—</td><td>⭕</td></tr>
+          <tr><td>محطة الكهرباء</td><td>✅</td><td>✅</td><td>✅ عازل</td><td>✅ 1000V</td><td>—</td><td>—</td><td>✅</td><td>⭕</td></tr>
+          <tr><td>معمل الجودة</td><td>—</td><td>✅</td><td>✅</td><td>✅</td><td>—</td><td>✅</td><td>—</td><td>—</td></tr>
+          <tr><td>المبنى الإداري</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-b" style="border-top:1px solid var(--line);font-size:11.5px;color:var(--txt-2)">✅ إلزامي دائم &nbsp;·&nbsp; ⭕ حسب المهمة &nbsp;·&nbsp; — غير مطلوب</div>
+  </div>
+</section>
+
+<!-- ============ INSPECTIONS ============ -->
+<section class="page" id="insp">
+  <div class="ph">
+    <div><h2>التفتيش والجولات</h2><p>INSPECTION & SAFETY WALKS · 128 COMPLETED YTD</p></div>
+    <div class="acts"><button class="btn">📅 جدولة جولة</button><button class="btn pri" onclick="open_('mInsp')">🔍 بدء جولة تفتيش</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">جولات مكتملة</div><div class="val">128</div><div class="sub">من 140 مخططة</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">ملاحظات مفتوحة</div><div class="val">23</div><div class="sub">7 متأخرة عن الموعد</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">نسبة الالتزام</div><div class="val">91%</div><div class="sub">الهدف ≥ 95%</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">جولات متأخرة</div><div class="val">2</div><div class="sub">ورشة الصيانة · المرافق</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>جدول الجولات</h3><span class="hint">SCHEDULE</span></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>النوع</th><th>المنطقة</th><th>التكرار</th><th>المسؤول</th><th>القادمة</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr><td>جولة سلامة عامة</td><td>خط الإنتاج A</td><td>أسبوعي</td><td>م. هبة فؤاد</td><td class="mono">2026-08-06</td><td><span class="pill p-in">مجدول</span></td></tr>
+            <tr><td>فحص طفايات الحريق</td><td>كل المناطق</td><td>شهري</td><td>م. كريم رشاد</td><td class="mono">2026-08-15</td><td><span class="pill p-in">مجدول</span></td></tr>
+            <tr><td>تفتيش LOTO</td><td>ورشة الصيانة</td><td>أسبوعي</td><td>م. أحمد سامي</td><td class="mono">2026-08-02</td><td><span class="pill p-cr">متأخر</span></td></tr>
+            <tr><td>فحص معدات الرفع</td><td>المخازن</td><td>ربع سنوي</td><td>جهة خارجية</td><td class="mono">2026-09-01</td><td><span class="pill p-in">مجدول</span></td></tr>
+            <tr><td>اختبار إنذار الحريق</td><td>كل المباني</td><td>شهري</td><td>م. كريم رشاد</td><td class="mono">2026-08-12</td><td><span class="pill p-in">مجدول</span></td></tr>
+            <tr><td>تفتيش المرافق الكهربائية</td><td>محطة الكهرباء</td><td>أسبوعي</td><td>م. كريم رشاد</td><td class="mono">2026-08-01</td><td><span class="pill p-cr">متأخر</span></td></tr>
+            <tr><td>تجربة إخلاء</td><td>الموقع بالكامل</td><td>نصف سنوي</td><td>HSE + الأمن</td><td class="mono">2026-09-20</td><td><span class="pill p-in">مجدول</span></td></tr>
+            <tr><td>جولة 5S / ترتيب</td><td>كل الأقسام</td><td>أسبوعي</td><td>رؤساء الأقسام</td><td class="mono">2026-08-07</td><td><span class="pill p-in">مجدول</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>ملاحظات آخر جولة — خط الإنتاج A</h3><span class="hint">2026-07-29</span></div>
+      <div class="card-b">
+        <div class="tl">
+          <div class="tli" style="--c:var(--crit)"><div class="tt">CRITICAL · مفتوح</div><div class="tb"><b>طفاية FE-A-014 منتهية الصلاحية</b><br><span style="color:var(--txt-2);font-size:11.5px">المسؤول: الصيانة · الموعد: 2026-08-08</span></div></div>
+          <div class="tli" style="--c:var(--warn)"><div class="tt">MAJOR · جاري</div><div class="tb"><b>ممر الطوارئ رقم 3 مسدود بصناديق</b><br><span style="color:var(--txt-2);font-size:11.5px">المسؤول: الإنتاج · الموعد: 2026-08-06</span></div></div>
+          <div class="tli" style="--c:var(--warn)"><div class="tt">MAJOR · جاري</div><div class="tb"><b>عاملان بدون واقي أذن في منطقة الضوضاء</b><br><span style="color:var(--txt-2);font-size:11.5px">المسؤول: رئيس الوردية · تم التنبيه</span></div></div>
+          <div class="tli" style="--c:var(--info)"><div class="tt">MINOR · مغلق</div><div class="tb"><b>لافتة تحذير باهتة عند ماكينة #7</b><br><span style="color:var(--txt-2);font-size:11.5px">تم الاستبدال 2026-08-01</span></div></div>
+          <div class="tli" style="--c:var(--info)"><div class="tt">MINOR · جاري</div><div class="tb"><b>تسريب زيت بسيط تحت خط النقل</b><br><span style="color:var(--txt-2);font-size:11.5px">المسؤول: الصيانة · الموعد: 2026-08-09</span></div></div>
+          <div class="tli" style="--c:var(--safe)"><div class="tt">POSITIVE</div><div class="tb"><b>التزام ممتاز بإجراءات بدء التشغيل</b><br><span style="color:var(--txt-2);font-size:11.5px">وردية أ — تم التنويه</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h3>المفتش الميداني الذكي</h3><span class="hint">MOBILE INSPECTION</span></div>
+      <div class="card-b">
+        <div class="grid g2">
+          <div>
+            <div class="stat-line"><span>📴 وضع عدم الاتصال (Offline)</span><span class="pill p-ok">مفعّل</span></div>
+            <div class="stat-line"><span>جولات مخزّنة محلياً</span><b>4</b></div>
+            <div class="stat-line"><span>آخر مزامنة</span><b class="mono">10:12</b></div>
+            <div class="stat-line"><span>📷 QR / NFC Tags</span><b>312 tag</b></div>
+            <div class="stat-line"><span>📍 Geofencing</span><span class="pill p-ok">إلزامي</span></div>
+            <div class="stat-line"><span>مسح مؤكد بالموقع</span><b style="color:var(--safe)">98.4%</b></div>
+          </div>
+          <div style="background:var(--steel);border:1px solid var(--line);border-radius:6px;padding:14px;text-align:center">
+            <div style="font-size:44px;line-height:1;margin-bottom:8px">▣</div>
+            <div class="mono" style="font-size:11px;color:var(--txt-2)">QR-FE-A-014</div>
+            <div style="font-size:11px;color:var(--txt-3);margin-top:6px;line-height:1.7">مسح الكود يفتح نموذج الفحص الخاص بالمعدة ويسجل الموقع والوقت تلقائياً</div>
+            <button class="btn sm pri" style="margin-top:10px;width:100%;justify-content:center" onclick="toast('تم التحقق من الموقع — فتح نموذج فحص FE-A-014')">محاكاة مسح</button>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--txt-2);line-height:1.8">
+          النظام يرفض تسجيل الفحص إذا كان المفتش خارج نطاق <b class="mono">15م</b> من موقع المعدة — لمنع الفحص الصوري (Pencil Whipping).
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>بانى نماذج التفتيش</h3><span class="hint">DRAG &amp; DROP BUILDER</span></div>
+      <div class="card-b">
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:9px">أنواع الحقول المتاحة</div>
+        <div style="margin-bottom:14px">
+          <span class="tag">☑️ نعم / لا / لا ينطبق</span><span class="tag">🔘 اختيار متعدد</span><span class="tag">🔢 قيمة رقمية بحدود</span><span class="tag">📷 صورة إلزامية</span><span class="tag">✍️ نص حر</span><span class="tag">📅 تاريخ</span><span class="tag">👤 اختيار موظف</span><span class="tag">📊 تقييم 1-5</span><span class="tag">🌡️ قراءة حساس</span><span class="tag">✒️ توقيع</span>
+        </div>
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:9px">قوالب جاهزة حسب المعايير</div>
+        <div class="stat-line"><span>ISO 45001 — تدقيق داخلي</span><b>112 بند</b></div>
+        <div class="stat-line"><span>ISO 14001 — تدقيق بيئي</span><b>86 بند</b></div>
+        <div class="stat-line"><span>OSHA General Industry</span><b>148 بند</b></div>
+        <div class="stat-line"><span>NFPA — أنظمة الحريق</span><b>64 بند</b></div>
+        <div class="stat-line"><span>BBS — التفتيش السلوكي</span><b>32 بند</b></div>
+        <div class="stat-line"><span>5S — الترتيب والنظافة</span><b>25 بند</b></div>
+        <div class="stat-line"><span>نماذج مخصصة للمصنع</span><b>19 نموذج</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RISK ============ -->
+<section class="page" id="risk">
+  <div class="ph">
+    <div><h2>تقييم المخاطر</h2><p>RISK ASSESSMENT REGISTER · HIRA · 47 IDENTIFIED HAZARDS</p></div>
+    <div class="acts"><button class="btn">⬇ تصدير السجل</button><button class="btn pri">＋ تقييم جديد</button></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>مصفوفة المخاطر 5×5</h3><span class="hint">الاحتمالية × الشدة</span></div>
+      <div class="card-b matrix-wrap">
+        <div class="risk" id="riskM"></div>
+        <div class="legend">
+          <span><i style="background:#38B87C"></i>مقبول (1-4)</span>
+          <span><i style="background:#C6C43A"></i>منخفض (5-9)</span>
+          <span><i style="background:#F09030"></i>متوسط (10-14)</span>
+          <span><i style="background:#E0483C"></i>عالي (15-19)</span>
+          <span><i style="background:#8E1F17"></i>حرج (20-25)</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>توزيع المخاطر</h3><span class="hint">47 HAZARDS</span></div>
+      <div class="card-b">
+        <div class="brow"><div class="t"><span>🔴 حرج — إيقاف النشاط</span><b>2</b></div><div class="bar"><i style="width:4%;background:#8E1F17"></i></div></div>
+        <div class="brow"><div class="t"><span>🟥 عالي — إجراء عاجل</span><b>6</b></div><div class="bar"><i style="width:13%;background:var(--crit)"></i></div></div>
+        <div class="brow"><div class="t"><span>🟧 متوسط — خطة تخفيف</span><b>14</b></div><div class="bar"><i style="width:30%;background:var(--warn)"></i></div></div>
+        <div class="brow"><div class="t"><span>🟨 منخفض — مراقبة</span><b>17</b></div><div class="bar"><i style="width:36%;background:#C6C43A"></i></div></div>
+        <div class="brow"><div class="t"><span>🟩 مقبول</span><b>8</b></div><div class="bar"><i style="width:17%;background:var(--safe)"></i></div></div>
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
+          <div class="stat-line"><span>مخاطر تم تخفيضها هذا العام</span><b style="color:var(--safe)">19</b></div>
+          <div class="stat-line"><span>مخاطر جديدة تم تحديدها</span><b style="color:var(--warn)">7</b></div>
+          <div class="stat-line"><span>آخر مراجعة شاملة</span><b>2026-06-01</b></div>
+          <div class="stat-line"><span>المراجعة القادمة</span><b>2026-12-01</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>سجل المخاطر — أعلى 10</h3><span class="hint">HIRA REGISTER</span></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>الكود</th><th>المنطقة</th><th>الخطر</th><th>النشاط</th><th>احتمالية</th><th>شدة</th><th>الدرجة</th><th>الضوابط</th><th>الدرجة المتبقية</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">HZ-001</td><td>محطة الكهرباء</td><td>صعق كهربائي — جهد متوسط</td><td>صيانة اللوحات</td><td class="mono">3</td><td class="mono">5</td><td><span class="pill p-cr">15 عالي</span></td><td>LOTO · قفازات 1000V · تصريح</td><td><span class="pill p-wn">6</span></td></tr>
+          <tr><td class="mono">HZ-002</td><td>ورشة الصيانة</td><td>حريق من أعمال اللحام</td><td>لحام وقطع</td><td class="mono">4</td><td class="mono">4</td><td><span class="pill p-cr">16 عالي</span></td><td>تصريح عمل ساخن · مراقب حريق</td><td><span class="pill p-wn">8</span></td></tr>
+          <tr><td class="mono">HZ-003</td><td>خط الإنتاج A</td><td>انحشار في أجزاء متحركة</td><td>تشغيل ماكينات القطع</td><td class="mono">3</td><td class="mono">5</td><td><span class="pill p-cr">15 عالي</span></td><td>حواجز أمان · مفاتيح طوارئ</td><td><span class="pill p-in">5</span></td></tr>
+          <tr><td class="mono">HZ-004</td><td>المخازن</td><td>اصطدام رافعة شوكية بمشاة</td><td>مناولة المواد</td><td class="mono">4</td><td class="mono">4</td><td><span class="pill p-cr">16 عالي</span></td><td>ممرات مفصولة · حد سرعة · مرايا</td><td><span class="pill p-wn">8</span></td></tr>
+          <tr><td class="mono">HZ-005</td><td>خط الإنتاج A/B</td><td>حروق من قوالب الحقن الساخنة</td><td>تغيير القوالب</td><td class="mono">3</td><td class="mono">4</td><td><span class="pill p-wn">12 متوسط</span></td><td>قفازات حرارية · إجراء تبريد</td><td><span class="pill p-in">4</span></td></tr>
+          <tr><td class="mono">HZ-006</td><td>المخازن</td><td>سقوط أحمال من ارتفاع</td><td>التخزين على الرفوف</td><td class="mono">3</td><td class="mono">4</td><td><span class="pill p-wn">12 متوسط</span></td><td>فحص الرفوف · حدود التحميل</td><td><span class="pill p-in">6</span></td></tr>
+          <tr><td class="mono">HZ-007</td><td>خط الإنتاج</td><td>ضوضاء تتجاوز 85 dB</td><td>التشغيل المستمر</td><td class="mono">5</td><td class="mono">3</td><td><span class="pill p-wn">15 عالي</span></td><td>واقي أذن إلزامي · قياس دوري</td><td><span class="pill p-in">6</span></td></tr>
+          <tr><td class="mono">HZ-008</td><td>ورشة الصيانة</td><td>تعرض لأبخرة كيميائية</td><td>تنظيف بالمذيبات</td><td class="mono">3</td><td class="mono">3</td><td><span class="pill p-in">9 منخفض</span></td><td>تهوية موضعية · كمامات · MSDS</td><td><span class="pill p-ok">3</span></td></tr>
+          <tr><td class="mono">HZ-009</td><td>كل المناطق</td><td>انزلاق وتعثر</td><td>الحركة اليومية</td><td class="mono">4</td><td class="mono">2</td><td><span class="pill p-in">8 منخفض</span></td><td>5S · إضاءة · تنظيف فوري</td><td><span class="pill p-ok">4</span></td></tr>
+          <tr><td class="mono">HZ-010</td><td>المبنى الإداري</td><td>إجهاد عضلي هيكلي</td><td>العمل المكتبي</td><td class="mono">4</td><td class="mono">2</td><td><span class="pill p-in">8 منخفض</span></td><td>كراسي إرجونومية · فترات راحة</td><td><span class="pill p-ok">4</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PERMITS ============ -->
+<section class="page" id="perm">
+  <div class="ph">
+    <div><h2>تصاريح العمل</h2><p>PERMIT TO WORK SYSTEM · 12 ACTIVE</p></div>
+    <div class="acts"><button class="btn">📋 كل التصاريح</button><button class="btn pri" onclick="open_('mPermit')">＋ إصدار تصريح</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">تصاريح نشطة</div><div class="val">12</div><div class="sub">تحت التنفيذ الآن</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">تنتهي خلال 6 ساعات</div><div class="val">3</div><div class="sub">تحتاج تجديد أو إغلاق</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">بانتظار الموافقة</div><div class="val">5</div><div class="sub">متوسط الموافقة: 42 دقيقة</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">مخالفات تصاريح</div><div class="val">1</div><div class="sub">عمل بدون تصريح — يوليو</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>التصاريح النشطة</h3><span class="hint">LIVE PERMITS</span></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>رقم التصريح</th><th>النوع</th><th>المنطقة</th><th>الوصف</th><th>المُصدِر</th><th>المُنفِّذ</th><th>من</th><th>إلى</th><th>الحالة</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">PTW-2026-0412</td><td><span class="pill p-cr">🔥 عمل ساخن</span></td><td>ورشة الصيانة</td><td>لحام إطار حامل ماكينة</td><td>م. أحمد سامي</td><td>فريق اللحام</td><td class="mono">08:00</td><td class="mono" style="color:var(--warn)">14:00</td><td><span class="pill p-wn">ينتهي قريباً</span></td></tr>
+          <tr><td class="mono">PTW-2026-0411</td><td><span class="pill p-cr">⚡ كهربائي</span></td><td>محطة الكهرباء</td><td>استبدال قاطع MV في اللوحة رقم 3</td><td>م. كريم رشاد</td><td>مقاول خارجي</td><td class="mono">07:00</td><td class="mono">17:00</td><td><span class="pill p-ok">نشط</span></td></tr>
+          <tr><td class="mono">PTW-2026-0410</td><td><span class="pill p-wn">🪜 مرتفعات</span></td><td>خط الإنتاج B</td><td>صيانة وحدة الشفط العلوية</td><td>م. أحمد سامي</td><td>الصيانة الداخلية</td><td class="mono">09:00</td><td class="mono" style="color:var(--warn)">13:00</td><td><span class="pill p-wn">ينتهي قريباً</span></td></tr>
+          <tr><td class="mono">PTW-2026-0409</td><td><span class="pill p-cr">🕳️ أماكن مغلقة</span></td><td>محطة المرافق</td><td>تنظيف خزان المياه الأرضي</td><td>م. كريم رشاد</td><td>مقاول متخصص</td><td class="mono">06:00</td><td class="mono">12:00</td><td><span class="pill p-ok">نشط</span></td></tr>
+          <tr><td class="mono">PTW-2026-0408</td><td><span class="pill p-in">🔧 ميكانيكي</span></td><td>خط الإنتاج A</td><td>تغيير سير ناقل الوحدة 4</td><td>م. هبة فؤاد</td><td>الصيانة الداخلية</td><td class="mono">10:00</td><td class="mono">16:00</td><td><span class="pill p-ok">نشط</span></td></tr>
+          <tr><td class="mono">PTW-2026-0407</td><td><span class="pill p-wn">🏗️ حفر</span></td><td>خارج المبنى</td><td>مد كابل تغذية جديد</td><td>م. كريم رشاد</td><td>مقاول خارجي</td><td class="mono">08:00</td><td class="mono" style="color:var(--warn)">14:00</td><td><span class="pill p-wn">ينتهي قريباً</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h3>أنواع التصاريح</h3></div>
+      <div class="card-b">
+        <div class="stat-line"><span>🔥 عمل ساخن (Hot Work)</span><b>4</b></div>
+        <div class="stat-line"><span>⚡ عمل كهربائي</span><b>3</b></div>
+        <div class="stat-line"><span>🪜 عمل بالمرتفعات</span><b>2</b></div>
+        <div class="stat-line"><span>🕳️ أماكن مغلقة</span><b>1</b></div>
+        <div class="stat-line"><span>🔧 ميكانيكي / LOTO</span><b>1</b></div>
+        <div class="stat-line"><span>🏗️ حفر وأعمال مدنية</span><b>1</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>قائمة فحص العمل الساخن</h3><span class="hint">CHECKLIST</span></div>
+      <div class="card-b" style="font-size:12.5px;line-height:2.1">
+        <div>✅ إزالة المواد القابلة للاشتعال (11م)</div>
+        <div>✅ توفير طفاية مناسبة في الموقع</div>
+        <div>✅ تعيين مراقب حريق (Fire Watch)</div>
+        <div>✅ فحص الجو بكاشف الغاز</div>
+        <div>✅ عزل كواشف الدخان بالمنطقة</div>
+        <div>✅ التأكد من صلاحية معدات اللحام</div>
+        <div>✅ PPE كامل + قناع لحام</div>
+        <div>✅ مراقبة 30 دقيقة بعد الانتهاء</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>إحصائيات 2026</h3></div>
+      <div class="card-b">
+        <div class="stat-line"><span>إجمالي التصاريح الصادرة</span><b>412</b></div>
+        <div class="stat-line"><span>تم إغلاقها بشكل صحيح</span><b style="color:var(--safe)">398</b></div>
+        <div class="stat-line"><span>مُلغاة</span><b>13</b></div>
+        <div class="stat-line"><span>مخالفات</span><b style="color:var(--crit)">1</b></div>
+        <div class="stat-line"><span>حوادث مرتبطة بتصريح</span><b style="color:var(--safe)">0</b></div>
+        <div class="stat-line"><span>نسبة الالتزام</span><b style="color:var(--safe)">99.7%</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h3>كشف تعارض العمليات المتزامنة (SIMOPS)</h3><span class="pill p-cr">1 تعارض محجوب</span></div>
+      <div class="card-b">
+        <div style="padding:13px;background:rgba(158,27,50,.13);border:1px solid rgba(158,27,50,.4);border-radius:5px;margin-bottom:14px">
+          <div style="font-size:12.5px;font-weight:600;color:#e8697f;margin-bottom:7px">⛔ تم رفض إصدار التصريح PTW-2026-0414</div>
+          <div style="font-size:11.5px;color:var(--txt-2);line-height:1.9">
+            طلب <b>عمل ساخن (لحام)</b> في ورشة الصيانة — منطقة اللحام<br>
+            يتعارض مكانياً (المسافة 4.2م &lt; الحد 11م) مع التصريح النشط <b class="mono">PTW-2026-0412</b><br>
+            الذي يتضمن <b>فتح خزان مذيبات CHM-018 قابل للاشتعال</b><br>
+            <span style="color:var(--crit)">القرار الآلي: حجب الإصدار حتى إغلاق التصريح المتعارض أو نقل موقع العمل.</span>
+          </div>
+        </div>
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:9px">قواعد التعارض المفعّلة</div>
+        <div class="stat-line"><span>عمل ساخن ↔ مواد قابلة للاشتعال</span><b class="mono">حد 11م</b></div>
+        <div class="stat-line"><span>عمل ساخن ↔ أماكن مغلقة</span><b class="mono">حظر تام</b></div>
+        <div class="stat-line"><span>عمل بالمرتفعات ↔ عمل أسفله</span><b class="mono">حظر تام</b></div>
+        <div class="stat-line"><span>حفر ↔ كابلات مدفونة نشطة</span><b class="mono">عزل إلزامي</b></div>
+        <div class="stat-line"><span>عمل كهربائي ↔ أعمال رطبة</span><b class="mono">حد 5م</b></div>
+        <div class="stat-line"><span>تعارضات محجوبة 2026</span><b style="color:var(--safe)">23</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>سير الاعتماد والتوقيع الرقمي</h3><span class="hint">PTW-2026-0411</span></div>
+      <div class="card-b">
+        <div class="step"><div class="num" style="background:var(--safe)">✓</div><div class="sc"><h4>مقدّم الطلب — فريق الكهرباء</h4><p>تم التقديم 2026-08-06 06:12 · مرفق JSA-018</p></div></div>
+        <div class="step"><div class="num" style="background:var(--safe)">✓</div><div class="sc"><h4>قائمة الفحص الإلزامية قبل العمل</h4><p>8 من 8 بنود مؤكدة · قياس غازات ✓ · عزل LOTO ✓ · لا يمكن تجاوزها</p></div></div>
+        <div class="step"><div class="num" style="background:var(--safe)">✓</div><div class="sc"><h4>اعتماد مشرف المنطقة</h4><p>م. كريم رشاد · 06:34 · Push Notification</p></div></div>
+        <div class="step"><div class="num" style="background:var(--safe)">✓</div><div class="sc"><h4>اعتماد HSE Officer</h4><p>م. أحمد سامي · 06:48 · فحص SIMOPS ✓</p></div></div>
+        <div class="step"><div class="num" style="background:var(--warn)">5</div><div class="sc"><h4>اعتماد HSE Manager</h4><p>رافع صابر · بانتظار التوقيع (مطلوب للمخاطر العالية)</p></div></div>
+        <div class="sig" style="margin-top:14px">
+          <div class="sg">Ahmed Sami</div>
+          <div class="st">Digital Signature · SHA-256 · Timestamp 2026-08-06T06:48:22+02:00</div>
+          <div class="st" style="margin-top:4px;color:var(--safe)">✓ موثّق ومختوم زمنياً — غير قابل للتعديل</div>
+        </div>
+        <div style="margin-top:12px;font-size:11.5px;color:var(--txt-2);text-align:center">متوسط زمن دورة الاعتماد الكاملة: <b class="mono">42 دقيقة</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRAINING ============ -->
+<section class="page" id="train">
+  <div class="ph">
+    <div><h2>التدريب والتأهيل</h2><p>TRAINING & COMPETENCY MATRIX · 388 EMPLOYEES</p></div>
+    <div class="acts"><button class="btn">📅 جدول التدريبات</button><button class="btn pri">＋ تسجيل دورة</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">نسبة التغطية</div><div class="val">87%</div><div class="sub">338 من 388 موظف</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">شهادات تنتهي هذا الشهر</div><div class="val">14</div><div class="sub">تحتاج تجديد</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">شهادات منتهية</div><div class="val">6</div><div class="sub"><span class="dn">يُمنع دخول المناطق الحرجة</span></div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">ساعات تدريب YTD</div><div class="val">4,280</div><div class="sub">11 ساعة / موظف</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>البرامج التدريبية</h3></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>البرنامج</th><th>الفئة المستهدفة</th><th>الصلاحية</th><th>مؤهلون</th><th>التغطية</th></tr></thead>
+          <tbody>
+            <tr><td>التوعية العامة بالسلامة</td><td>الجميع</td><td>سنوي</td><td class="mono">372/388</td><td><div class="bar" style="width:70px"><i style="width:96%;background:var(--safe)"></i></div></td></tr>
+            <tr><td>مكافحة الحريق والإخلاء</td><td>الجميع</td><td>سنوي</td><td class="mono">341/388</td><td><div class="bar" style="width:70px"><i style="width:88%;background:var(--safe)"></i></div></td></tr>
+            <tr><td>الإسعافات الأولية</td><td>فريق الطوارئ</td><td>سنتان</td><td class="mono">42/45</td><td><div class="bar" style="width:70px"><i style="width:93%;background:var(--safe)"></i></div></td></tr>
+            <tr><td>LOTO — العزل والتأمين</td><td>الصيانة والكهرباء</td><td>سنتان</td><td class="mono">48/61</td><td><div class="bar" style="width:70px"><i style="width:79%;background:var(--warn)"></i></div></td></tr>
+            <tr><td>العمل بالمرتفعات</td><td>الصيانة</td><td>سنتان</td><td class="mono">28/34</td><td><div class="bar" style="width:70px"><i style="width:82%;background:var(--warn)"></i></div></td></tr>
+            <tr><td>الأماكن المغلقة</td><td>الصيانة والمرافق</td><td>سنة</td><td class="mono">14/21</td><td><div class="bar" style="width:70px"><i style="width:67%;background:var(--crit)"></i></div></td></tr>
+            <tr><td>قيادة الرافعات الشوكية</td><td>المخازن</td><td>3 سنوات</td><td class="mono">18/18</td><td><div class="bar" style="width:70px"><i style="width:100%;background:var(--safe)"></i></div></td></tr>
+            <tr><td>السلامة الكهربائية HV/MV</td><td>الكهرباء</td><td>سنتان</td><td class="mono">11/14</td><td><div class="bar" style="width:70px"><i style="width:79%;background:var(--warn)"></i></div></td></tr>
+            <tr><td>التعامل مع المواد الكيميائية</td><td>الجودة والصيانة</td><td>سنتان</td><td class="mono">51/56</td><td><div class="bar" style="width:70px"><i style="width:91%;background:var(--safe)"></i></div></td></tr>
+            <tr><td>تحليل الحوادث (RCA)</td><td>المشرفون</td><td>3 سنوات</td><td class="mono">24/31</td><td><div class="bar" style="width:70px"><i style="width:77%;background:var(--warn)"></i></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>شهادات تحتاج تجديد عاجل</h3><span class="pill p-cr">20 موظف</span></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>الموظف</th><th>القسم</th><th>الشهادة</th><th>تنتهي</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr><td>محمود عبد الله</td><td>الصيانة</td><td>LOTO</td><td class="mono" style="color:var(--crit)">2026-07-20</td><td><span class="pill p-cr">منتهية</span></td></tr>
+            <tr><td>سيد إبراهيم</td><td>المخازن</td><td>رافعات شوكية</td><td class="mono" style="color:var(--crit)">2026-07-28</td><td><span class="pill p-cr">منتهية</span></td></tr>
+            <tr><td>عمرو حسن</td><td>الإنتاج A</td><td>مكافحة الحريق</td><td class="mono" style="color:var(--crit)">2026-08-01</td><td><span class="pill p-cr">منتهية</span></td></tr>
+            <tr><td>خالد منصور</td><td>الكهرباء</td><td>سلامة كهربائية MV</td><td class="mono" style="color:var(--crit)">2026-08-03</td><td><span class="pill p-cr">منتهية</span></td></tr>
+            <tr><td>طارق يوسف</td><td>الصيانة</td><td>أماكن مغلقة</td><td class="mono" style="color:var(--warn)">2026-08-12</td><td><span class="pill p-wn">قريباً</span></td></tr>
+            <tr><td>هاني سعيد</td><td>الصيانة</td><td>عمل بالمرتفعات</td><td class="mono" style="color:var(--warn)">2026-08-18</td><td><span class="pill p-wn">قريباً</span></td></tr>
+            <tr><td>وليد عادل</td><td>الإنتاج B</td><td>توعية عامة</td><td class="mono" style="color:var(--warn)">2026-08-22</td><td><span class="pill p-wn">قريباً</span></td></tr>
+            <tr><td>ياسر فتحي</td><td>الجودة</td><td>مواد كيميائية</td><td class="mono" style="color:var(--warn)">2026-08-27</td><td><span class="pill p-wn">قريباً</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ JSA ============ -->
+<section class="page" id="jsa">
+  <div class="ph">
+    <div><h2>تحليل سلامة المهام (JSA)</h2><p>JOB SAFETY ANALYSIS · 64 ANALYSES · LINKED TO ePTW</p></div>
+    <div class="acts"><button class="btn">🔗 ربط بتصريح عمل</button><button class="btn pri" onclick="open_('mJSA')">＋ تحليل مهمة جديدة</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">تحليلات معتمدة</div><div class="val">64</div><div class="sub">تغطي 78% من المهام الحرجة</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">تحتاج مراجعة دورية</div><div class="val">9</div><div class="sub">مر عليها &gt; 12 شهر</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">مرتبطة بتصاريح</div><div class="val">41</div><div class="sub">إلزامية قبل إصدار PTW</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">متوسط الخطوات / مهمة</div><div class="val">7.4</div><div class="sub">أعلى: 18 خطوة</div></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>JSA-018 — استبدال قاطع كهربائي MV</h3><span class="pill p-cr">مخاطر عالية</span></div>
+      <div class="card-b">
+        <div class="step"><div class="num">1</div><div class="sc"><h4>عزل مصدر الطاقة وتطبيق LOTO</h4>
+          <p><b style="color:var(--crit)">الخطر:</b> صعق كهربائي · قوس كهربائي (Arc Flash)<br>
+          <b style="color:var(--safe)">الضابط:</b> عزل من اللوحة الرئيسية · قفل وبطاقة فردية لكل فني · التحقق بجهاز قياس · بدلة Arc Flash فئة 2</p></div></div>
+        <div class="step"><div class="num">2</div><div class="sc"><h4>تفريغ الشحنات المتبقية وتأريض المعدة</h4>
+          <p><b style="color:var(--crit)">الخطر:</b> شحنة سعوية متبقية في المكثفات<br>
+          <b style="color:var(--safe)">الضابط:</b> عصا تأريض معتمدة · انتظار 5 دقائق · تأكيد الجهد صفر</p></div></div>
+        <div class="step"><div class="num">3</div><div class="sc"><h4>فك التوصيلات وإخراج القاطع</h4>
+          <p><b style="color:var(--warn)">الخطر:</b> إجهاد عضلي · سقوط أداة أو جزء ثقيل (45kg)<br>
+          <b style="color:var(--safe)">الضابط:</b> عربة سحب مخصصة · فردان كحد أدنى · حذاء أمان</p></div></div>
+        <div class="step"><div class="num">4</div><div class="sc"><h4>تركيب القاطع الجديد وإحكام التوصيلات</h4>
+          <p><b style="color:var(--warn)">الخطر:</b> ربط غير محكم يؤدي لسخونة وحريق لاحق<br>
+          <b style="color:var(--safe)">الضابط:</b> مفتاح عزم مُعاير · توثيق قيم العزم · تصوير حراري بعد التشغيل</p></div></div>
+        <div class="step"><div class="num">5</div><div class="sc"><h4>رفع العزل وإعادة التشغيل</h4>
+          <p><b style="color:var(--crit)">الخطر:</b> تشغيل مفاجئ أثناء وجود أفراد<br>
+          <b style="color:var(--safe)">الضابط:</b> إخلاء المنطقة · إعلان صوتي · رفع الأقفال بترتيب عكسي · مسؤول واحد فقط</p></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-h"><h3>سلّم إجراءات التحكم</h3><span class="hint">HIERARCHY OF CONTROLS</span></div>
+        <div class="card-b">
+          <div style="display:flex;flex-direction:column;gap:5px;align-items:center">
+            <div style="width:100%;background:#1f7a4d;padding:9px;text-align:center;border-radius:4px 4px 0 0;font-size:12px;font-weight:600">1 — الإزالة (Elimination) · 3 حالات</div>
+            <div style="width:87%;background:#2f8f52;padding:9px;text-align:center;font-size:12px;font-weight:600">2 — الاستبدال (Substitution) · 6 حالات</div>
+            <div style="width:74%;background:#8a9a34;padding:9px;text-align:center;font-size:12px;font-weight:600;color:#101a10">3 — ضوابط هندسية · 21 حالة</div>
+            <div style="width:61%;background:var(--warn);padding:9px;text-align:center;font-size:12px;font-weight:600;color:#1a1208">4 — ضوابط إدارية · 34 حالة</div>
+            <div style="width:48%;background:var(--crit);padding:9px;text-align:center;border-radius:0 0 4px 4px;font-size:12px;font-weight:600">5 — PPE · 47 حالة</div>
+          </div>
+          <p style="font-size:11.5px;color:var(--txt-2);margin-top:12px;line-height:1.8">النظام يحسب <b>الخطر المتأصل (Inherent)</b> قبل الضوابط و<b>الخطر المتبقي (Residual)</b> بعدها تلقائياً، ويرفض اعتماد JSA يعتمد على PPE وحده في المخاطر العالية.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>سجل تحليلات المهام</h3></div>
+        <div class="tw"><table>
+          <thead><tr><th>الكود</th><th>المهمة</th><th>القسم</th><th>متأصل</th><th>متبقي</th><th>PTW</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">JSA-018</td><td>استبدال قاطع MV</td><td>الكهرباء</td><td><span class="pill p-cr">20</span></td><td><span class="pill p-in">6</span></td><td class="mono">✓</td></tr>
+            <tr><td class="mono">JSA-024</td><td>لحام إطارات معدنية</td><td>الصيانة</td><td><span class="pill p-cr">16</span></td><td><span class="pill p-wn">8</span></td><td class="mono">✓</td></tr>
+            <tr><td class="mono">JSA-031</td><td>تنظيف خزان أرضي</td><td>المرافق</td><td><span class="pill p-cr">20</span></td><td><span class="pill p-wn">8</span></td><td class="mono">✓</td></tr>
+            <tr><td class="mono">JSA-009</td><td>تغيير قالب حقن ساخن</td><td>الإنتاج A</td><td><span class="pill p-wn">12</span></td><td><span class="pill p-ok">4</span></td><td class="mono">—</td></tr>
+            <tr><td class="mono">JSA-042</td><td>مناولة بالرافعة الشوكية</td><td>المخازن</td><td><span class="pill p-cr">16</span></td><td><span class="pill p-wn">8</span></td><td class="mono">—</td></tr>
+            <tr><td class="mono">JSA-050</td><td>صيانة وحدة شفط علوية</td><td>الإنتاج B</td><td><span class="pill p-wn">12</span></td><td><span class="pill p-in">6</span></td><td class="mono">✓</td></tr>
+            <tr><td class="mono">JSA-055</td><td>سحب كابلات في مسار مدفون</td><td>المرافق</td><td><span class="pill p-wn">12</span></td><td><span class="pill p-ok">4</span></td><td class="mono">✓</td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HAZMAT ============ -->
+<section class="page" id="hazmat">
+  <div class="ph">
+    <div><h2>إدارة المواد الخطرة والكيميائية</h2><p>HAZMAT &amp; CHEMICAL INVENTORY · GHS COMPLIANT · 84 SUBSTANCES</p></div>
+    <div class="acts"><button class="btn">🏷️ طباعة ملصقات GHS</button><button class="btn">📄 تحديث SDS</button><button class="btn pri" onclick="open_('mChem')">＋ تسجيل مادة</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">مواد مسجّلة</div><div class="val">84</div><div class="sub">في 6 مخازن ومناطق</div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">صحائف SDS محدّثة</div><div class="val">79</div><div class="sub">94% من الإجمالي</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">SDS منتهية / ناقصة</div><div class="val">5</div><div class="sub"><span class="dn">مطلوب تحديث عاجل</span></div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">تحذيرات توافق تخزيني</div><div class="val">2</div><div class="sub">مواد غير متوافقة في نفس المخزن</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">مواد عالية الخطورة</div><div class="val">11</div><div class="sub">تتطلب تصريح صرف</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">QR Codes نشطة</div><div class="val">84</div><div class="sub">وصول فوري للـ SDS</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>سجل المواد الكيميائية</h3><span class="hint">CHEMICAL INVENTORY</span></div>
+    <div class="tw"><table>
+      <thead><tr><th>الكود</th><th>المادة</th><th>CAS No.</th><th>تصنيف GHS</th><th>الكمية</th><th>مكان التخزين</th><th>SDS</th><th>QR</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">CHM-001</td><td>أسيتون تقني</td><td class="mono">67-64-1</td><td><span class="tag r">🔥 قابل للاشتعال</span><span class="tag r">⚠️ مهيّج</span></td><td class="mono">240 L</td><td>مخزن الكيماويات — رف A</td><td><span class="pill p-ok">2026-05</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-002</td><td>حمض الكبريتيك 98%</td><td class="mono">7664-93-9</td><td><span class="tag r">🧪 أكّال</span><span class="tag r">☠️ سام</span></td><td class="mono">60 L</td><td>مخزن الأحماض — خزانة معزولة</td><td><span class="pill p-ok">2026-06</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-003</td><td>هيدروكسيد الصوديوم</td><td class="mono">1310-73-2</td><td><span class="tag r">🧪 أكّال</span></td><td class="mono">180 kg</td><td>مخزن القلويات</td><td><span class="pill p-ok">2026-04</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-011</td><td>زيت عزل كهربائي</td><td class="mono">8042-47-5</td><td><span class="tag">🌿 خطر بيئي</span></td><td class="mono">1,400 L</td><td>محطة الكهرباء — حوض احتواء</td><td><span class="pill p-ok">2026-07</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-018</td><td>مذيب تنظيف صناعي</td><td class="mono">64742-88-7</td><td><span class="tag r">🔥 قابل للاشتعال</span><span class="tag r">🫁 خطر تنفسي</span></td><td class="mono">320 L</td><td>ورشة الصيانة</td><td><span class="pill p-cr">منتهية</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-022</td><td>راتنج إيبوكسي (مكوّن A)</td><td class="mono">25068-38-6</td><td><span class="tag r">⚠️ مُحسِّس جلدي</span></td><td class="mono">560 kg</td><td>مخزن الخامات — منطقة C</td><td><span class="pill p-ok">2026-03</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-023</td><td>مُصلِّد أميني (مكوّن B)</td><td class="mono">2579-20-6</td><td><span class="tag r">🧪 أكّال</span><span class="tag r">⚠️ مُحسِّس</span></td><td class="mono">210 kg</td><td>مخزن الخامات — منطقة C</td><td><span class="pill p-ok">2026-03</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-031</td><td>غاز الأرجون (أسطوانات)</td><td class="mono">7440-37-1</td><td><span class="tag">💨 غاز مضغوط</span><span class="tag">🫁 خانق</span></td><td class="mono">14 أسطوانة</td><td>ساحة الغازات</td><td><span class="pill p-ok">2026-06</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-034</td><td>أسيتيلين (أسطوانات)</td><td class="mono">74-86-2</td><td><span class="tag r">🔥 شديد الاشتعال</span><span class="tag">💨 غاز مضغوط</span></td><td class="mono">8 أسطوانات</td><td>ساحة الغازات — قسم منفصل</td><td><span class="pill p-ok">2026-05</span></td><td class="mono">📱</td></tr>
+        <tr><td class="mono">CHM-040</td><td>مادة تشحيم عالية الحرارة</td><td class="mono">8052-42-4</td><td><span class="tag">⚠️ مهيّج بسيط</span></td><td class="mono">75 kg</td><td>ورشة الصيانة</td><td><span class="pill p-wn">تنتهي 2026-09</span></td><td class="mono">📱</td></tr>
+      </tbody></table></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>مصفوفة التوافق التخزيني</h3><span class="pill p-cr">2 تعارض</span></div>
+      <div class="card-b">
+        <div class="tw"><table class="compat">
+          <thead><tr><th style="text-align:center">—</th><th>أحماض</th><th>قلويات</th><th>مؤكسدات</th><th>قابل اشتعال</th><th>غازات مضغوطة</th></tr></thead>
+          <tbody>
+            <tr><th>أحماض</th><td style="color:var(--safe)">✓</td><td style="color:var(--crit)">✕</td><td style="color:var(--crit)">✕</td><td style="color:var(--crit)">✕</td><td style="color:var(--warn)">!</td></tr>
+            <tr><th>قلويات</th><td style="color:var(--crit)">✕</td><td style="color:var(--safe)">✓</td><td style="color:var(--warn)">!</td><td style="color:var(--warn)">!</td><td style="color:var(--safe)">✓</td></tr>
+            <tr><th>مؤكسدات</th><td style="color:var(--crit)">✕</td><td style="color:var(--warn)">!</td><td style="color:var(--safe)">✓</td><td style="color:var(--crit)">✕</td><td style="color:var(--crit)">✕</td></tr>
+            <tr><th>قابل اشتعال</th><td style="color:var(--crit)">✕</td><td style="color:var(--warn)">!</td><td style="color:var(--crit)">✕</td><td style="color:var(--safe)">✓</td><td style="color:var(--crit)">✕</td></tr>
+            <tr><th>غازات مضغوطة</th><td style="color:var(--warn)">!</td><td style="color:var(--safe)">✓</td><td style="color:var(--crit)">✕</td><td style="color:var(--crit)">✕</td><td style="color:var(--warn)">!</td></tr>
+          </tbody></table></div>
+        <div class="legend"><span style="color:var(--safe)">✓ متوافق</span><span style="color:var(--warn)">! يتطلب فصل</span><span style="color:var(--crit)">✕ ممنوع التخزين معاً</span></div>
+        <div style="margin-top:14px;padding:12px;background:rgba(158,27,50,.12);border:1px solid rgba(158,27,50,.35);border-radius:5px">
+          <div style="font-size:12.5px;font-weight:600;color:#e8697f;margin-bottom:6px">⛔ تحذيرات نشطة</div>
+          <div style="font-size:11.5px;color:var(--txt-2);line-height:1.9">
+            • <b>CHM-018</b> (مذيب قابل للاشتعال) مخزّن على بُعد 1.2م من أسطوانات أكسجين — الحد الأدنى 6م<br>
+            • <b>CHM-002</b> (حمض كبريتيك) و<b>CHM-003</b> (هيدروكسيد صوديوم) في نفس غرفة التخزين بدون حاجز
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>رموز GHS المستخدمة بالموقع</h3><span class="hint">GHS PICTOGRAMS</span></div>
+      <div class="card-b">
+        <div class="grid g4">
+          <div style="text-align:center"><div class="ghs"><span>🔥</span></div><div style="font-size:11px;color:var(--txt-2)">قابل للاشتعال<br><b class="mono">21 مادة</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>🧪</span></div><div style="font-size:11px;color:var(--txt-2)">أكّال<br><b class="mono">14 مادة</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>☠️</span></div><div style="font-size:11px;color:var(--txt-2)">سُمّية حادة<br><b class="mono">6 مواد</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>💨</span></div><div style="font-size:11px;color:var(--txt-2)">غاز مضغوط<br><b class="mono">9 مواد</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>⚠️</span></div><div style="font-size:11px;color:var(--txt-2)">مهيّج / مُحسِّس<br><b class="mono">28 مادة</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>🌿</span></div><div style="font-size:11px;color:var(--txt-2)">خطر بيئي<br><b class="mono">7 مواد</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>🫁</span></div><div style="font-size:11px;color:var(--txt-2)">خطر صحي مزمن<br><b class="mono">11 مادة</b></div></div>
+          <div style="text-align:center"><div class="ghs"><span>⭕</span></div><div style="font-size:11px;color:var(--txt-2)">مؤكسد<br><b class="mono">4 مواد</b></div></div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+          <div class="stat-line"><span>معدات الاستجابة للانسكاب</span><b>6 مجموعات</b></div>
+          <div class="stat-line"><span>أحواض الاحتواء الثانوي</span><b>9 / 9 سليمة</b></div>
+          <div class="stat-line"><span>خزائن تخزين مقاومة للحريق</span><b>4</b></div>
+          <div class="stat-line"><span>انسكابات مسجّلة 2026</span><b style="color:var(--warn)">3</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OCCUPATIONAL HEALTH ============ -->
+<section class="page" id="health">
+  <div class="ph">
+    <div><h2>الصحة المهنية والملفات الطبية</h2><p>OCCUPATIONAL HEALTH · ENCRYPTED RECORDS · HIPAA / GDPR ALIGNED</p></div>
+    <div class="acts"><button class="btn">🩺 جدولة فحص دوري</button><button class="btn pri" onclick="open_('mClinic')">＋ تسجيل زيارة عيادة</button></div>
+  </div>
+
+  <div style="background:rgba(11,60,126,.2);border:1px solid #27405F;border-radius:5px;padding:11px 15px;margin-bottom:18px;font-size:12px;color:var(--txt-2);display:flex;align-items:center;gap:9px">
+    🔒 <span>البيانات الطبية مشفّرة بمعيار <b class="mono">AES-256</b> ومعزولة عن باقي وحدات النظام. الوصول مقصور على الطبيب المختص ومسؤول الصحة المهنية فقط — وكل عملية اطّلاع تُسجَّل في Audit Trail غير قابل للتعديل.</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">فحوصات دورية مكتملة</div><div class="val">312</div><div class="sub">80% من 388 موظف</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">فحوصات مستحقة</div><div class="val">46</div><div class="sub">خلال 60 يوم</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">حالات تحتاج متابعة</div><div class="val">8</div><div class="sub">نتائج خارج الحدود الطبيعية</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">زيارات العيادة (شهري)</div><div class="val">127</div><div class="sub">14 منها إصابات عمل</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">أيام عمل مفقودة YTD</div><div class="val">27</div><div class="sub">من إصابتين مُعطِّلتين</div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">لياقة للعمل</div><div class="val">98%</div><div class="sub">6 حالات بقيود مؤقتة</div></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>بروتوكولات الفحص حسب التعرّض المهني</h3><span class="hint">EXPOSURE-BASED PROTOCOLS</span></div>
+      <div class="tw"><table>
+        <thead><tr><th>عامل التعرّض</th><th>الفئة المعرّضة</th><th>الفحص المطلوب</th><th>التكرار</th><th>الالتزام</th></tr></thead>
+        <tbody>
+          <tr><td>🔊 ضوضاء &gt; 85 dB</td><td>الإنتاج A/B — 122 عامل</td><td>قياس السمع (Audiometry)</td><td>سنوي</td><td><span class="pill p-ok">96%</span></td></tr>
+          <tr><td>🌫️ أبخرة ومذيبات</td><td>الصيانة — 34 عامل</td><td>وظائف الكبد + وظائف تنفس</td><td>نصف سنوي</td><td><span class="pill p-wn">82%</span></td></tr>
+          <tr><td>⚡ مجالات كهرومغناطيسية</td><td>الكهرباء — 21 عامل</td><td>رسم قلب + فحص عام</td><td>سنوي</td><td><span class="pill p-ok">95%</span></td></tr>
+          <tr><td>🌡️ إجهاد حراري</td><td>الحقن والقوالب — 48 عامل</td><td>ضغط + قلب + وظائف كلى</td><td>سنوي</td><td><span class="pill p-ok">91%</span></td></tr>
+          <tr><td>🏋️ حمل ومناولة يدوية</td><td>المخازن — 55 عامل</td><td>فحص عمود فقري</td><td>كل سنتين</td><td><span class="pill p-wn">76%</span></td></tr>
+          <tr><td>👁️ إجهاد بصري</td><td>الجودة والإداري — 100 موظف</td><td>فحص نظر</td><td>كل سنتين</td><td><span class="pill p-ok">88%</span></td></tr>
+          <tr><td>🧪 مواد محسِّسة (إيبوكسي)</td><td>الإنتاج — 31 عامل</td><td>فحص جلدي + حساسية</td><td>سنوي</td><td><span class="pill p-cr">64%</span></td></tr>
+          <tr><td>🚚 قيادة معدات</td><td>المخازن — 18 سائق</td><td>نظر + سمع + لياقة قيادة</td><td>سنوي</td><td><span class="pill p-ok">100%</span></td></tr>
+        </tbody></table></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-h"><h3>نشاط العيادة الداخلية — أغسطس</h3><span class="live"><i></i>LIVE</span></div>
+        <div class="card-b">
+          <div class="brow"><div class="t"><span>إصابات عمل (Work-related)</span><b>14</b></div><div class="bar"><i style="width:11%;background:var(--crit)"></i></div></div>
+          <div class="brow"><div class="t"><span>شكاوى عامة (صداع/برد/آلام)</span><b>68</b></div><div class="bar"><i style="width:54%;background:var(--info)"></i></div></div>
+          <div class="brow"><div class="t"><span>متابعة أمراض مزمنة</span><b>23</b></div><div class="bar"><i style="width:18%;background:var(--warn)"></i></div></div>
+          <div class="brow"><div class="t"><span>فحوصات ما قبل التعيين</span><b>12</b></div><div class="bar"><i style="width:9%;background:var(--safe)"></i></div></div>
+          <div class="brow"><div class="t"><span>صرف أدوية فقط</span><b>10</b></div><div class="bar"><i style="width:8%;background:var(--txt-3)"></i></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>حالات تحت المتابعة الطبية</h3><span class="pill p-cr">سرّي</span></div>
+        <div class="tw"><table>
+          <thead><tr><th>الرقم الطبي</th><th>القسم</th><th>سبب المتابعة</th><th>القيود</th><th>المراجعة</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">MED-0142</td><td>الإنتاج A</td><td>نقص سمع مبدئي</td><td><span class="pill p-wn">عزل سمعي مضاعف</span></td><td class="mono">2026-09-01</td></tr>
+            <tr><td class="mono">MED-0089</td><td>الصيانة</td><td>إصابة ظهر — تعافي</td><td><span class="pill p-cr">لا رفع &gt; 10kg</span></td><td class="mono">2026-08-20</td></tr>
+            <tr><td class="mono">MED-0203</td><td>المخازن</td><td>التواء كاحل</td><td><span class="pill p-wn">عمل مكتبي مؤقت</span></td><td class="mono">2026-08-15</td></tr>
+            <tr><td class="mono">MED-0117</td><td>الإنتاج B</td><td>حساسية جلدية (إيبوكسي)</td><td><span class="pill p-cr">نقل من الخط</span></td><td class="mono">2026-08-25</td></tr>
+            <tr><td class="mono">MED-0166</td><td>الكهرباء</td><td>ارتفاع ضغط</td><td><span class="pill p-wn">لا عمل بالمرتفعات</span></td><td class="mono">2026-09-10</td></tr>
+            <tr><td class="mono">MED-0231</td><td>الإنتاج A</td><td>حرق درجة أولى — تعافي</td><td><span class="pill p-ok">بدون قيود</span></td><td class="mono">2026-08-12</td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AI & IoT ============ -->
+<section class="page" id="ai">
+  <div class="ph">
+    <div><h2>الذكاء الاصطناعي وإنترنت الأشياء</h2><p>COMPUTER VISION · IoT SENSORS · WEARABLES · INDUSTRY 4.0</p></div>
+    <div class="acts"><button class="btn">⚙️ ضبط الحساسية</button><button class="btn pri">📹 عرض كل الكاميرات</button></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-b" style="padding:14px 18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--txt-2)">
+        <span>📹 CCTV / IoT Sensors</span><span class="arrow" style="font-size:18px">◄</span>
+        <span>🧠 AI Engine — Edge Inference</span><span class="arrow" style="font-size:18px">◄</span>
+        <span>🗄️ EHS Core Platform</span><span class="arrow" style="font-size:18px">◄</span>
+        <span style="color:var(--hi);font-weight:600">🔔 Alert &amp; Auto-Action</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">كاميرات متصلة</div><div class="val">42</div><div class="sub">38 بتحليل AI نشط</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">مخالفات PPE اليوم</div><div class="val">17</div><div class="sub"><span class="dn">2 لم يتم التعامل معها</span></div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">دخول مناطق محظورة</div><div class="val">4</div><div class="sub">تم إخطار المشرفين</div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">دقة النموذج</div><div class="val">94.2%</div><div class="sub">False positives: 3.1%</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">حساسات IoT</div><div class="val">86</div><div class="sub">غاز · ضوضاء · حرارة</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">أجهزة ملبوسة نشطة</div><div class="val">64</div><div class="sub">الإنتاج والصيانة</div></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>الرؤية الحاسوبية — كشف حي</h3><span class="live"><i></i>REC · CAM-A-07</span></div>
+      <div class="card-b">
+        <div class="cam">
+          <div class="grid-o"></div>
+          <div class="lbl2">CAM-A-07 · خط الإنتاج A · 2026-08-06 10:42:18</div>
+          <div class="bbox" style="right:14%;top:26%;width:20%;height:52%"><span>⚠ لا يرتدي خوذة — 96%</span></div>
+          <div class="bbox ok" style="right:44%;top:31%;width:18%;height:47%"><span>✓ PPE كامل — 98%</span></div>
+          <div class="bbox ok" style="right:70%;top:29%;width:17%;height:49%"><span>✓ PPE كامل — 93%</span></div>
+          <div style="position:absolute;bottom:9px;right:9px;font-family:var(--mono);font-size:10px;color:var(--txt-3)">3 أشخاص · 1 مخالفة · معالجة 24 fps</div>
+        </div>
+        <div style="margin-top:14px">
+          <div class="stat-line"><span>🪖 كشف الخوذة</span><span><span class="tag g">نشط</span><b style="margin-right:8px">96.1%</b></span></div>
+          <div class="stat-line"><span>🦺 كشف سترة السلامة</span><span><span class="tag g">نشط</span><b style="margin-right:8px">97.4%</b></span></div>
+          <div class="stat-line"><span>🥽 كشف النظارة الواقية</span><span><span class="tag g">نشط</span><b style="margin-right:8px">89.7%</b></span></div>
+          <div class="stat-line"><span>🚧 المناطق المحظورة (Geofence)</span><span><span class="tag g">نشط</span><b style="margin-right:8px">98.9%</b></span></div>
+          <div class="stat-line"><span>🔥 كشف الدخان والحريق المبكر</span><span><span class="tag g">نشط</span><b style="margin-right:8px">92.3%</b></span></div>
+          <div class="stat-line"><span>🧍 كشف سقوط العامل (Man-Down)</span><span><span class="tag g">نشط</span><b style="margin-right:8px">91.0%</b></span></div>
+          <div class="stat-line"><span>💧 كشف الانسكابات</span><span><span class="tag">تدريب</span><b style="margin-right:8px">78.5%</b></span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-h"><h3>حساسات IoT — قراءات حية</h3><span class="live"><i></i>LIVE</span></div>
+        <div class="card-b">
+          <div class="sensor"><div class="si">💨</div><div class="sb"><div style="font-size:12px">كاشف VOC — ورشة الصيانة</div><div style="font-size:10.5px;color:var(--txt-3)">TLV: 100 ppm</div></div><div style="text-align:left"><div class="sv" style="color:var(--safe)">42 <span style="font-size:10px">ppm</span></div></div></div>
+          <div class="sensor"><div class="si">🔊</div><div class="sb"><div style="font-size:12px">مستوى الضوضاء — الإنتاج A</div><div style="font-size:10.5px;color:var(--txt-3)">PEL: 85 dB (8h)</div></div><div style="text-align:left"><div class="sv" style="color:var(--warn)">88 <span style="font-size:10px">dB</span></div></div></div>
+          <div class="sensor"><div class="si">🌡️</div><div class="sb"><div style="font-size:12px">إجهاد حراري WBGT — الحقن</div><div style="font-size:10.5px;color:var(--txt-3)">الحد: 30°C</div></div><div style="text-align:left"><div class="sv" style="color:var(--warn)">29.4 <span style="font-size:10px">°C</span></div></div></div>
+          <div class="sensor"><div class="si">⚗️</div><div class="sb"><div style="font-size:12px">كاشف تسرب أسيتيلين — ساحة الغاز</div><div style="font-size:10.5px;color:var(--txt-3)">LEL: 2.5%</div></div><div style="text-align:left"><div class="sv" style="color:var(--safe)">0.0 <span style="font-size:10px">%LEL</span></div></div></div>
+          <div class="sensor"><div class="si">🫁</div><div class="sb"><div style="font-size:12px">أكسجين — خزان المياه الأرضي</div><div style="font-size:10.5px;color:var(--txt-3)">الآمن: 19.5–23.5%</div></div><div style="text-align:left"><div class="sv" style="color:var(--crit)">18.2 <span style="font-size:10px">%</span></div></div></div>
+          <div class="sensor"><div class="si">🌫️</div><div class="sb"><div style="font-size:12px">جسيمات PM2.5 — مخزن الخامات</div><div style="font-size:10.5px;color:var(--txt-3)">الحد: 35 µg/m³</div></div><div style="text-align:left"><div class="sv" style="color:var(--safe)">21 <span style="font-size:10px">µg/m³</span></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>سجل تنبيهات AI/IoT اليوم</h3><span class="pill p-cr">17 تنبيه</span></div>
+        <div class="card-b">
+          <div class="log">
+            <div><span>10:42:18</span> · <b style="color:var(--crit)">PPE_VIOLATION</b> · CAM-A-07 · خوذة مفقودة · <span>إخطار مشرف الوردية</span></div>
+            <div><span>10:38:04</span> · <b style="color:var(--crit)">O2_LOW</b> · SNS-CS-02 · 18.2% · <span>إيقاف تصريح PTW-0409 تلقائياً</span></div>
+            <div><span>10:21:55</span> · <b style="color:var(--warn)">NOISE_EXCEED</b> · SNS-NS-11 · 88 dB · <span>تذكير PPE سمعي</span></div>
+            <div><span>09:57:12</span> · <b style="color:var(--warn)">RESTRICTED_ZONE</b> · CAM-M-03 · اقتراب من مكبس · <span>إنذار صوتي بالموقع</span></div>
+            <div><span>09:44:31</span> · <b style="color:var(--crit)">PPE_VIOLATION</b> · CAM-B-02 · نظارة مفقودة · <span>تم التعامل</span></div>
+            <div><span>09:30:08</span> · <b style="color:var(--info)">WEARABLE_HR</b> · WRB-0041 · نبض 148 · <span>توصية بفترة راحة</span></div>
+            <div><span>09:12:47</span> · <b style="color:var(--warn)">HEAT_STRESS</b> · SNS-HT-05 · WBGT 29.4 · <span>تفعيل دورة راحة 10د/ساعة</span></div>
+            <div><span>08:55:19</span> · <b style="color:var(--crit)">PPE_VIOLATION</b> · CAM-A-01 · سترة مفقودة · <span>تم التعامل</span></div>
+            <div><span>08:41:02</span> · <b style="color:var(--info)">FORKLIFT_PROXIMITY</b> · ZN-WH-04 · مشاة قريب · <span>إنذار بالكابينة</span></div>
+            <div><span>08:20:36</span> · <b style="color:var(--warn)">RESTRICTED_ZONE</b> · CAM-U-01 · غرفة MV · <span>لا يوجد تصريح مطابق</span></div>
+            <div><span>07:58:14</span> · <b style="color:var(--crit)">PPE_VIOLATION</b> · CAM-M-01 · قناع لحام · <span>تم التعامل</span></div>
+            <div><span>07:33:29</span> · <b style="color:var(--info)">VOC_RISE</b> · SNS-VC-03 · 42 ppm · <span>ضمن الحدود — مراقبة</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>الأجهزة الملبوسة الذكية (Smart Wearables)</h3><span class="hint">64 ACTIVE DEVICES</span></div>
+    <div class="card-b">
+      <div class="grid g4">
+        <div class="dept" style="--dc:var(--safe)"><div class="dn2">❤️ معدل نبض القلب</div><div class="dm">HEART RATE</div><div class="ds"><span>ضمن الطبيعي</span><b>58 عامل</b></div><div class="ds"><span>مرتفع — تنبيه</span><b style="color:var(--warn)">5</b></div><div class="ds"><span>حرج</span><b style="color:var(--crit)">1</b></div></div>
+        <div class="dept" style="--dc:var(--warn)"><div class="dn2">🌡️ الإجهاد الحراري</div><div class="dm">HEAT STRAIN INDEX</div><div class="ds"><span>منخفض</span><b>41 عامل</b></div><div class="ds"><span>متوسط</span><b style="color:var(--warn)">19</b></div><div class="ds"><span>عالٍ</span><b style="color:var(--crit)">4</b></div></div>
+        <div class="dept" style="--dc:var(--info)"><div class="dn2">📍 تتبع الموقع</div><div class="dm">RTLS / GEOFENCE</div><div class="ds"><span>في مناطق مصرّح بها</span><b>62</b></div><div class="ds"><span>مناطق محظورة</span><b style="color:var(--crit)">2</b></div><div class="ds"><span>دقة الموقع</span><b>±1.8م</b></div></div>
+        <div class="dept" style="--dc:var(--crit)"><div class="dn2">🆘 زر الاستغاثة</div><div class="dm">SOS / MAN-DOWN</div><div class="ds"><span>ضغطات SOS اليوم</span><b>0</b></div><div class="ds"><span>كشف سقوط</span><b>1 (إنذار كاذب)</b></div><div class="ds"><span>زمن الاستجابة</span><b>42 ثانية</b></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INTEGRATIONS ============ -->
+<section class="page" id="integ">
+  <div class="ph">
+    <div><h2>الربط والتكامل</h2><p>SYSTEM INTEGRATIONS · RESTful API / GraphQL · 6 CONNECTED SYSTEMS</p></div>
+    <div class="acts"><button class="btn">📖 API Documentation</button><button class="btn pri">＋ إضافة تكامل</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">أنظمة متصلة</div><div class="val">6</div><div class="sub">كلها Healthy</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">استدعاءات API / يوم</div><div class="val">48K</div><div class="sub">متوسط زمن 180ms</div></div>
+    <div class="kpi" style="--accent:var(--warn)"><div class="lbl">رسائل في قائمة الانتظار</div><div class="val">12</div><div class="sub">Outbox pattern · retry نشط</div></div>
+    <div class="kpi" style="--accent:var(--crit)"><div class="lbl">أخطاء مزامنة (24س)</div><div class="val">3</div><div class="sub">كلها تمت إعادة معالجتها</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>مصفوفة التكامل</h3><span class="hint">INTEGRATION MATRIX</span></div>
+    <div class="tw"><table>
+      <thead><tr><th>النظام</th><th>البروتوكول</th><th>البيانات المتبادلة</th><th>الاتجاه</th><th>التكرار</th><th>الهدف التشغيلي</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td><b>Microsoft Dynamics 365 F&amp;O</b><br><span class="mono" style="font-size:10.5px">ERP</span></td><td class="mono">OData / Custom Service</td><td>المعدات · أوامر الصيانة · قطع الغيار · مراكز التكلفة</td><td><span class="tag">⇄ ثنائي</span></td><td class="mono">Real-time</td><td>ربط PTW بأوامر الصيانة وإيقاف الآلة برمجياً عند الخطر</td><td><span class="pill p-ok">متصل</span></td></tr>
+        <tr><td><b>HRMS</b><br><span class="mono" style="font-size:10.5px">Human Resources</span></td><td class="mono">REST API</td><td>الموظفين · الهيكل التنظيمي · المسميات · الجزاءات</td><td><span class="tag">← وارد</span></td><td class="mono">كل ساعة</td><td>تحديث تلقائي لحركة الموظفين وإسناد المهام حسب الوظيفة</td><td><span class="pill p-ok">متصل</span></td></tr>
+        <tr><td><b>Access Control</b><br><span class="mono" style="font-size:10.5px">البوابات الإلكترونية</span></td><td class="mono">Webhook / REST</td><td>سجلات الدخول والخروج · صلاحيات البوابات</td><td><span class="tag">⇄ ثنائي</span></td><td class="mono">Real-time</td><td>حظر دخول من انتهى تدريبه أو تصريحه تلقائياً</td><td><span class="pill p-ok">متصل</span></td></tr>
+        <tr><td><b>LMS</b><br><span class="mono" style="font-size:10.5px">نظام التدريب</span></td><td class="mono">REST API</td><td>الدورات · الشهادات · مصفوفة الكفاءة</td><td><span class="tag">← وارد</span></td><td class="mono">يومي</td><td>تحديث صلاحيات السلامة والحد الأدنى للكفاءة</td><td><span class="pill p-ok">متصل</span></td></tr>
+        <tr><td><b>CCTV / VMS</b><br><span class="mono" style="font-size:10.5px">Milestone</span></td><td class="mono">RTSP / gRPC</td><td>بث الكاميرات · أحداث الكشف</td><td><span class="tag">← وارد</span></td><td class="mono">Streaming</td><td>تغذية محرك الرؤية الحاسوبية بالبث الحي</td><td><span class="pill p-ok">متصل</span></td></tr>
+        <tr><td><b>SCADA / IoT Gateway</b><br><span class="mono" style="font-size:10.5px">MQTT Broker</span></td><td class="mono">MQTT / OPC-UA</td><td>قراءات الحساسات · حالة الآلات · إنذارات</td><td><span class="tag">⇄ ثنائي</span></td><td class="mono">Real-time</td><td>إنذار آلي عند تجاوز PEL/TLV وإيقاف طارئ</td><td><span class="pill p-wn">تحت الاختبار</span></td></tr>
+      </tbody></table></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>سيناريوهات التكامل التشغيلية</h3><span class="hint">USE CASES</span></div>
+      <div class="card-b">
+        <div class="step"><div class="num">1</div><div class="sc"><h4>تصريح عمل ← أمر صيانة D365</h4><p>عند إصدار PTW مرتبط بأمر صيانة، يقرأ النظام <span class="mono">WorkOrderId</span> من D365 ويحقن حالة التصريح في الأمر — ولا يسمح بإغلاق أمر الصيانة قبل إغلاق التصريح.</p></div></div>
+        <div class="step"><div class="num">2</div><div class="sc"><h4>انتهاء تدريب ← حظر بوابة</h4><p>LMS يبلّغ بانتهاء شهادة LOTO لموظف ← النظام يسحب صلاحيته من Access Control فوراً ← البوابة ترفض دخوله لمنطقة الصيانة.</p></div></div>
+        <div class="step"><div class="num">3</div><div class="sc"><h4>حساس أكسجين ← إلغاء تصريح</h4><p>قراءة O₂ أقل من 19.5% في مكان مغلق ← إلغاء تلقائي لتصريح الدخول + إنذار صوتي + إخطار Push لفريق الإنقاذ.</p></div></div>
+        <div class="step"><div class="num">4</div><div class="sc"><h4>حادث ← أمر صيانة تلقائي</h4><p>تسجيل حادث سببه عطل معدة ← توليد Work Order في D365 تلقائياً مع ربطه برقم الحادث وحالة "إيقاف حتى الإصلاح".</p></div></div>
+        <div class="step"><div class="num">5</div><div class="sc"><h4>مخالفة PPE ← سجل الموظف</h4><p>كشف AI لمخالفة متكررة (3+ مرات) ← تسجيل ملاحظة في HRMS + توليد مهمة تدريب توعوي في LMS.</p></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>حالة نقاط النهاية (Endpoints)</h3><span class="live"><i style="background:var(--safe)"></i>MONITORING</span></div>
+      <div class="card-b">
+        <div class="log">
+          <div><b style="color:var(--safe)">200</b> <span>GET</span> /api/v1/equipment/sync · D365 · <span>184ms · 10:42</span></div>
+          <div><b style="color:var(--safe)">200</b> <span>POST</span> /api/v1/permits/link-workorder · D365 · <span>212ms · 10:41</span></div>
+          <div><b style="color:var(--safe)">200</b> <span>GET</span> /api/v1/employees/delta · HRMS · <span>96ms · 10:40</span></div>
+          <div><b style="color:var(--safe)">201</b> <span>POST</span> /api/v1/access/revoke · AccessCtrl · <span>78ms · 10:38</span></div>
+          <div><b style="color:var(--crit)">503</b> <span>POST</span> /api/v1/iot/telemetry · SCADA · <span>timeout · 10:35</span></div>
+          <div><b style="color:var(--safe)">200</b> <span>POST</span> /api/v1/iot/telemetry · SCADA · <span>retry ✓ · 10:36</span></div>
+          <div><b style="color:var(--safe)">200</b> <span>GET</span> /api/v1/training/certificates · LMS · <span>143ms · 10:30</span></div>
+          <div><b style="color:var(--safe)">200</b> <span>POST</span> /api/v1/incidents/webhook · CCTV · <span>61ms · 10:28</span></div>
+          <div><b style="color:var(--warn)">429</b> <span>GET</span> /api/v1/equipment/list · D365 · <span>throttled · 10:22</span></div>
+          <div><b style="color:var(--safe)">200</b> <span>GET</span> /api/v1/equipment/list · D365 · <span>backoff ✓ · 10:23</span></div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+          <div class="stat-line"><span>Authentication</span><b class="mono">OAuth 2.0 · Client Credentials</b></div>
+          <div class="stat-line"><span>Rate Limit</span><b class="mono">1,000 req / min</b></div>
+          <div class="stat-line"><span>نمط المرونة</span><b class="mono">Outbox + Exponential Backoff</b></div>
+          <div class="stat-line"><span>API Versioning</span><b class="mono">/api/v1 · v2 قيد التطوير</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECURITY ============ -->
+<section class="page" id="sec">
+  <div class="ph">
+    <div><h2>الأمن السيبراني وسجل التدقيق</h2><p>CYBERSECURITY · RBAC/ABAC · IMMUTABLE AUDIT TRAIL</p></div>
+    <div class="acts"><button class="btn">⬇ تصدير سجل التدقيق</button><button class="btn pri">👥 إدارة الصلاحيات</button></div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="card"><div class="card-b"><div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);margin-bottom:8px">ENCRYPTION IN TRANSIT</div><div style="font-size:19px;font-family:var(--mono);font-weight:700;color:var(--safe)">TLS 1.3</div><div style="font-size:11px;color:var(--txt-2);margin-top:5px">شهادة سارية حتى 2027-02</div></div></div>
+    <div class="card"><div class="card-b"><div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);margin-bottom:8px">ENCRYPTION AT REST</div><div style="font-size:19px;font-family:var(--mono);font-weight:700;color:var(--safe)">AES-256</div><div style="font-size:11px;color:var(--txt-2);margin-top:5px">مفاتيح مُدارة عبر HSM</div></div></div>
+    <div class="card"><div class="card-b"><div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);margin-bottom:8px">SINGLE SIGN-ON</div><div style="font-size:19px;font-family:var(--mono);font-weight:700;color:var(--safe)">SAML 2.0</div><div style="font-size:11px;color:var(--txt-2);margin-top:5px">Azure AD · OpenID Connect</div></div></div>
+    <div class="card"><div class="card-b"><div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);margin-bottom:8px">MULTI-FACTOR AUTH</div><div style="font-size:19px;font-family:var(--mono);font-weight:700;color:var(--safe)">مُفعّل</div><div style="font-size:11px;color:var(--txt-2);margin-top:5px">إلزامي لكل الأدوار الإدارية</div></div></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>مصفوفة الصلاحيات (RBAC / ABAC)</h3><span class="hint">9 ROLES · 388 USERS</span></div>
+      <div class="tw"><table>
+        <thead><tr><th>الدور</th><th>مستخدمين</th><th>الحوادث</th><th>التصاريح</th><th>الطبي</th><th>الإعدادات</th><th>النطاق</th></tr></thead>
+        <tbody>
+          <tr><td>HSE Manager</td><td class="mono">2</td><td class="mono">CRUD</td><td class="mono">CRUD+اعتماد</td><td class="mono">R</td><td class="mono">RW</td><td>الموقع بالكامل</td></tr>
+          <tr><td>HSE Officer</td><td class="mono">3</td><td class="mono">CRU</td><td class="mono">CRU</td><td class="mono">—</td><td class="mono">R</td><td>مناطق محددة</td></tr>
+          <tr><td>طبيب الصحة المهنية</td><td class="mono">2</td><td class="mono">R</td><td class="mono">—</td><td class="mono">CRUD</td><td class="mono">—</td><td>العيادة</td></tr>
+          <tr><td>مدير القسم</td><td class="mono">9</td><td class="mono">CR</td><td class="mono">R+اعتماد</td><td class="mono">—</td><td class="mono">—</td><td>قسمه فقط</td></tr>
+          <tr><td>مشرف وردية</td><td class="mono">18</td><td class="mono">CR</td><td class="mono">C</td><td class="mono">—</td><td class="mono">—</td><td>ورديته فقط</td></tr>
+          <tr><td>فني صيانة</td><td class="mono">61</td><td class="mono">C</td><td class="mono">R</td><td class="mono">—</td><td class="mono">—</td><td>مهامه المسندة</td></tr>
+          <tr><td>عامل</td><td class="mono">248</td><td class="mono">C</td><td class="mono">R</td><td class="mono">—</td><td class="mono">—</td><td>بلاغاته فقط</td></tr>
+          <tr><td>مقاول خارجي</td><td class="mono">42</td><td class="mono">C</td><td class="mono">R</td><td class="mono">—</td><td class="mono">—</td><td>تصريحه النشط فقط</td></tr>
+          <tr><td>مدقق / Auditor</td><td class="mono">3</td><td class="mono">R</td><td class="mono">R</td><td class="mono">—</td><td class="mono">R</td><td>قراءة فقط — الكل</td></tr>
+        </tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>سجل التدقيق الأمني</h3><span class="pill p-cr">🔒 غير قابل للتعديل</span></div>
+      <div class="card-b">
+        <div class="log">
+          <div><span>10:44:02</span> <b>rafea.saber</b> · <span style="color:var(--info)">VIEW</span> · Incident INC-2026-0089 · <span>10.14.2.61</span></div>
+          <div><span>10:43:17</span> <b>ahmed.sami</b> · <span style="color:var(--warn)">UPDATE</span> · PTW-2026-0412 · تمديد الوقت · <span>10.14.3.22</span></div>
+          <div><span>10:41:55</span> <b>system</b> · <span style="color:var(--crit)">AUTO-REVOKE</span> · PTW-2026-0409 · O₂ منخفض · <span>internal</span></div>
+          <div><span>10:38:41</span> <b>dr.mona.h</b> · <span style="color:var(--info)">VIEW</span> · Medical MED-0142 · <span>10.14.7.09</span></div>
+          <div><span>10:35:20</span> <b>heba.fouad</b> · <span style="color:var(--safe)">CREATE</span> · Inspection INS-2026-0129 · <span>10.14.3.41</span></div>
+          <div><span>10:31:08</span> <b>karim.rashad</b> · <span style="color:var(--warn)">UPDATE</span> · FE-A-014 status · <span>10.14.3.18</span></div>
+          <div><span>10:28:33</span> <b>svc.d365</b> · <span style="color:var(--info)">API-READ</span> · Equipment sync · <span>10.20.1.5</span></div>
+          <div><span>10:22:14</span> <b>unknown</b> · <span style="color:var(--crit)">AUTH-FAIL</span> · محاولة دخول ×3 · <span>41.33.x.x — حُظر</span></div>
+          <div><span>10:19:47</span> <b>rafea.saber</b> · <span style="color:var(--hi)">EXPORT</span> · تقرير الحوادث PDF · <span>10.14.2.61</span></div>
+          <div><span>10:15:02</span> <b>auditor.ext</b> · <span style="color:var(--info)">VIEW</span> · Risk Register · <span>VPN-gw</span></div>
+          <div><span>10:09:55</span> <b>ahmed.sami</b> · <span style="color:var(--safe)">SIGN</span> · PTW-2026-0411 توقيع رقمي · <span>10.14.3.22</span></div>
+          <div><span>10:02:31</span> <b>system</b> · <span style="color:var(--info)">BACKUP</span> · Snapshot مكتمل · <span>internal</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card"><div class="card-h"><h3>الامتثال والخصوصية</h3></div><div class="card-b">
+      <div class="stat-line"><span>GDPR (البيانات الشخصية)</span><span class="pill p-ok">مطابق</span></div>
+      <div class="stat-line"><span>HIPAA (البيانات الطبية)</span><span class="pill p-ok">مطابق</span></div>
+      <div class="stat-line"><span>قانون حماية البيانات المصري 151/2020</span><span class="pill p-ok">مطابق</span></div>
+      <div class="stat-line"><span>ISO 27001</span><span class="pill p-wn">قيد الاعتماد</span></div>
+      <div class="stat-line"><span>سياسة الاحتفاظ بالبيانات</span><b>7 سنوات</b></div>
+    </div></div>
+    <div class="card"><div class="card-h"><h3>أحداث أمنية (30 يوم)</h3></div><div class="card-b">
+      <div class="stat-line"><span>محاولات دخول فاشلة</span><b style="color:var(--warn)">47</b></div>
+      <div class="stat-line"><span>عناوين IP محظورة</span><b>6</b></div>
+      <div class="stat-line"><span>جلسات منتهية تلقائياً</span><b>218</b></div>
+      <div class="stat-line"><span>تغييرات صلاحيات</span><b>11</b></div>
+      <div class="stat-line"><span>خروقات مؤكدة</span><b style="color:var(--safe)">0</b></div>
+    </div></div>
+    <div class="card"><div class="card-h"><h3>النسخ الاحتياطي والتعافي</h3></div><div class="card-b">
+      <div class="stat-line"><span>آخر نسخة كاملة</span><b class="mono">2026-08-06 02:00</b></div>
+      <div class="stat-line"><span>نسخ تزايدية</span><b class="mono">كل 15 دقيقة</b></div>
+      <div class="stat-line"><span>RTO (هدف الاستعادة)</span><b style="color:var(--safe)">&lt; 2 ساعة</b></div>
+      <div class="stat-line"><span>RPO (فقدان البيانات)</span><b style="color:var(--safe)">&le; 15 دقيقة</b></div>
+      <div class="stat-line"><span>آخر اختبار DR</span><b class="mono">2026-06-14 ✓</b></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section class="page" id="arch">
+  <div class="ph">
+    <div><h2>معمارية النظام والبنية التحتية</h2><p>SYSTEM ARCHITECTURE · MICROSERVICES · HYBRID DEPLOYMENT</p></div>
+    <div class="acts"><button class="btn">📄 وثيقة المعمارية</button><button class="btn">📊 مراقبة الأداء</button></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">Uptime (90 يوم)</div><div class="val">99.96%</div><div class="sub">SLA: ≥ 99.9%</div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">زمن تحميل الصفحة</div><div class="val">0.9s</div><div class="sub">الهدف &lt; 1.5 ثانية</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">مستخدمين متزامنين</div><div class="val">184</div><div class="sub">الذروة: 412</div></div>
+    <div class="kpi" style="--accent:var(--info)"><div class="lbl">Microservices</div><div class="val">14</div><div class="sub">كلها Healthy</div></div>
+    <div class="kpi" style="--accent:var(--hi)"><div class="lbl">حجم قاعدة البيانات</div><div class="val">312<span style="font-size:15px"> GB</span></div><div class="sub">نمو 8 GB / شهر</div></div>
+    <div class="kpi" style="--accent:var(--safe)"><div class="lbl">Auto-scaling</div><div class="val">نشط</div><div class="sub">3–12 نسخة حسب الحمل</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>الطبقات المعمارية</h3><span class="hint">LAYERED ARCHITECTURE</span></div>
+      <div class="card-b">
+        <div class="arch">
+          <div class="layer" style="--lc:var(--hi)"><h4>1 · طبقة العرض (Presentation)</h4><div class="lt"><span class="tag">Web App (SPA)</span><span class="tag">Mobile — iOS/Android</span><span class="tag">Offline Mode</span><span class="tag">Kiosk Dashboards</span><span class="tag">RTL / عربي-إنجليزي</span></div></div>
+          <div class="arrow">▲</div>
+          <div class="layer" style="--lc:var(--info)"><h4>2 · بوابة الـ API (API Gateway)</h4><div class="lt"><span class="tag">RESTful</span><span class="tag">GraphQL</span><span class="tag">OAuth 2.0</span><span class="tag">Rate Limiting</span><span class="tag">Request Routing</span></div></div>
+          <div class="arrow">▲</div>
+          <div class="layer" style="--lc:var(--safe)"><h4>3 · الخدمات المصغّرة (Microservices)</h4><div class="lt"><span class="tag g">Incident Svc</span><span class="tag g">Permit Svc</span><span class="tag g">Risk Svc</span><span class="tag g">Inspection Svc</span><span class="tag g">Health Svc</span><span class="tag g">HazMat Svc</span><span class="tag g">Training Svc</span><span class="tag g">Notification Svc</span><span class="tag g">Reporting Svc</span><span class="tag g">Integration Svc</span><span class="tag g">AI Inference Svc</span><span class="tag g">IoT Ingest Svc</span><span class="tag g">Audit Svc</span><span class="tag g">Identity Svc</span></div></div>
+          <div class="arrow">▲</div>
+          <div class="layer" style="--lc:var(--warn)"><h4>4 · طبقة البيانات (Data Layer)</h4><div class="lt"><span class="tag">SQL Server / PostgreSQL</span><span class="tag">MongoDB — ملفات وبيانات غير منتظمة</span><span class="tag">Redis Cache</span><span class="tag">Time-Series DB — IoT</span><span class="tag">Blob Storage — صور/فيديو</span></div></div>
+          <div class="arrow">▲</div>
+          <div class="layer" style="--lc:var(--crit)"><h4>5 · البنية التحتية (Infrastructure)</h4><div class="lt"><span class="tag">Private Cloud</span><span class="tag">On-Premises</span><span class="tag">Kubernetes</span><span class="tag">Message Broker (Kafka/RabbitMQ)</span><span class="tag">Edge AI Nodes</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-h"><h3>حالة الخدمات</h3><span class="live"><i style="background:var(--safe)"></i>ALL HEALTHY</span></div>
+        <div class="card-b">
+          <div class="tw"><table>
+            <thead><tr><th>الخدمة</th><th>النسخ</th><th>CPU</th><th>الاستجابة</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">incident-svc</td><td class="mono">3</td><td class="mono">24%</td><td class="mono">88ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+              <tr><td class="mono">permit-svc</td><td class="mono">3</td><td class="mono">31%</td><td class="mono">104ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+              <tr><td class="mono">ai-inference-svc</td><td class="mono">4</td><td class="mono">78%</td><td class="mono">41ms</td><td><span class="pill p-wn">حمل مرتفع</span></td></tr>
+              <tr><td class="mono">iot-ingest-svc</td><td class="mono">2</td><td class="mono">45%</td><td class="mono">12ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+              <tr><td class="mono">reporting-svc</td><td class="mono">2</td><td class="mono">18%</td><td class="mono">340ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+              <tr><td class="mono">integration-svc</td><td class="mono">2</td><td class="mono">29%</td><td class="mono">180ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+              <tr><td class="mono">notification-svc</td><td class="mono">2</td><td class="mono">15%</td><td class="mono">55ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+              <tr><td class="mono">audit-svc</td><td class="mono">2</td><td class="mono">12%</td><td class="mono">30ms</td><td><span class="pill p-ok">Healthy</span></td></tr>
+            </tbody></table></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>مواصفات النشر</h3><span class="hint">DEPLOYMENT SPEC</span></div>
+        <div class="card-b">
+          <div class="stat-line"><span>نموذج النشر</span><b>Private Cloud + On-Prem Edge</b></div>
+          <div class="stat-line"><span>التوسع</span><b>رأسي وأفقي — Auto-scaling</b></div>
+          <div class="stat-line"><span>قاعدة البيانات الأساسية</span><b class="mono">MS SQL Server 2022</b></div>
+          <div class="stat-line"><span>قاعدة البيانات غير العلاقية</span><b class="mono">MongoDB 7</b></div>
+          <div class="stat-line"><span>الحاويات</span><b class="mono">Docker + Kubernetes</b></div>
+          <div class="stat-line"><span>Message Broker</span><b class="mono">Apache Kafka</b></div>
+          <div class="stat-line"><span>المراقبة</span><b class="mono">Prometheus + Grafana</b></div>
+          <div class="stat-line"><span>بيئات النظام</span><b>DEV · TEST · UAT · PROD</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REPORTS ============ -->
+<section class="page" id="rep">
+  <div class="ph">
+    <div><h2>التقارير والتحليلات</h2><p>REPORTS & ANALYTICS · ISO 45001 COMPLIANCE</p></div>
+    <div class="acts"><button class="btn">⬇ PDF</button><button class="btn">⬇ Excel</button><button class="btn pri">📧 إرسال للإدارة</button></div>
+  </div>
+
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="card"><div class="card-b" style="text-align:center;padding:20px">
+      <div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);letter-spacing:.6px;margin-bottom:10px">TRIR</div>
+      <div class="gauge" style="justify-content:center"><div class="donut" style="background:conic-gradient(var(--safe) 0 68%,var(--steel-3) 68% 100%)"><span>0.84</span></div></div>
+      <div style="font-size:11.5px;color:var(--txt-2);margin-top:10px">معدل الإصابات المسجلة<br>الهدف ≤ 1.20</div></div></div>
+    <div class="card"><div class="card-b" style="text-align:center;padding:20px">
+      <div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);letter-spacing:.6px;margin-bottom:10px">LTIFR</div>
+      <div class="gauge" style="justify-content:center"><div class="donut" style="background:conic-gradient(var(--safe) 0 78%,var(--steel-3) 78% 100%)"><span>0.31</span></div></div>
+      <div style="font-size:11.5px;color:var(--txt-2);margin-top:10px">معدل تكرار الإصابات المُعطِّلة<br>الهدف ≤ 0.50</div></div></div>
+    <div class="card"><div class="card-b" style="text-align:center;padding:20px">
+      <div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);letter-spacing:.6px;margin-bottom:10px">SEVERITY RATE</div>
+      <div class="gauge" style="justify-content:center"><div class="donut" style="background:conic-gradient(var(--warn) 0 55%,var(--steel-3) 55% 100%)"><span>4.2</span></div></div>
+      <div style="font-size:11.5px;color:var(--txt-2);margin-top:10px">أيام ضائعة لكل مليون ساعة<br>الهدف ≤ 5.0</div></div></div>
+    <div class="card"><div class="card-b" style="text-align:center;padding:20px">
+      <div style="font-size:11px;color:var(--txt-3);font-family:var(--mono);letter-spacing:.6px;margin-bottom:10px">NEAR MISS RATIO</div>
+      <div class="gauge" style="justify-content:center"><div class="donut" style="background:conic-gradient(var(--safe) 0 88%,var(--steel-3) 88% 100%)"><span>3.7</span></div></div>
+      <div style="font-size:11.5px;color:var(--txt-2);margin-top:10px">أشباه حوادث لكل حادث<br>الهدف ≥ 3.0</div></div></div>
+  </div>
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>الاتجاه السنوي — TRIR</h3><span class="hint">2022 – 2026</span></div>
+      <div class="card-b"><canvas id="chart2" height="190"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>الالتزام بمتطلبات ISO 45001</h3><span class="hint">AUDIT READINESS</span></div>
+      <div class="card-b">
+        <div class="brow"><div class="t"><span>4 — سياق المنظمة</span><b>100%</b></div><div class="bar"><i style="width:100%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>5 — القيادة ومشاركة العاملين</span><b>94%</b></div><div class="bar"><i style="width:94%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>6 — التخطيط وتقييم المخاطر</span><b>88%</b></div><div class="bar"><i style="width:88%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>7 — الدعم والتدريب</span><b>81%</b></div><div class="bar"><i style="width:81%;background:var(--warn)"></i></div></div>
+        <div class="brow"><div class="t"><span>8 — التشغيل والطوارئ</span><b>86%</b></div><div class="bar"><i style="width:86%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>9 — تقييم الأداء</span><b>92%</b></div><div class="bar"><i style="width:92%;background:var(--safe)"></i></div></div>
+        <div class="brow"><div class="t"><span>10 — التحسين المستمر</span><b>79%</b></div><div class="bar"><i style="width:79%;background:var(--warn)"></i></div></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12.5px">جاهزية التدقيق الإجمالية</span>
+          <span class="pill p-ok" style="font-size:13px;padding:4px 12px">88.6%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="grid g2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-h"><h3>الخريطة الحرارية للمصنع</h3><span class="hint">INCIDENT DENSITY HEATMAP</span></div>
+      <div class="card-b">
+        <div class="hm" id="heat"></div>
+        <div class="legend">
+          <span><i style="background:#1a3a2e"></i>0 حادث</span>
+          <span><i style="background:#8a9a34"></i>1–2</span>
+          <span><i style="background:#F09030"></i>3–4</span>
+          <span><i style="background:#c0402e"></i>5–6</span>
+          <span><i style="background:#8E1F17"></i>7+</span>
+        </div>
+        <p style="font-size:11.5px;color:var(--txt-2);margin-top:12px;line-height:1.8">أعلى كثافة: <b style="color:var(--crit)">ورشة الصيانة — منطقة اللحام</b> (7 أحداث) و<b style="color:var(--warn)">خط الإنتاج A — ماكينات القطع</b> (5 أحداث). النظام يقترح إعادة تقييم JSA لهاتين المنطقتين.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>المؤشرات الاستباقية (Leading)</h3><span class="hint">PROACTIVE KPIs</span></div>
+      <div class="card-b">
+        <div class="brow"><div class="t"><span>نسبة إغلاق CAPA في الموعد</span><b style="color:var(--warn)">83%</b></div><div class="bar"><i style="width:83%;background:var(--warn)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">الهدف ≥ 90%</div></div>
+        <div class="brow"><div class="t"><span>نسبة إنجاز جولات التفتيش</span><b style="color:var(--safe)">91%</b></div><div class="bar"><i style="width:91%;background:var(--safe)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">128 من 140 جولة</div></div>
+        <div class="brow"><div class="t"><span>نسبة إنجاز خطة التدريب</span><b style="color:var(--safe)">87%</b></div><div class="bar"><i style="width:87%;background:var(--safe)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">4,280 ساعة تدريب</div></div>
+        <div class="brow"><div class="t"><span>معدل الإبلاغ عن أشباه الحوادث</span><b style="color:var(--safe)">3.7:1</b></div><div class="bar"><i style="width:93%;background:var(--safe)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">الهدف ≥ 3:1 — ثقافة إبلاغ صحية</div></div>
+        <div class="brow"><div class="t"><span>الالتزام بالـ PPE (كشف AI)</span><b style="color:var(--safe)">94%</b></div><div class="bar"><i style="width:94%;background:var(--safe)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">مراقبة مستمرة عبر 38 كاميرا</div></div>
+        <div class="brow"><div class="t"><span>تغطية JSA للمهام الحرجة</span><b style="color:var(--warn)">78%</b></div><div class="bar"><i style="width:78%;background:var(--warn)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">الهدف 100% بنهاية Q4</div></div>
+        <div class="brow"><div class="t"><span>مشاركة الإدارة في جولات السلامة</span><b style="color:var(--safe)">96%</b></div><div class="bar"><i style="width:96%;background:var(--safe)"></i></div><div style="font-size:10.5px;color:var(--txt-3);margin-top:3px">Management Safety Walks</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>مولّد التقارير المخصص</h3><span class="hint">AD-HOC REPORT BUILDER</span></div>
+    <div class="card-b">
+      <div class="grid g4">
+        <div class="fg"><label>مصدر البيانات</label><select><option>الحوادث والبلاغات</option><option>تصاريح العمل</option><option>جولات التفتيش</option><option>معدات الحريق</option><option>التدريب والكفاءات</option><option>المواد الكيميائية</option><option>الصحة المهنية</option><option>سجل المخاطر</option></select></div>
+        <div class="fg"><label>الفترة الزمنية</label><select><option>هذا الشهر</option><option>الربع الحالي</option><option>سنة حتى تاريخه (YTD)</option><option>فترة مخصصة</option></select></div>
+        <div class="fg"><label>التجميع حسب</label><select><option>القسم / المنطقة</option><option>النوع</option><option>الشدة</option><option>المسؤول</option><option>الشهر</option></select></div>
+        <div class="fg"><label>صيغة التصدير</label><select><option>PDF</option><option>Excel (XLSX)</option><option>CSV</option><option>Power BI Dataset</option></select></div>
+      </div>
+      <div class="grid g2" style="margin-top:4px">
+        <div class="fg"><label>جدولة الإرسال الآلي</label><select><option>بدون جدولة</option><option>يومي — 07:00</option><option>أسبوعي — الأحد 08:00</option><option>شهري — أول يوم عمل</option></select></div>
+        <div class="fg"><label>المستلمون</label><input placeholder="hse@elsewedy.com; plant.manager@elsewedy.com" value="hse@elsewedy.com; plant.manager@elsewedy.com"></div>
+      </div>
+      <div style="display:flex;gap:9px;margin-top:6px">
+        <button class="btn pri" onclick="toast('جاري توليد التقرير المخصص...')">▶ توليد الآن</button>
+        <button class="btn" onclick="toast('تم حفظ التقرير المجدول')">💾 حفظ كتقرير مجدول</button>
+        <button class="btn" onclick="toast('تم فتح المعاينة')">👁️ معاينة</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>التقارير الجاهزة</h3><span class="hint">READY TO GENERATE</span></div>
+    <div class="card-b">
+      <div class="grid g3">
+        <div class="dept" style="--dc:var(--info)" onclick="toast('جاري توليد التقرير الشهري...')"><div class="dn2">📊 التقرير الشهري للسلامة</div><div class="dm">MONTHLY HSE REPORT</div><div style="font-size:11.5px;color:var(--txt-2)">ملخص شامل للحوادث والمؤشرات والإجراءات</div></div>
+        <div class="dept" style="--dc:var(--crit)" onclick="toast('جاري توليد تقرير الحوادث...')"><div class="dn2">⚠️ تقرير تحليل الحوادث</div><div class="dm">INCIDENT ANALYSIS</div><div style="font-size:11.5px;color:var(--txt-2)">تحليل الأسباب الجذرية والاتجاهات</div></div>
+        <div class="dept" style="--dc:var(--warn)" onclick="toast('جاري توليد تقرير معدات الحريق...')"><div class="dn2">🧯 تقرير جاهزية الحريق</div><div class="dm">FIRE READINESS</div><div style="font-size:11.5px;color:var(--txt-2)">حالة كل الطفايات والمعدات وجدول التجديد</div></div>
+        <div class="dept" style="--dc:var(--safe)" onclick="toast('جاري توليد تقرير التدريب...')"><div class="dn2">🎓 مصفوفة الكفاءات</div><div class="dm">COMPETENCY MATRIX</div><div style="font-size:11.5px;color:var(--txt-2)">حالة تدريب كل موظف وتواريخ التجديد</div></div>
+        <div class="dept" style="--dc:var(--hi)" onclick="toast('جاري توليد سجل المخاطر...')"><div class="dn2">🎯 سجل المخاطر المحدّث</div><div class="dm">RISK REGISTER</div><div style="font-size:11.5px;color:var(--txt-2)">كل المخاطر والضوابط والدرجات المتبقية</div></div>
+        <div class="dept" style="--dc:var(--info)" onclick="toast('جاري توليد تقرير التدقيق...')"><div class="dn2">✅ حزمة التدقيق ISO 45001</div><div class="dm">AUDIT PACK</div><div style="font-size:11.5px;color:var(--txt-2)">كل الأدلة والسجلات المطلوبة للتدقيق</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer style="border-top:1px solid var(--line);background:var(--steel-2);padding:16px 22px;margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="wordmark foot">
+      <span class="w1">ELSEWEDY</span><span class="rule"></span><span class="w2">CABLES</span>
+      <svg class="smile" viewBox="0 0 240 26" preserveAspectRatio="none"><path d="M2 2 C 60 30, 180 30, 238 2 C 180 22, 60 22, 2 2 Z" fill="#9E1B32"/></svg>
+    </div>
+    <span style="font-size:11.5px;color:var(--txt-2)">Elsewedy Cables — Cable Accessories (ESCA) · إدارة السلامة والصحة المهنية</span>
+  </div>
+  <span class="mono" style="font-size:10.5px;color:var(--txt-3)">HSE-MS v2.4 · Powered by Grow Path · D365 F&amp;O Integrated</span>
+</footer>
+
+<!-- ===== MODALS ===== -->
+<div class="ov" id="mIncident">
+  <div class="mdl">
+    <div class="mdl-h"><h3>🚨 تسجيل حادث / بلاغ جديد</h3><button class="x" onclick="close_('mIncident')">×</button></div>
+    <div class="mdl-b">
+      <div class="frow">
+        <div class="fg"><label>نوع البلاغ</label><select><option>إصابة</option><option>شبه حادث (Near Miss)</option><option>وضع غير آمن</option><option>سلوك غير آمن</option><option>حريق</option><option>ضرر بالممتلكات</option><option>انسكاب / تسرب بيئي</option></select></div>
+        <div class="fg"><label>درجة الخطورة</label><select><option>منخفضة</option><option>متوسطة</option><option>عالية</option><option>حرجة</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>القسم / المنطقة</label><select><option>خط إنتاج الأكسسوارات A</option><option>خط إنتاج الأكسسوارات B</option><option>ورشة الصيانة الميكانيكية</option><option>معمل الجودة والاختبارات</option><option>مخزن الخامات</option><option>مخزن المنتج التام</option><option>محطة الكهرباء والمرافق</option><option>المبنى الإداري</option><option>العيادة والكانتين</option></select></div>
+        <div class="fg"><label>التاريخ والوقت</label><input type="datetime-local" value="2026-08-05T10:30"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>اسم المصاب (إن وُجد)</label><input placeholder="اتركه فارغاً لو مفيش إصابة"></div>
+        <div class="fg"><label>الرقم الوظيفي</label><input placeholder="EMP-xxxxx"></div>
+      </div>
+      <div class="fg"><label>وصف ما حدث</label><textarea placeholder="اشرح الحادث بالتفصيل: ماذا حدث، أين، كيف، وما هي الظروف المحيطة..."></textarea></div>
+      <div class="fg"><label>الإجراء الفوري المتخذ</label><textarea placeholder="ما تم عمله فور وقوع الحادث..." style="min-height:56px"></textarea></div>
+      <div class="frow">
+        <div class="fg"><label>المسؤول عن التحقيق</label><select><option>م. أحمد سامي — HSE Officer</option><option>م. هبة فؤاد — HSE Officer</option><option>م. كريم رشاد — HSE Officer</option><option>رافع صابر — HSE Manager</option></select></div>
+        <div class="fg"><label>موعد إنهاء التحقيق</label><input type="date" value="2026-08-12"></div>
+      </div>
+    </div>
+    <div class="mdl-f"><button class="btn dgr" onclick="close_('mIncident');toast('تم تسجيل البلاغ برقم INC-2026-0090 وإخطار المسؤولين')">حفظ وإخطار</button><button class="btn" onclick="close_('mIncident')">إلغاء</button></div>
+  </div>
+</div>
+
+<div class="ov" id="mFire">
+  <div class="mdl">
+    <div class="mdl-h"><h3>🧯 تسجيل فحص طفاية حريق</h3><button class="x" onclick="close_('mFire')">×</button></div>
+    <div class="mdl-b">
+      <div class="frow">
+        <div class="fg"><label>كود الطفاية</label><input placeholder="FE-A-001" value="FE-A-014"></div>
+        <div class="fg"><label>النوع</label><select><option>مسحوق جاف 6kg</option><option>مسحوق جاف 12kg</option><option>CO₂ 5kg</option><option>CO₂ 10kg</option><option>رغوة 9L</option><option>مائية 9L</option><option>عربة 50kg</option></select></div>
+      </div>
+      <div class="fg"><label>الموقع بالتفصيل</label><input value="خط الإنتاج A — العمود رقم 4، بجوار ماكينة القطع #3"></div>
+      <div class="card" style="margin-bottom:14px;background:var(--steel)">
+        <div class="card-h"><h3 style="font-size:12.5px">قائمة الفحص الشهري</h3></div>
+        <div class="card-b" style="font-size:12.5px;line-height:2.2">
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">الطفاية موجودة في مكانها المحدد</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">الوصول إليها غير معاق</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" style="width:auto">مؤشر الضغط في المنطقة الخضراء</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">الخرطوم والفوهة سليمان</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">مسمار الأمان والحلقة موجودان</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" style="width:auto">تاريخ الصلاحية سارٍ</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">الجسم خالٍ من الصدأ أو التلف</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">اللافتة الإرشادية واضحة</label>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>النتيجة</label><select><option>صالحة</option><option selected>تحتاج إجراء</option><option>خارج الخدمة</option></select></div>
+        <div class="fg"><label>تاريخ الفحص القادم</label><input type="date" value="2026-09-05"></div>
+      </div>
+      <div class="fg"><label>ملاحظات</label><textarea style="min-height:56px">الطفاية منتهية الصلاحية منذ 2026-07-18 والضغط منخفض — مطلوب استبدال فوري وإصدار أمر شغل للمقاول.</textarea></div>
+    </div>
+    <div class="mdl-f"><button class="btn pri" onclick="close_('mFire');toast('تم حفظ الفحص وإصدار أمر شغل WO-2026-0341')">حفظ الفحص</button><button class="btn" onclick="close_('mFire')">إلغاء</button></div>
+  </div>
+</div>
+
+<div class="ov" id="mPermit">
+  <div class="mdl">
+    <div class="mdl-h"><h3>📋 إصدار تصريح عمل</h3><button class="x" onclick="close_('mPermit')">×</button></div>
+    <div class="mdl-b">
+      <div class="frow">
+        <div class="fg"><label>نوع التصريح</label><select><option>🔥 عمل ساخن (لحام / قطع / طحن)</option><option>⚡ عمل كهربائي</option><option>🪜 عمل بالمرتفعات</option><option>🕳️ دخول أماكن مغلقة</option><option>🔧 عمل ميكانيكي / LOTO</option><option>🏗️ حفر وأعمال مدنية</option><option>☢️ تصوير إشعاعي</option></select></div>
+        <div class="fg"><label>المنطقة</label><select><option>خط الإنتاج A</option><option>خط الإنتاج B</option><option>ورشة الصيانة</option><option>محطة الكهرباء</option><option>المخازن</option><option>خارج المبنى</option></select></div>
+      </div>
+      <div class="fg"><label>وصف العمل</label><textarea placeholder="اشرح طبيعة العمل المطلوب والمعدات المستخدمة..." style="min-height:60px"></textarea></div>
+      <div class="frow">
+        <div class="fg"><label>الجهة المنفذة</label><select><option>الصيانة الداخلية</option><option>الكهرباء الداخلية</option><option>مقاول خارجي</option><option>مقاول متخصص</option></select></div>
+        <div class="fg"><label>عدد الأفراد</label><input type="number" value="3"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>من</label><input type="datetime-local" value="2026-08-06T08:00"></div>
+        <div class="fg"><label>إلى</label><input type="datetime-local" value="2026-08-06T16:00"></div>
+      </div>
+      <div class="fg"><label>الضوابط المطلوبة</label>
+        <div style="margin-top:5px">
+          <span class="chip">✓ عزل الطاقة LOTO</span><span class="chip">✓ مراقب حريق</span><span class="chip">✓ فحص الجو</span><span class="chip">✓ طفاية في الموقع</span><span class="chip">✓ تأمين المنطقة</span><span class="chip">✓ PPE كامل</span>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>مُصدر التصريح</label><select><option>م. أحمد سامي</option><option>م. هبة فؤاد</option><option>م. كريم رشاد</option></select></div>
+        <div class="fg"><label>اعتماد HSE Manager</label><select><option>مطلوب</option><option>غير مطلوب</option></select></div>
+      </div>
+    </div>
+    <div class="mdl-f"><button class="btn pri" onclick="close_('mPermit');toast('تم إصدار التصريح PTW-2026-0413 — بانتظار الاعتماد')">إصدار التصريح</button><button class="btn" onclick="close_('mPermit')">إلغاء</button></div>
+  </div>
+</div>
+
+<div class="ov" id="mInsp">
+  <div class="mdl">
+    <div class="mdl-h"><h3>🔍 جولة تفتيش سلامة</h3><button class="x" onclick="close_('mInsp')">×</button></div>
+    <div class="mdl-b">
+      <div class="frow">
+        <div class="fg"><label>المنطقة</label><select><option>خط الإنتاج A</option><option>خط الإنتاج B</option><option>ورشة الصيانة</option><option>المخازن</option><option>محطة الكهرباء</option><option>المبنى الإداري</option></select></div>
+        <div class="fg"><label>المفتش</label><select><option>م. هبة فؤاد</option><option>م. أحمد سامي</option><option>م. كريم رشاد</option></select></div>
+      </div>
+      <div class="card" style="margin-bottom:14px;background:var(--steel)">
+        <div class="card-h"><h3 style="font-size:12.5px">بنود التفتيش</h3></div>
+        <div class="card-b" style="font-size:12.5px;line-height:2.2">
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">النظافة والترتيب (5S)</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">الالتزام بمعدات الوقاية الشخصية</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" style="width:auto">مخارج الطوارئ خالية وواضحة</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">طفايات الحريق سارية وفي مكانها</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">حواجز الأمان على المعدات سليمة</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">اللافتات التحذيرية واضحة</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" style="width:auto">التوصيلات الكهربائية آمنة</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">تخزين المواد الكيميائية سليم</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">صناديق الإسعاف مكتملة</label>
+          <label style="display:flex;gap:9px;cursor:pointer"><input type="checkbox" checked style="width:auto">الإضاءة والتهوية كافية</label>
+        </div>
+      </div>
+      <div class="fg"><label>الملاحظات المُسجَّلة</label><textarea placeholder="سجّل أي ملاحظة أو مخالفة مع تحديد المسؤول والموعد المستهدف..." style="min-height:70px"></textarea></div>
+      <div class="fg"><label>التقييم العام</label><select><option>مطابق تماماً</option><option selected>مطابق مع ملاحظات بسيطة</option><option>يحتاج إجراءات تصحيحية</option><option>غير مطابق — إيقاف النشاط</option></select></div>
+    </div>
+    <div class="mdl-f"><button class="btn pri" onclick="close_('mInsp');toast('تم حفظ الجولة INS-2026-0129 وتوليد 3 إجراءات تصحيحية')">إنهاء الجولة</button><button class="btn" onclick="close_('mInsp')">إلغاء</button></div>
+  </div>
+</div>
+
+
+<div class="ov" id="mJSA">
+  <div class="mdl">
+    <div class="mdl-h"><h3>🧩 تحليل سلامة مهمة جديدة (JSA)</h3><button class="x" onclick="close_('mJSA')">×</button></div>
+    <div class="mdl-b">
+      <div class="frow">
+        <div class="fg"><label>اسم المهمة</label><input placeholder="مثال: استبدال قاطع كهربائي MV"></div>
+        <div class="fg"><label>القسم</label><select><option>الإنتاج A</option><option>الإنتاج B</option><option>الصيانة</option><option>الكهرباء والمرافق</option><option>المخازن</option><option>الجودة</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>تكرار المهمة</label><select><option>يومي</option><option>أسبوعي</option><option>شهري</option><option>عند الحاجة</option><option>أول مرة</option></select></div>
+        <div class="fg"><label>يتطلب تصريح عمل؟</label><select><option>نعم — عمل ساخن</option><option>نعم — كهربائي</option><option>نعم — مرتفعات</option><option>نعم — أماكن مغلقة</option><option>لا</option></select></div>
+      </div>
+      <div class="fg"><label>الخطوة الأولى</label><input placeholder="وصف الخطوة..."></div>
+      <div class="frow">
+        <div class="fg"><label>الخطر المصاحب</label><input placeholder="مثال: صعق كهربائي"></div>
+        <div class="fg"><label>مستوى التحكم</label><select><option>1 — إزالة</option><option>2 — استبدال</option><option>3 — ضوابط هندسية</option><option>4 — ضوابط إدارية</option><option>5 — PPE</option></select></div>
+      </div>
+      <div class="fg"><label>إجراءات السيطرة</label><textarea placeholder="اذكر كل الضوابط المطلوبة لهذه الخطوة..." style="min-height:60px"></textarea></div>
+      <div class="frow">
+        <div class="fg"><label>الخطر المتأصل (Inherent)</label><select><option>احتمالية 4 × شدة 5 = 20</option><option>احتمالية 3 × شدة 5 = 15</option><option>احتمالية 4 × شدة 4 = 16</option><option>احتمالية 3 × شدة 4 = 12</option></select></div>
+        <div class="fg"><label>الخطر المتبقي (Residual)</label><select><option>احتمالية 2 × شدة 3 = 6</option><option>احتمالية 1 × شدة 4 = 4</option><option>احتمالية 2 × شدة 4 = 8</option></select></div>
+      </div>
+      <button class="btn sm" onclick="toast('تمت إضافة خطوة جديدة')">＋ إضافة خطوة أخرى</button>
+    </div>
+    <div class="mdl-f"><button class="btn pri" onclick="close_('mJSA');toast('تم حفظ JSA-065 — بانتظار اعتماد HSE Manager')">حفظ وإرسال للاعتماد</button><button class="btn" onclick="close_('mJSA')">إلغاء</button></div>
+  </div>
+</div>
+
+<div class="ov" id="mChem">
+  <div class="mdl">
+    <div class="mdl-h"><h3>🧪 تسجيل مادة كيميائية</h3><button class="x" onclick="close_('mChem')">×</button></div>
+    <div class="mdl-b">
+      <div class="frow">
+        <div class="fg"><label>اسم المادة</label><input placeholder="الاسم التجاري والكيميائي"></div>
+        <div class="fg"><label>رقم CAS</label><input placeholder="000-00-0"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>المورّد</label><input placeholder="اسم المورّد"></div>
+        <div class="fg"><label>الكمية والوحدة</label><input placeholder="مثال: 200 L"></div>
+      </div>
+      <div class="fg"><label>تصنيف GHS (اختيار متعدد)</label>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px">
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">🔥 قابل للاشتعال</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">🧪 أكّال</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">☠️ سام</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">⭕ مؤكسد</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">💨 غاز مضغوط</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">🌿 خطر بيئي</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">🫁 خطر صحي مزمن</label>
+          <label style="display:flex;gap:5px;align-items:center;font-size:11.5px"><input type="checkbox" style="width:auto">⚠️ مهيّج</label>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>فئة التوافق التخزيني</label><select><option>أحماض</option><option>قلويات</option><option>مؤكسدات</option><option>قابل للاشتعال</option><option>غازات مضغوطة</option><option>خامل</option></select></div>
+        <div class="fg"><label>مكان التخزين</label><select><option>مخزن الكيماويات</option><option>مخزن الأحماض</option><option>مخزن القلويات</option><option>ساحة الغازات</option><option>ورشة الصيانة</option><option>مخزن الخامات</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>صحيفة SDS</label><input type="file"></div>
+        <div class="fg"><label>تاريخ إصدار SDS</label><input type="date" value="2026-08-01"></div>
+      </div>
+      <div class="fg"><label>إجراءات الطوارئ والانسكاب</label><textarea placeholder="خطوات التعامل مع الانسكاب والإسعافات الأولية..." style="min-height:56px"></textarea></div>
+    </div>
+    <div class="mdl-f"><button class="btn pri" onclick="close_('mChem');toast('تم تسجيل CHM-085 وتوليد QR Code وملصق GHS')">حفظ وتوليد QR</button><button class="btn" onclick="close_('mChem')">إلغاء</button></div>
+  </div>
+</div>
+
+<div class="ov" id="mClinic">
+  <div class="mdl">
+    <div class="mdl-h"><h3>🏥 تسجيل زيارة عيادة</h3><button class="x" onclick="close_('mClinic')">×</button></div>
+    <div class="mdl-b">
+      <div style="background:rgba(11,60,126,.22);border:1px solid #27405F;border-radius:5px;padding:10px 13px;margin-bottom:16px;font-size:11.5px;color:var(--txt-2)">🔒 هذه البيانات طبية سرية — مشفّرة AES-256 ومتاحة للطبيب المختص فقط. كل اطّلاع يُسجَّل في Audit Trail.</div>
+      <div class="frow">
+        <div class="fg"><label>الموظف</label><input placeholder="الاسم أو الرقم الوظيفي"></div>
+        <div class="fg"><label>القسم</label><select><option>الإنتاج A</option><option>الإنتاج B</option><option>الصيانة</option><option>الكهرباء</option><option>المخازن</option><option>الجودة</option><option>الإداري</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>نوع الزيارة</label><select><option>إصابة عمل</option><option>شكوى عامة</option><option>متابعة مرض مزمن</option><option>فحص دوري</option><option>فحص ما قبل التعيين</option><option>صرف دواء</option></select></div>
+        <div class="fg"><label>مرتبطة ببلاغ حادث؟</label><input placeholder="INC-2026-xxxx (اختياري)"></div>
+      </div>
+      <div class="fg"><label>الشكوى والتشخيص</label><textarea placeholder="وصف الحالة والتشخيص المبدئي..." style="min-height:66px"></textarea></div>
+      <div class="fg"><label>العلاج / الأدوية المصروفة</label><textarea placeholder="الأدوية والجرعات..." style="min-height:50px"></textarea></div>
+      <div class="frow">
+        <div class="fg"><label>القرار</label><select><option>عودة للعمل بدون قيود</option><option>عودة للعمل بقيود مؤقتة</option><option>راحة مرضية</option><option>تحويل لمستشفى خارجي</option></select></div>
+        <div class="fg"><label>أيام الراحة (إن وُجدت)</label><input type="number" value="0"></div>
+      </div>
+      <div class="fg"><label>قيود العمل المؤقتة</label><input placeholder="مثال: لا رفع أثقال أكثر من 10 كجم لمدة أسبوعين"></div>
+    </div>
+    <div class="mdl-f"><button class="btn pri" onclick="close_('mClinic');toast('تم تسجيل الزيارة MED-0244 بشكل مشفّر')">حفظ الزيارة</button><button class="btn" onclick="close_('mClinic')">إلغاء</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* NAV */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  document.getElementById(t.dataset.p).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* MODAL */
+function open_(id){document.getElementById(id).classList.add('on')}
+function close_(id){document.getElementById(id).classList.remove('on')}
+document.querySelectorAll('.ov').forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove('on')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov.on').forEach(o=>o.classList.remove('on'))});
+
+/* TOAST */
+let tt;
+function toast(m){const t=document.getElementById('toast');t.textContent='✓ '+m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3000)}
+
+/* CLOCK */
+setInterval(()=>{const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString('en-GB')},1000);
+
+/* COUNTER */
+let c=0;const target=148;
+const ci=setInterval(()=>{c+=4;if(c>=target){c=target;clearInterval(ci)}
+  document.getElementById('ctr').textContent=c;document.getElementById('k1').textContent=c},18);
+
+/* DEPT VIEW */
+function deptView(n){toast('فتح تفاصيل: '+n)}
+function incView(n){toast('فتح ملف الحادث: '+n)}
+
+/* FIRE EXTINGUISHER GRID */
+const fx=[
+ ['FE-A-001','بوابة الدخول الرئيسية','ok','مسحوق 6kg','2027-03'],
+ ['FE-A-002','ماكينة الحقن #1','ok','CO₂ 5kg','2027-01'],
+ ['FE-A-003','ماكينة الحقن #2','ok','CO₂ 5kg','2027-01'],
+ ['FE-A-004','لوحة التحكم الرئيسية','ok','CO₂ 10kg','2026-12'],
+ ['FE-A-005','منطقة التعبئة','ok','مسحوق 6kg','2027-02'],
+ ['FE-A-006','ممر الطوارئ 1','ok','مسحوق 6kg','2026-11'],
+ ['FE-A-007','ماكينة القطع #3','wn','مسحوق 6kg','2026-08'],
+ ['FE-A-008','مخزن نصف مصنع','ok','رغوة 9L','2027-04'],
+ ['FE-A-009','منطقة الاختبار','ok','CO₂ 5kg','2027-02'],
+ ['FE-A-010','ممر الطوارئ 2','ok','مسحوق 6kg','2026-12'],
+ ['FE-A-011','غرفة الضاغط','wn','CO₂ 10kg','2026-09'],
+ ['FE-A-012','منطقة التبريد','ok','مسحوق 6kg','2027-05'],
+ ['FE-A-013','خزانة الأدوات','ok','مسحوق 6kg','2027-03'],
+ ['FE-A-014','العمود رقم 4','cr','مسحوق 6kg','2026-07'],
+ ['FE-A-015','مكتب الوردية','ok','مسحوق 6kg','2027-01'],
+ ['FE-A-016','منطقة التحميل','ok','رغوة 9L','2027-06'],
+];
+const icons={ok:'🧯',wn:'🧯',cr:'⛔'};
+document.getElementById('fxGrid').innerHTML=fx.map(f=>`
+<div class="fxc ${f[2]}" onclick="toast('${f[0]} · ${f[3]} · صلاحية ${f[4]}')">
+  <div class="ico">${icons[f[2]]}</div>
+  <div class="id">${f[0]}</div>
+  <div class="lo">${f[1]}</div>
+  <span class="pill ${f[2]==='ok'?'p-ok':f[2]==='wn'?'p-wn':'p-cr'}">${f[4]}</span>
+</div>`).join('');
+
+/* RISK MATRIX */
+const sev=['ضئيل 1','بسيط 2','متوسط 3','كبير 4','كارثي 5'];
+const prob=['نادر 1','ضعيف 2','ممكن 3','مرجح 4','شبه مؤكد 5'];
+let h='<div class="rh">احتمالية ↓ / شدة →</div>';
+sev.forEach(s=>h+=`<div class="rh">${s}</div>`);
+for(let p=5;p>=1;p--){
+  h+=`<div class="rh">${prob[p-1]}</div>`;
+  for(let s=1;s<=5;s++){
+    const v=p*s;
+    let c = v<=4?'#38B87C' : v<=9?'#C6C43A' : v<=14?'#F09030' : v<=19?'#E0483C':'#8E1F17';
+    h+=`<div class="rc" style="background:${c};${v>=15?'color:#fff':''}" onclick="toast('درجة الخطر ${v} — احتمالية ${p} × شدة ${s}')">${v}</div>`;
+  }
+}
+document.getElementById('riskM').innerHTML=h;
+
+/* CHARTS (pure canvas, no lib) */
+function drawBars(id,labels,series,colors){
+  const cv=document.getElementById(id);const ctx=cv.getContext('2d');
+  const W=cv.width=cv.offsetWidth*2, H=cv.height=cv.height*2;ctx.scale(1,1);
+  cv.style.width='100%';
+  const pad={t:16,r:16,b:44,l:44};
+  const max=Math.max(...series.flat())*1.15;
+  const cw=(W-pad.l-pad.r)/labels.length;
+  ctx.clearRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='#2E3D4E';ctx.lineWidth=1.5;ctx.font='20px IBM Plex Mono';ctx.fillStyle='#5B6E82';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const y=pad.t+(H-pad.t-pad.b)*i/4;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillText(Math.round(max*(1-i/4)),pad.l-9,y+7);
+  }
+  const bw=cw/(series.length+1.4);
+  labels.forEach((l,i)=>{
+    series.forEach((s,j)=>{
+      const v=s[i];const bh=(H-pad.t-pad.b)*v/max;
+      const x=pad.l+cw*i+bw*0.7+j*bw;
+      ctx.fillStyle=colors[j];
+      ctx.fillRect(x,H-pad.b-bh,bw*0.82,bh);
+    });
+    ctx.fillStyle='#8FA3B8';ctx.textAlign='center';ctx.font='19px IBM Plex Mono';
+    ctx.fillText(l,pad.l+cw*i+cw/2,H-pad.b+26);
+  });
+}
+function drawLine(id,labels,data,color){
+  const cv=document.getElementById(id);const ctx=cv.getContext('2d');
+  const W=cv.width=cv.offsetWidth*2,H=cv.height=cv.height*2;cv.style.width='100%';
+  const pad={t:18,r:20,b:42,l:48};
+  const max=Math.max(...data)*1.25;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#2E3D4E';ctx.lineWidth=1.5;ctx.font='20px IBM Plex Mono';ctx.fillStyle='#5B6E82';ctx.textAlign='right';
+  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillText((max*(1-i/4)).toFixed(2),pad.l-9,y+7);}
+  const sx=(W-pad.l-pad.r)/(labels.length-1);
+  const pt=data.map((v,i)=>[pad.l+sx*i,H-pad.b-(H-pad.t-pad.b)*v/max]);
+  // area
+  const g=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  g.addColorStop(0,color+'55');g.addColorStop(1,color+'00');
+  ctx.beginPath();ctx.moveTo(pt[0][0],H-pad.b);pt.forEach(p=>ctx.lineTo(p[0],p[1]));
+  ctx.lineTo(pt[pt.length-1][0],H-pad.b);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  // line
+  ctx.beginPath();pt.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+  ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();
+  pt.forEach((p,i)=>{ctx.beginPath();ctx.arc(p[0],p[1],7,0,7);ctx.fillStyle='#1B242F';ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=4;ctx.stroke();
+    ctx.fillStyle='#E6EDF4';ctx.font='700 20px IBM Plex Mono';ctx.textAlign='center';
+    ctx.fillText(data[i].toFixed(2),p[0],p[1]-18);});
+  ctx.fillStyle='#8FA3B8';ctx.font='19px IBM Plex Mono';ctx.textAlign='center';
+  labels.forEach((l,i)=>ctx.fillText(l,pad.l+sx*i,H-pad.b+27));
+}
+function render(){
+  drawBars('chart1',['ينا','فبر','مار','أبر','ماي','يون','يول','أغس'],
+    [[1,2,3,1,2,1,2,1],[4,6,5,7,6,8,7,5],[38,44,51,47,55,62,58,39]],
+    ['#E0483C','#F09030','#38B87C']);
+  drawLine('chart2',['2022','2023','2024','2025','2026'],[2.14,1.78,1.42,1.05,0.84],'#38B87C');
+}
+render();window.addEventListener('resize',()=>setTimeout(render,120));
+
+/* RCA TABS */
+function rcaTab(i,btn){
+  [0,1,2].forEach(n=>document.getElementById('rca'+n).style.display = n===i?'block':'none');
+  btn.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('pri'));
+  btn.classList.add('pri');
+}
+
+/* HEATMAP */
+const zones=[
+ ['بوابة','إدارة','معمل QC','QC-2','كانتين','عيادة','أمن','موقف',0,0,0,1,0,0,0,0],
+ ['إنتاج A1','إنتاج A2','قطع A3','حقن A4','تعبئة A5','إنتاج B1','إنتاج B2','حقن B3',3,2,5,4,1,1,2,1],
+ ['صيانة 1','لحام','مخرطة','عُدد','كهرباء MV','مولدات','ضواغط','معالجة',4,7,2,1,3,2,1,0],
+ ['خام A','خام B','تحميل','ممر شوكية','تام A','تام B','شحن','غازات',2,1,3,4,1,0,1,2]
+];
+let hh='';
+zones.forEach(r=>{for(let i=0;i<8;i++){
+  const n=r[i+8];
+  const c = n===0?'#1a3a2e' : n<=2?'#8a9a34' : n<=4?'#F09030' : n<=6?'#c0402e':'#8E1F17';
+  const tc = n>=5?'#fff':(n===0?'#5E7794':'#101a10');
+  hh+=`<div class="hmc" style="background:${c};color:${tc}" onclick="toast('${r[i]} — ${n} حادث/ملاحظة')"><b>${n}</b><span style="font-size:8.5px">${r[i]}</span></div>`;
+}});
+const he=document.getElementById('heat');if(he)he.innerHTML=hh;
+</script>
+</body>
+</html>

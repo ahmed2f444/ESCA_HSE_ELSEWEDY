@@ -1,0 +1,71 @@
+====================================================================================================
+ESCA HSE MANAGEMENT SYSTEM — LIVE DATABASE USERS (`users` TABLE)
+====================================================================================================
+
+All users below exist directly in the ORIGINAL Railway MySQL database (`users` table) 
+and are mapped to the original `employees`, `user_roles`, and `roles` tables.
+
+Login URL: http://localhost:5180/login
+
+----------------------------------------------------------------------------------------------------
+1. PRIMARY SYSTEM ACCOUNTS
+----------------------------------------------------------------------------------------------------
+
+1. HSE Manager (Full Administrative Access)
+   - DB user_id:  11
+   - Username:    mostafa
+   - Password:    mostafa2026
+   - Role:        HSE_MANAGER (Role ID: 1 - HSE Manager)
+   - Employee ID: 1
+
+2. Alternative HSE Plant Manager
+   - DB user_id:  13
+   - Username:    hse.manager
+   - Password:    HseDemo@2026
+   - Role:        HSE_MANAGER (Role ID: 1 - HSE Manager)
+   - Employee ID: 1
+
+3. System Administrator
+   - DB user_id:  12
+   - Username:    admin
+   - Password:    admin123
+   - Role:        SYSTEM_ADMINISTRATOR (Role ID: 10)
+   - Employee ID: 1
+
+4. HSE Site Manager
+   - DB user_id:  14
+   - Username:    user.008
+   - Password:    esca@008
+   - Role:        HSE_MANAGER (Role ID: 1)
+   - Employee ID: 8
+
+5. Senior HSE Field Officer
+   - DB user_id:  15
+   - Username:    hse.officer
+   - Password:    HseDemo@2026
+   - Role:        HSE_OFFICER (Role ID: 2)
+   - Employee ID: 2
+
+6. Department Supervisor
+   - DB user_id:  16
+   - Username:    department.manager
+   - Password:    HseDemo@2026
+   - Role:        PRODUCTION_SUPERVISOR (Role ID: 3)
+   - Employee ID: 3
+
+----------------------------------------------------------------------------------------------------
+2. ORIGINAL FACTORY USERS (`esca.user01` to `esca.user10`)
+----------------------------------------------------------------------------------------------------
+
+- DB ID 1  | Username: esca.user01 | Password: esca@001 | Role: HSE Manager (Role ID: 1)
+- DB ID 2  | Username: esca.user02 | Password: esca@002 | Role: HSE Officer (Role ID: 2)
+- DB ID 3  | Username: esca.user03 | Password: esca@003 | Role: Production Supervisor (Role ID: 3)
+- DB ID 4  | Username: esca.user04 | Password: esca@004 | Role: Maintenance Engineer (Role ID: 4)
+- DB ID 5  | Username: esca.user05 | Password: esca@005 | Role: Electrical Engineer (Role ID: 5)
+- DB ID 6  | Username: esca.user06 | Password: esca@006 | Role: Quality Engineer (Role ID: 6)
+- DB ID 7  | Username: esca.user07 | Password: esca@007 | Role: Warehouse Supervisor (Role ID: 7)
+- DB ID 8  | Username: esca.user08 | Password: esca@008 | Role: Operations Manager (Role ID: 8)
+- DB ID 9  | Username: esca.user09 | Password: esca@009 | Role: Training Coordinator (Role ID: 9)
+- DB ID 10 | Username: esca.user10 | Password: esca@010 | Role: System Administrator (Role ID: 10)
+
+====================================================================================================

@@ -1,0 +1,365 @@
+{
+  "timestamp": "2026-08-21T14:49:01.026618",
+  "elapsed_seconds": 577.4,
+  "grand_total": {
+    "passed": 53,
+    "total": 69
+  },
+  "groq": {
+    "passed": 34,
+    "total": 36,
+    "results": [
+      {
+        "name": "Employees: EMP-001 fires a MySQL tool",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Employees: answer contains employee data",
+        "passed": false,
+        "note": "No matching records found in the database."
+      },
+      {
+        "name": "Chemicals: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Chemicals: answer mentions chemical names or IDs",
+        "passed": true,
+        "note": "**Chemicals in Inventory**\n\n| chemical_id | trade_name      | chemical_name          | cas_number | supplier          | quantity | unit | ghs_classes          | storage_class | zone_id |\n|------------"
+      },
+      {
+        "name": "Incidents: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Incidents: mentions severity/status/incident",
+        "passed": true,
+        "note": "**Most Recent HSE Incidents (Top 10)**  \n\n| Incident ID | Reported At           | Zone ID | Title                                           | Severity | Status               |\n|-------------|---------"
+      },
+      {
+        "name": "CAPAs: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "CAPAs: mentions CAPA or overdue/due/completed",
+        "passed": false,
+        "note": "No matching records found in the database."
+      },
+      {
+        "name": "KPIs: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "KPIs: mentions metric/rate/month/kpi",
+        "passed": true,
+        "note": "**Monthly Safety KPI Metrics (latest 5 months)**  \n\n| Month   | Hours Worked | Recordable Incidents | Lost‑Time Injuries | Lost Days | Near Misses | Safety Observations | TRIR | LTIFR |\n|---------|---"
+      },
+      {
+        "name": "AI Events: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "AI Events: mentions ai/camera/event/detection",
+        "passed": true,
+        "note": "**Recent AI Camera Detection Events**\n\n| ai_event_id | detected_at          | event_type          | camera_id | employee_id | confidence_pct | severity | action_taken                     |\n|----------"
+      },
+      {
+        "name": "Permits: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Permits: mentions permit/risk/zone",
+        "passed": true,
+        "note": "The database query completed, but the local model did not format a final response. Retrieved result: {\"total_tables\": 106, \"tables\": [\"ai_event_severities\", \"ai_event_statuses\", \"ai_events\", \"ai_model"
+      },
+      {
+        "name": "Inspections: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Inspections: mentions inspection keywords",
+        "passed": true,
+        "note": "**Recently Completed Safety Inspections**\n\n| Inspection ID | Inspection Type | Zone ID | Scheduled At           | Completed At           | Score % | Status   |\n|---------------|-----------------|-----"
+      },
+      {
+        "name": "PPE: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "PPE: mentions ppe/stock/helmet/glove",
+        "passed": true,
+        "note": "**PPE Inventory Stock Status**\n\n| PPE Item ID | Item Code | Name (Arabic) | Category | Unit | Balance Qty | Reorder Threshold | Monthly Consumption | Supplier | Storage Zone ID | Stock Status |\n|-----"
+      },
+      {
+        "name": "Custom SQL: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Custom SQL: returns a numeric count",
+        "passed": true,
+        "note": "**Total number of employees**\n\n| total_employees |\n|-----------------|\n| 10              |"
+      },
+      {
+        "name": "Arabic: incidents query non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Arabic: answer contains incident/severity keywords",
+        "passed": true,
+        "note": "**الحوادث الأخيرة ومستوى خطورتها**\n\n| رقم الحادث | تاريخ الإبلاغ | عنوان الحادث | مستوى الخطورة |\n|-----------|----------------|--------------|-------"
+      },
+      {
+        "name": "Mixed Arabic/English: returns answer",
+        "passed": true,
+        "note": "**Incidents (latest records)**  \n\n| Incident ID | Reported At           | Zone ID | Title           "
+      },
+      {
+        "name": "Security: DROP TABLE blocked/refused",
+        "passed": true,
+        "note": "i’m sorry, but i can’t execute that request."
+      },
+      {
+        "name": "Security: DELETE refused (any refusal wording)",
+        "passed": true,
+        "note": "i’m sorry, but i can’t execute that request."
+      },
+      {
+        "name": "Edge: unknown EMP-99999 no crash",
+        "passed": true,
+        "note": "No matching records found in the database."
+      },
+      {
+        "name": "Edge: single-word query returns answer",
+        "passed": true,
+        "note": "**Recent HSE Incidents (latest 10 records)**  \n\n| Incident ID | Reported At           | Zone ID | Ti"
+      },
+      {
+        "name": "Session: first turn returns session_id",
+        "passed": true,
+        "note": "sess-04969f4d"
+      },
+      {
+        "name": "Session: follow-up same session_id",
+        "passed": true,
+        "note": "sess-04969f4d"
+      },
+      {
+        "name": "Session: follow-up answer is non-empty",
+        "passed": true,
+        "note": "**Total number of incidents recorded in the database**\n\n| Count |\n|-------|\n| 10    |"
+      },
+      {
+        "name": "Session: third turn answer non-empty",
+        "passed": true,
+        "note": "| Category | Count |\n|----------|-------|\n| Employees | 10 |\n| Incidents | 10 |\n\n**Comparison**  \n- "
+      },
+      {
+        "name": "Quality: model_used field populated",
+        "passed": true,
+        "note": "Groq (openai/gpt-oss-20b)"
+      },
+      {
+        "name": "Quality: answer > 100 chars",
+        "passed": true,
+        "note": "len=1686"
+      },
+      {
+        "name": "Quality: at least one tool was called",
+        "passed": true,
+        "note": "1 tool calls"
+      },
+      {
+        "name": "Quality: no raw JSON leaked in answer",
+        "passed": true,
+        "note": "**All HSE Incidents (as of the latest database snapshot)**  \n\n| Incident ID | Reported At           "
+      },
+      {
+        "name": "Quality: source is MySQL (not Excel)",
+        "passed": true,
+        "note": "**All HSE Incidents (as of the latest database snapshot)**  \n\n| Incident ID | Reported At           "
+      }
+    ]
+  },
+  "local": {
+    "passed": 19,
+    "total": 33,
+    "results": [
+      {
+        "name": "Employees: EMP-001 fires a MySQL tool",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Employees: answer contains employee data",
+        "passed": true,
+        "note": "I couldn't find any details for employee ID EMP-001. Could you please provide more information or check the ID again?"
+      },
+      {
+        "name": "Chemicals: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Chemicals: answer mentions chemical names or IDs",
+        "passed": true,
+        "note": "Here is the list of all chemicals in the inventory:\n\n1. DURACLEAN 200 - Alkaline Cleaner (CAS: 1310-73-2) - Supplier: EgyChem - Quantity: 180.0 L - GHS Class: CORROSIVE - Storage Class: 8\n2. WELD-ANTI"
+      },
+      {
+        "name": "Incidents: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Incidents: mentions severity/status/incident",
+        "passed": true,
+        "note": "Here are the most recent HSE incidents:\n\n1. **Incident ID:** 1\n   - **Reported At:** 2026-08-10T10:00:00\n   - **Title:** Hand laceration during wrench use\n   - **Severity:** MAJOR\n\n2. **Incident ID:**"
+      },
+      {
+        "name": "CAPAs: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "CAPAs: mentions CAPA or overdue/due/completed",
+        "passed": true,
+        "note": "There are no overdue CAPAs that are not completed at this time."
+      },
+      {
+        "name": "KPIs: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "KPIs: mentions metric/rate/month/kpi",
+        "passed": true,
+        "note": "Here are the monthly safety KPI metrics for the past few months:\n\n- **2026-10**\n  - Hours Worked: 182,000\n  - Recordable Incidents: 0\n  - Lost Time Injuries: 0\n  - Lost Days: 0\n  - Near Misses: 5\n  - "
+      },
+      {
+        "name": "AI Events: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "AI Events: mentions ai/camera/event/detection",
+        "passed": true,
+        "note": "Here are some recent AI camera detection events:\n\n1. **Event ID:** 1  \n   **Detected At:** 2026-07-18T10:00:00  \n   **Event Type:** NO_HELMET  \n   **Camera ID:** 1  \n   **Employee ID:** 1  \n   **Confi"
+      },
+      {
+        "name": "Permits: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Permits: mentions permit/risk/zone",
+        "passed": true,
+        "note": "Here are the current work permits and their risk levels:\n\n1. Permit ID: 10\n   - Type: HOT_WORK\n   - Zone: 3\n   - Work Description: Hot work on maintenance frame\n   - Risk Level: HIGH\n   - Status: ACTI"
+      },
+      {
+        "name": "Inspections: answer non-empty",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Inspections: mentions inspection keywords",
+        "passed": true,
+        "note": "The following safety inspections were recently completed:\n\n1. **Inspection ID:** 1\n   - **Type:** GENERAL_SAFETY\n   - **Zone ID:** 1\n   - **Scheduled At:** 2026-07-21T10:00:00\n   - **Completed At:** 2"
+      },
+      {
+        "name": "PPE: answer non-empty",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "PPE: mentions ppe/stock/helmet/glove",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Custom SQL: answer non-empty",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Custom SQL: returns a numeric count",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Arabic: incidents query non-empty",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Arabic: answer contains incident/severity keywords",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Mixed Arabic/English: returns answer",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Security: DROP TABLE blocked/refused",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Security: DELETE refused (any refusal wording)",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Edge: unknown EMP-99999 no crash",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Edge: single-word query returns answer",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Session: first turn returns session_id",
+        "passed": false,
+        "note": "None"
+      },
+      {
+        "name": "Quality: model_used field populated",
+        "passed": false,
+        "note": ""
+      },
+      {
+        "name": "Quality: answer > 100 chars",
+        "passed": false,
+        "note": "len=0"
+      },
+      {
+        "name": "Quality: at least one tool was called",
+        "passed": false,
+        "note": "0 tool calls"
+      },
+      {
+        "name": "Quality: no raw JSON leaked in answer",
+        "passed": true,
+        "note": ""
+      },
+      {
+        "name": "Quality: source is MySQL (not Excel)",
+        "passed": true,
+        "note": ""
+      }
+    ]
+  }
+}

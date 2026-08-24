@@ -1,0 +1,187 @@
+================================================================================
+ESCA HSE MANAGEMENT SYSTEM — RUN INSTRUCTIONS
+================================================================================
+
+This document contains step-by-step instructions to run all components of the 
+ESCA HSE platform locally or using Docker Compose.
+
+The system consists of 3 services:
+  1. Backend:   Spring Boot 4 / Java 17 REST API (Port 8080)
+  2. AI Agent:  FastAPI / Python 3.12 Service with Groq & Tool Calling (Port 8000)
+  3. Frontend:  React + Tailwind CSS RTL Dashboard (Port 5180)
+
+All services connect directly to the live Railway MySQL Cloud Database:
+  - Host:      zephyr.proxy.rlwy.net
+  - Port:      17885
+  - Database:  railway
+  - Username:  root
+  - Password:  XpHdmtESQcZsfimIUuCwdqDcXutJYMhD
+
+--------------------------------------------------------------------------------
+EASIEST METHOD: 1-CLICK LAUNCHER (ALL 3 SERVICES)
+--------------------------------------------------------------------------------
+
+Simply double-click or run:
+    .\start-all.bat
+or in PowerShell:
+    .\Start-All.ps1
+
+This automatically opens 3 separate windows:
+  1. Backend Service (Spring Boot on Port 8080)
+  2. AI Agent Service (FastAPI on Port 8000)
+  3. Frontend Dashboard (React Vite on Port 5180)
+
+Once launched, open your browser at:
+  -> http://localhost:5180
+
+--------------------------------------------------------------------------------
+OPTION 2: RUNNING MANUALLY IN SEPARATE TERMINALS
+--------------------------------------------------------------------------------
+
+
+You will need 3 separate terminal windows (one for each service).
+
+--- TERMINAL 1: BACKEND SERVICE (Spring Boot) ---
+Prerequisites: Java 17+ (or JDK 17) and Apache Maven.
+
+  1. Navigate to the backend directory:
+       cd backend
+
+  2. Start the Spring Boot application:
+       mvn spring-boot:run
+
+     (The backend will listen on http://localhost:8080)
+
+  3. Verify it is running:
+       Open browser: http://localhost:8080/api/v1/health
+       Expected response: {"status":"ready","database":"connected"}
+
+
+--- TERMINAL 2: AI AGENT SERVICE (Python FastAPI) ---
+Prerequisites: Python 3.11+ / 3.12+.
+(See AI_AGENT_NEW_PC_SETUP.txt for full new-machine / offline setup guide)
+
+  1. Navigate to the ai-agent directory:
+       cd ai-agent
+
+  2. Create and activate a virtual environment (if not already created):
+       # On Windows PowerShell:
+       python -m venv venv
+       .\venv\Scripts\Activate.ps1
+
+       # On Linux / macOS:
+       python3 -m venv venv
+       source venv/bin/activate
+
+  3. Install dependencies:
+       pip install -r requirements.txt
+
+  4. Start the FastAPI server:
+       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+     (The agent will listen on http://localhost:8000)
+
+  5. Verify it is running:
+       Open browser: http://localhost:8000/health
+       Expected response: {"status":"ok","engine":"MySQL","database":"railway",...}
+
+
+
+--- TERMINAL 3: FRONTEND DASHBOARD (React + Vite) ---
+Prerequisites: Node.js 18+ and npm.
+
+  1. Navigate to the frontend directory:
+       cd frontend
+
+  2. Install dependencies (first time only):
+       npm install
+
+  3. Start the Vite development server:
+       npm run dev -- --port 5180
+
+  4. Open the Web Dashboard:
+       Open browser: http://localhost:5180
+
+--------------------------------------------------------------------------------
+TESTING & VERIFICATION COMMANDS
+--------------------------------------------------------------------------------
+
+1. Test AI Agent (Live Database Integration Tests):
+     cd ai-agent
+     .\venv\Scripts\python.exe -m pytest -v
+
+2. Test Backend (Spring Boot Unit & Integration Tests):
+     cd backend
+     mvn test
+
+3. Test Frontend Production Build:
+     cd frontend
+     npm run build
+
+--------------------------------------------------------------------------------
+LOGIN CREDENTIALS (LIVE DATABASE USERS)
+--------------------------------------------------------------------------------
+
+1. Primary Role Accounts:
+- HSE Manager (Full Access):
+    Username: mostafa
+    Password: mostafa2026
+    (Alternative: username 'hse.manager' / password 'HseDemo@2026')
+
+- Department Supervisor / Manager:
+    Username: department.manager
+    Password: HseDemo@2026
+
+- HSE Field Officer:
+    Username: hse.officer
+    Password: HseDemo@2026
+
+- System Administrator:
+    Username: admin
+    Password: admin123
+
+2. Standard Factory Users (Mapped to Plant Roles):
+- HSE Manager (ID 1):             Username: esca.user01 | Password: esca@001
+- HSE Officer (ID 2):             Username: esca.user02 | Password: esca@002
+- Production Supervisor (ID 3):   Username: esca.user03 | Password: esca@003
+- Maintenance Engineer (ID 4):    Username: esca.user04 | Password: esca@004
+- Electrical Engineer (ID 5):     Username: esca.user05 | Password: esca@005
+- Quality Engineer (ID 6):        Username: esca.user06 | Password: esca@006
+- Warehouse Supervisor (ID 7):    Username: esca.user07 | Password: esca@007
+- Operations Manager (ID 8):      Username: esca.user08 | Password: esca@008
+- Training Coordinator (ID 9):    Username: esca.user09 | Password: esca@009
+- System Administrator (ID 10):   Username: esca.user10 | Password: esca@010
+--------------------------------------------------------------------------------
+HOW TO STOP / TERMINATE ALL SERVICES (END THE SERVER)
+--------------------------------------------------------------------------------
+
+Option A: 1-Click Stop Scripts (Recommended)
+---------------------------------------------
+Simply double-click or run:
+    .\stop-all.bat
+or in PowerShell:
+    .\Stop-All.ps1
+
+This will automatically find and safely terminate all 3 processes running on 
+ports 8080 (Backend), 8000 (AI Agent), and 5180 (Frontend).
+
+
+Option B: Manual Terminal Windows
+---------------------------------------------
+If you have the 3 command prompt / terminal windows open:
+  - Click on each window and press:  Ctrl + C
+  - Or simply close the 3 terminal windows.
+
+
+Option C: Quick PowerShell 1-Liner (Command Line)
+-------------------------------------------------
+Run this command in any PowerShell window:
+    Get-NetTCPConnection -LocalPort 8080, 8000, 5180 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | Stop-Process -Force
+
+
+Option D: Docker Compose (If running via Docker)
+------------------------------------------------
+    docker compose down
+
+
+================================================================================

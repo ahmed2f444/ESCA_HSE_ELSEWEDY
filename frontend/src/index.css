@@ -1,0 +1,396 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   ESCA HSE console — base
+   The whole app is RTL. Physical utilities (left/right) are avoided in
+   JSX; anything directional lives here so we only reason about it once.
+------------------------------------------------------------------- */
+@layer base {
+  html {
+    background: theme('colors.steel.DEFAULT');
+  }
+  body {
+    @apply bg-steel text-txt font-sans text-base antialiased;
+    line-height: 1.6;
+  }
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: theme('colors.steel.DEFAULT');
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.line');
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.hi.dim');
+  }
+  /* Latin numerals inside Arabic text — HSE codes are read aloud on the floor */
+  .num {
+    font-feature-settings: 'tnum' 1;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: rgba(158, 27, 50, 0.45);
+  }
+}
+
+@layer components {
+  /* ---------- surfaces ---------- */
+  .card {
+    @apply bg-steel-2 border border-line rounded-md overflow-hidden;
+  }
+  .card-h {
+    @apply px-4 py-3 border-b border-line flex items-center justify-between gap-2.5;
+    background: rgba(0, 0, 0, 0.15);
+  }
+  .card-h h3 {
+    @apply text-[13.5px] font-semibold;
+  }
+  .card-b {
+    @apply p-4;
+  }
+  .hint {
+    @apply text-xs text-txt-3 font-mono num;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    @apply bg-steel-3 border border-line text-txt px-[15px] py-2 rounded text-[12.5px] font-medium
+           cursor-pointer transition-colors duration-150 inline-flex items-center gap-1.5
+           hover:bg-line hover:border-txt-3 disabled:opacity-45 disabled:cursor-not-allowed
+           disabled:hover:bg-steel-3 disabled:hover:border-line;
+  }
+  .btn-pri {
+    @apply bg-hi border-hi text-white font-semibold hover:bg-hi-2 hover:border-hi-2;
+  }
+  .btn-dgr {
+    @apply bg-crit border-crit text-white hover:bg-[#f0584c] hover:border-[#f0584c];
+  }
+  .btn-sm {
+    @apply px-[11px] py-[5px] text-[11.5px];
+  }
+  .btn-ghost {
+    @apply bg-transparent border-transparent hover:bg-steel-3 hover:border-line;
+  }
+
+  /* ---------- tables ---------- */
+  .tw {
+    @apply overflow-x-auto;
+  }
+  .tbl {
+    @apply w-full border-collapse text-[12.5px];
+  }
+  .tbl th {
+    @apply text-right px-3 py-2.5 bg-steel-3 text-txt-2 font-medium text-xs uppercase
+           tracking-wide font-mono border-b border-line whitespace-nowrap;
+  }
+  .tbl td {
+    @apply px-3 py-2.5 align-middle;
+    border-bottom: 1px solid rgba(46, 61, 78, 0.5);
+  }
+  .tbl tbody tr {
+    @apply transition-colors duration-100;
+  }
+  .tbl-rows tbody tr {
+    @apply cursor-pointer;
+  }
+  .tbl-rows tbody tr:hover {
+    background: rgba(158, 27, 50, 0.07);
+  }
+  .mono {
+    @apply font-mono text-[12px] text-txt-2 num;
+  }
+
+  /* ---------- status pills ---------- */
+  .pill {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-[2.5px] rounded-full text-xs
+           font-semibold whitespace-nowrap font-mono num;
+  }
+  .p-ok {
+    @apply text-safe;
+    background: rgba(56, 184, 124, 0.14);
+    border: 1px solid rgba(56, 184, 124, 0.3);
+  }
+  .p-wn {
+    @apply text-warn;
+    background: rgba(240, 144, 48, 0.14);
+    border: 1px solid rgba(240, 144, 48, 0.3);
+  }
+  .p-cr {
+    @apply text-crit;
+    background: rgba(224, 72, 60, 0.14);
+    border: 1px solid rgba(224, 72, 60, 0.3);
+  }
+  .p-in {
+    @apply text-info;
+    background: rgba(74, 157, 216, 0.14);
+    border: 1px solid rgba(74, 157, 216, 0.3);
+  }
+  .p-nu {
+    @apply text-txt-2 border border-line;
+    background: rgba(143, 163, 184, 0.12);
+  }
+
+  .tag {
+    @apply inline-block border border-line text-txt-2 px-2 py-0.5 rounded-sm text-2xs font-mono num m-0.5;
+    background: rgba(11, 60, 126, 0.25);
+  }
+  .tag-g {
+    @apply text-safe;
+    background: rgba(56, 184, 124, 0.14);
+    border-color: rgba(56, 184, 124, 0.35);
+  }
+  .tag-r {
+    color: #e8697f;
+    background: rgba(158, 27, 50, 0.18);
+    border-color: rgba(158, 27, 50, 0.4);
+  }
+
+  /* ---------- form controls ---------- */
+  input, select, textarea {
+    color-scheme: dark;
+  }
+  .field {
+    @apply w-full bg-steel-3 border border-line text-txt px-3 py-2.5 rounded text-[13px]
+           font-sans transition-colors duration-150
+           focus:outline-none focus:border-hi focus:ring-[3px] focus:ring-hi/20
+           placeholder:text-txt-3;
+    color-scheme: dark;
+    background-color: #1B2E4A !important;
+    color: #E9EFF7 !important;
+    border-color: #27405F !important;
+  }
+  .field::placeholder {
+    color: #7E95B0 !important;
+    opacity: 1;
+  }
+  .field:focus {
+    border-color: #C42440 !important;
+    box-shadow: 0 0 0 3px rgba(196, 36, 64, 0.25) !important;
+  }
+  .field-error {
+    border-color: #E0483C !important;
+    box-shadow: 0 0 0 2px rgba(224, 72, 60, 0.25) !important;
+  }
+  select.field option {
+    background-color: #122036 !important;
+    color: #E9EFF7 !important;
+  }
+  .label {
+    @apply block text-xs text-txt font-semibold mb-1.5;
+    color: #E9EFF7 !important;
+  }
+  .error-msg {
+    color: #FF6B6B;
+    font-size: 11px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+
+  /* ---------- misc primitives ---------- */
+  .stat-line {
+    @apply flex justify-between items-center gap-3 py-2 text-[12.5px];
+    border-bottom: 1px solid rgba(46, 61, 78, 0.4);
+  }
+  .stat-line:last-child {
+    border-bottom: none;
+  }
+  .stat-line b {
+    @apply font-mono num;
+  }
+  .bar-track {
+    @apply h-[7px] bg-steel-3 rounded overflow-hidden mt-1.5;
+  }
+  .bar-fill {
+    @apply block h-full rounded;
+    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hz-stripe {
+    height: 6px;
+    background: linear-gradient(90deg, #9e1b32 0%, #c42440 50%, #9e1b32 100%);
+  }
+}
+
+/* Recharts keeps its own focus outline on the wrapper — noisy in a dense grid */
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none;
+}
+
+/* ------------------------------------------------------------------
+   Print & PDF Export Styling (Executive ISO 45001 Document)
+------------------------------------------------------------------- */
+.print-only {
+  display: none !important;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0 !important; /* Strips browser default header (localhost URL) and footer */
+}
+
+@media print {
+  /* Hide website navigation, top header, chat dock, toasts, form builders, and interactive buttons */
+  header,
+  nav,
+  .site-header,
+  .nav-bar,
+  .toast,
+  .no-print,
+  #agent-dock,
+  .ai-assistant-dock,
+  [role="status"],
+  button,
+  .btn,
+  .field,
+  input,
+  select,
+  textarea {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Show dedicated print document header & footer */
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html {
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    padding: 14mm 16mm 14mm 16mm !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Cards in print */
+  .card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    margin-bottom: 10px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .card-h {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding: 6px 12px !important;
+  }
+
+  .card-h h3 {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: 12pt !important;
+  }
+
+  .card-b {
+    padding: 10px 12px !important;
+    background: #ffffff !important;
+  }
+
+  /* Typography & High Contrast Colors for White Paper */
+  .text-txt, .text-txt-1, .text-txt-2, .text-txt-3, h1, h2, h3, h4, span, p, div {
+    color: #0f172a !important;
+  }
+
+  .text-txt-3 {
+    color: #475569 !important;
+  }
+
+  .text-safe {
+    color: #15803d !important;
+  }
+
+  .text-warn {
+    color: #b45309 !important;
+  }
+
+  .text-crit {
+    color: #b91c1c !important;
+  }
+
+  .text-info {
+    color: #0369a1 !important;
+  }
+
+  /* Status Pills in Print */
+  .pill {
+    border: 1px solid #94a3b8 !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
+  }
+  .p-ok {
+    border-color: #86efac !important;
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+  }
+  .p-wn {
+    border-color: #fde68a !important;
+    background: #fffbeb !important;
+    color: #b45309 !important;
+  }
+  .p-cr {
+    border-color: #fca5a5 !important;
+    background: #fef2f2 !important;
+    color: #b91c1c !important;
+  }
+
+  /* Tables in Print */
+  .tbl {
+    border: 1px solid #cbd5e1 !important;
+  }
+  .tbl th {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+    font-size: 9pt !important;
+  }
+
+  .tbl td {
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+    font-size: 9pt !important;
+  }
+
+  .bar-track {
+    background: #e2e8f0 !important;
+    height: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  /* Donut SVG styling */
+  svg circle {
+    stroke-opacity: 1 !important;
+  }
+
+  /* Prevent awkward page breaks */
+  .grid, .grid-cols-2, .card, table, tr, .stat-line {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+

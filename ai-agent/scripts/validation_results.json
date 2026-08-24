@@ -1,0 +1,133 @@
+[
+  {
+    "id": "1_employees_full",
+    "prompt": "List all 10 employees with their display names, job titles, and hire dates.",
+    "gt_rows_count": 10,
+    "groq": {
+      "duration_seconds": 2.72,
+      "tools": [
+        "run_read_only_query"
+      ],
+      "missing_items": [
+        "محمود عبد الله",
+        "محمد عادل",
+        "ياسر محمود",
+        "دينا مصطفى"
+      ],
+      "answer_preview": "**First 10 Employees**\n\n| # | Display Name | Job Title | Hire Date |\n|---|--------------|-----------|-----------|\n| 1 | محمد عبد الله | Production Supervisor | 2019‑01‑10 |\n| 2 | هبة فؤاد | Production Operator | 2019‑09‑07 |\n| 3 | أحمد سامي | HSE Engineer | 2020‑05‑04 |\n| 4 | كريم رشاد | Maintenance"
+    },
+    "local": {
+      "duration_seconds": 66.72,
+      "tools": [
+        "get_employee_info"
+      ],
+      "missing_items": [
+        "دينا مصطفى"
+      ],
+      "answer_preview": "Here is a list of 10 employees with their display names, job titles, and hire dates:\n\n| Employee ID | Display Name | Job Title                | Hire Date      |\n|-------------|--------------|--------------------------|----------------|\n| 1           | مهندس محمود عبد الله | Production Supervisor    "
+    }
+  },
+  {
+    "id": "2_departments_managers",
+    "prompt": "List all 10 departments and the names of their managers.",
+    "gt_rows_count": 10,
+    "groq": {
+      "duration_seconds": 1.59,
+      "tools": [
+        "run_read_only_query"
+      ],
+      "missing_items": [],
+      "answer_preview": "**Departments – Managers (first 10 records)**  \n\n| # | Department (EN) | Department (AR) | Manager (Name) |\n|---|-----------------|-----------------|----------------|\n| 1 | Production Sector A | قطاع الإنتاج A | محمد عبد الله |\n| 2 | Production Sector B | قطاع الإنتاج B | هبة فؤاد |\n| 3 | Maintenanc"
+    },
+    "local": {
+      "duration_seconds": 45.12,
+      "tools": [
+        "run_read_only_query"
+      ],
+      "missing_items": [],
+      "answer_preview": "Here is the list of 10 departments along with the names of their managers:\n\n| Department ID | Department Name (English) | Manager Name (Arabic)                |\n|---------------|--------------------------|--------------------------------------|\n| 1             | Production Sector A       | مصطفى أحم"
+    }
+  },
+  {
+    "id": "3_chemicals_full",
+    "prompt": "List all 10 chemicals in our inventory with their trade names, CAS numbers, and quantities.",
+    "gt_rows_count": 10,
+    "groq": {
+      "duration_seconds": 1.66,
+      "tools": [
+        "list_chemicals"
+      ],
+      "missing_items": [
+        "WELD-ANTI SP",
+        "SOLV-IPA"
+      ],
+      "answer_preview": "**Chemical Inventory – First 10 Records**\n\n| # | Trade Name | CAS Number | Quantity (with Unit) |\n|---|------------|------------|----------------------|\n| 1 | DURACLEAN 200 | 1310‑73‑2 | 180 L |\n| 2 | WELD‑ANTI SP | 9003‑39‑8 | 75 kg |\n| 3 | CUTSAFE 46 | 64742‑54‑7 | 240 L |\n| 4 | SOLV‑IPA | 67‑63‑0"
+    },
+    "local": {
+      "duration_seconds": 90.85,
+      "tools": [
+        "list_chemicals"
+      ],
+      "missing_items": [],
+      "answer_preview": "Here is a list of the first 10 chemicals in our inventory along with their trade names, CAS numbers, and quantities:\n\n| Chemical ID | Trade Name         | CAS Number | Quantity | Unit | GHS Classes          |\n|-------------|-------------------|-----------|---------|------|----------------------|\n| 1"
+    }
+  },
+  {
+    "id": "4_incidents_severity",
+    "prompt": "What are all the recorded HSE incidents and their severity levels?",
+    "gt_rows_count": 10,
+    "groq": {
+      "duration_seconds": 3.71,
+      "tools": [
+        "get_db_schema",
+        "get_db_schema",
+        "run_read_only_query"
+      ],
+      "missing_items": [
+        "Near Miss - Forklift Near Collision",
+        "Minor Chemical Splash during Tank Wash",
+        "Steam Pipe Leak in Zone 4",
+        "Slips and Trips on Oily Floor"
+      ],
+      "answer_preview": "**All Recorded HSE Incidents (with Severity Levels)**  \n\n| # | Reported Date & Time (UTC) | Incident Title | Severity |\n|---|----------------------------|----------------|----------|\n| 1 | 2026‑08‑10 10:00 | Hand laceration during wrench use | **MAJOR** |\n| 2 | 2026‑08‑03 09:00 | Cable reel fell fro"
+    },
+    "local": {
+      "duration_seconds": 8.53,
+      "tools": [
+        "list_incidents"
+      ],
+      "missing_items": [
+        "Near Miss - Forklift Near Collision",
+        "Minor Chemical Splash during Tank Wash",
+        "Steam Pipe Leak in Zone 4",
+        "Slips and Trips on Oily Floor"
+      ],
+      "answer_preview": "There are currently no open HSE incidents recorded in the database. \n\nWould you like to check for any closed incidents or filter by a specific severity level?"
+    }
+  },
+  {
+    "id": "5_arabic_query",
+    "prompt": "ما هي المواد الكيميائية المسجلة في النظام وما هي درجات خطورتها؟",
+    "gt_rows_count": 10,
+    "groq": {
+      "duration_seconds": 10.18,
+      "tools": [
+        "list_chemicals"
+      ],
+      "missing_items": [
+        "DURACLEAN 200",
+        "SOLV-IPA",
+        "EPOXY RESIN A"
+      ],
+      "answer_preview": "**المواد الكيميائية المسجلة في نظام HSE ودرجة خطورتها (حسب تصنيف GHS)**  \n\n| # | الاسم التجاري | الاسم الكيميائي | رقم CAS | الفئة GHS (درجة الخطورة) |\n|---|--------------|----------------|--------|---------------------------|\n| 1 | DURACLEAN 200 | Alkaline Cleaner | 1310‑73‑2 | **CORROSIVE** (مُسبب"
+    },
+    "local": {
+      "duration_seconds": 95.68,
+      "tools": [
+        "list_chemicals"
+      ],
+      "missing_items": [],
+      "answer_preview": "تم تسجيل المواد الكيميائية التالية في النظام مع درجات خطورتها:\n\n| الكيميائي | الاسم التجاري | رقم CAS | المورِّد | الكمية (الوحدة) | درجة الخطورة |\n| --- | --- | --- | --- | --- | --- |\n| Alkaline Cleaner | DURACLEAN 200 | 1310-73-2 | EgyChem | 180.0 L | CORROSIVE |\n| Anti-Spatter Compound | WELD-AN"
+    }
+  }
+]

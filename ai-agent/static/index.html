@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESCA HSE — AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-body: #070d18;
+            --bg-card: #0e1929;
+            --bg-header: #0a1322;
+            --border-color: #1a2f4d;
+            --border-hover: #2a4975;
+            --accent-red: #c0243d;
+            --accent-red-hover: #e03a55;
+            --accent-blue: #388bfd;
+            --accent-green: #38b87c;
+            --accent-purple: #a371f7;
+            --text-primary: #e9eff7;
+            --text-secondary: #7e9bbd;
+            --text-muted: #4e6a8d;
+        }
+
+        body {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 960px;
+            height: 94vh;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        .header {
+            padding: 14px 20px;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #e03a3a, #8e1529);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(224, 58, 58, 0.3);
+        }
+
+        .header-titles h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.2px;
+        }
+
+        .header-titles p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ── Header Controls (Model Selector & Actions) ── */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .model-selector-wrapper {
+            display: flex;
+            align-items: center;
+            background: #060b13;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .model-pill {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .model-pill:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .model-pill.active {
+            background: #182b45;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .model-pill.active[data-mode="groq"] {
+            border: 1px solid rgba(56, 139, 253, 0.4);
+            color: #79c0ff;
+        }
+
+        .model-pill.active[data-mode="local"] {
+            border: 1px solid rgba(56, 184, 124, 0.4);
+            color: #7ee787;
+        }
+
+        .model-pill.active[data-mode="auto"] {
+            border: 1px solid rgba(163, 113, 247, 0.4);
+            color: #d2a8ff;
+        }
+
+        .btn-new-chat {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-new-chat:hover {
+            background: #152438;
+            color: #fff;
+            border-color: var(--border-hover);
+        }
+
+        /* ── Messages Area ── */
+        .messages {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .messages::-webkit-scrollbar { width: 6px; }
+        .messages::-webkit-scrollbar-track { background: transparent; }
+        .messages::-webkit-scrollbar-thumb { background: #1a2f4d; border-radius: 4px; }
+
+        .msg-wrapper { display: flex; flex-direction: column; }
+        .msg-wrapper.user { align-items: flex-end; }
+        .msg-wrapper.agent { align-items: flex-start; }
+
+        .msg {
+            max-width: 82%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.65;
+            animation: fadeUp 0.2s ease;
+            word-break: break-word;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg.user {
+            background: linear-gradient(135deg, #a81c33, #821224);
+            color: #ffffff;
+            border-bottom-right-radius: 3px;
+            box-shadow: 0 4px 14px rgba(136, 20, 40, 0.3);
+        }
+
+        .msg.agent {
+            background: #132033;
+            border: 1px solid var(--border-color);
+            color: #dbe7f5;
+            border-bottom-left-radius: 3px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Markdown styling inside agent bubbles */
+        .msg.agent h1, .msg.agent h2, .msg.agent h3, .msg.agent h4 {
+            margin: 10px 0 6px;
+            color: #fff;
+            font-weight: 600;
+        }
+        .msg.agent h1 { font-size: 17px; }
+        .msg.agent h2 { font-size: 15px; }
+        .msg.agent h3 { font-size: 14px; }
+        .msg.agent p { margin: 6px 0; }
+        .msg.agent ul, .msg.agent ol { padding-left: 22px; margin: 8px 0; }
+        .msg.agent li { margin: 4px 0; }
+        .msg.agent strong { color: #8ec3ff; }
+        .msg.agent em { color: #a4c4e8; }
+        .msg.agent table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 13px;
+            background: #0a1322;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .msg.agent th, .msg.agent td {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .msg.agent th {
+            background: #0f1d30;
+            color: #9bbfe6;
+            font-weight: 600;
+        }
+        .msg.agent code {
+            background: #09121e;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: var(--accent-green);
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            border: 1px solid rgba(56, 184, 124, 0.2);
+        }
+        .msg.agent pre {
+            background: #08111c;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+        }
+        .msg.agent pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            color: #d1e2f6;
+        }
+
+        /* ── Message Metadata Badges ── */
+        .msg-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: #09121f;
+            border: 1px solid var(--border-color);
+            font-size: 11px;
+        }
+
+        .meta-tag.groq {
+            color: #79c0ff;
+            border-color: rgba(56, 139, 253, 0.3);
+            background: rgba(56, 139, 253, 0.08);
+        }
+
+        .meta-tag.local {
+            color: #7ee787;
+            border-color: rgba(56, 184, 124, 0.3);
+            background: rgba(56, 184, 124, 0.08);
+        }
+
+        .meta-tag.tools {
+            color: #e3b341;
+            border-color: rgba(227, 179, 65, 0.3);
+            background: rgba(227, 179, 65, 0.08);
+        }
+
+        /* ── Typing Indicator ── */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 12px 16px;
+        }
+        .typing-indicator span {
+            width: 7px;
+            height: 7px;
+            background: #4a6fa5;
+            border-radius: 50%;
+            animation: bounce 1.2s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        /* ── Mode Info Banner ── */
+        .mode-banner {
+            font-size: 11px;
+            padding: 6px 16px;
+            background: #091322;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mode-banner span strong {
+            color: var(--text-secondary);
+        }
+
+        /* ── Input Box ── */
+        .input-box {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            background: var(--bg-header);
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: #08111e;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #userInput::placeholder { color: var(--text-muted); }
+        #userInput:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(56, 139, 253, 0.2);
+        }
+
+        #sendBtn {
+            padding: 12px 22px;
+            background: linear-gradient(135deg, var(--accent-red-hover), var(--accent-red));
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        #sendBtn:hover { opacity: 0.92; }
+        #sendBtn:active { transform: scale(0.98); }
+        #sendBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">🛡️</div>
+            <div class="header-titles">
+                <h2>ESCA HSE Assistant</h2>
+                <p>AI-Powered Health, Safety &amp; Environment Intelligence</p>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <!-- Model Selection Toggle -->
+            <div class="model-selector-wrapper">
+                <button class="model-pill" data-mode="auto" onclick="setModelMode('auto')" title="Tries Groq Cloud first, automatically falls back to Local Ollama if rate limited">
+                    <span>🔄</span> Auto Fallback
+                </button>
+                <button class="model-pill" data-mode="groq" onclick="setModelMode('groq')" title="Groq Cloud Only (Ultra-fast inference & full 60-table SQL access)">
+                    <span>⚡</span> Groq Cloud
+                </button>
+                <button class="model-pill" data-mode="local" onclick="setModelMode('local')" title="Local Ollama Only (100% Offline / RTX 3050 GPU)">
+                    <span>💻</span> Local Ollama
+                </button>
+            </div>
+
+            <button class="btn-new-chat" onclick="startNewSession()" title="Start a fresh conversation session">
+                <span>➕</span> New Chat
+            </button>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages" id="chatBox">
+        <div class="msg-wrapper agent">
+            <div class="msg agent">
+                👋 Hello! I'm your **ESCA HSE Assistant**. I have live access to safety incidents, CAPAs, risk registers, PPE inventory, IoT sensor alerts, employee medical exams, and more.<br><br>
+                💡 *You can select between **Auto Fallback**, **Groq Cloud**, or **Local Ollama** using the model switcher above.*<br><br>
+                Ask me anything in English or Arabic!
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Mode Helper Banner -->
+    <div class="mode-banner" id="modeBanner">
+        <span id="modeDescription">Current mode: <strong>🔄 Auto Fallback</strong> (Groq Cloud $\rightarrow$ Local Ollama failover)</span>
+        <span id="sessionStatus">Session: Live</span>
+    </div>
+
+    <!-- Input Box -->
+    <div class="input-box">
+        <input type="text" id="userInput" placeholder="Ask me anything… / اسألني أي شيء عن السلامة والبيئة" 
+               onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }">
+        <button id="sendBtn" onclick="sendMessage()">
+            <span>Send</span> ➤
+        </button>
+    </div>
+</div>
+
+<script>
+let currentSessionId = null;
+let selectedModelMode = localStorage.getItem('esca_model_mode') || 'auto';
+
+const MODE_DESCRIPTIONS = {
+    'auto': 'Current mode: <strong>🔄 Auto Fallback</strong> (Groq Cloud primary $\\rightarrow$ Local Ollama GPU failover)',
+    'groq': 'Current mode: <strong>⚡ Groq Cloud Only</strong> (Ultra-fast cloud inference & full tool suite)',
+    'local': 'Current mode: <strong>💻 Local Ollama Only</strong> (100% Offline / RTX 3050 GPU)'
+};
+
+function updateModelPillUI() {
+    document.querySelectorAll('.model-pill').forEach(btn => {
+        if (btn.dataset.mode === selectedModelMode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    const descEl = document.getElementById('modeDescription');
+    if (descEl && MODE_DESCRIPTIONS[selectedModelMode]) {
+        descEl.innerHTML = MODE_DESCRIPTIONS[selectedModelMode];
+    }
+}
+
+function setModelMode(mode) {
+    selectedModelMode = mode;
+    localStorage.setItem('esca_model_mode', mode);
+    updateModelPillUI();
+}
+
+function startNewSession() {
+    currentSessionId = null;
+    const chatBox = document.getElementById('chatBox');
+    chatBox.innerHTML = `
+        <div class="msg-wrapper agent">
+            <div class="msg agent">
+                ✨ **New session started.** Ask me any question regarding HSE records, incidents, CAPAs, or safety KPIs!
+            </div>
+        </div>
+    `;
+    const sessionStatus = document.getElementById('sessionStatus');
+    if (sessionStatus) sessionStatus.textContent = 'Session: New';
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+function sanitizeAgentText(text) {
+    if (!text) return '';
+    return text
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<think>[\s\S]*/gi, '')
+        .replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, '')
+        .replace(/<tool_call>[\s\S]*/gi, '')
+        .replace(/<function_call>[\s\S]*?<\/function_call>/gi, '')
+        .replace(/<function_call>[\s\S]*/gi, '')
+        .replace(/<function[=\s][\s\S]*?<\/function>/gi, '')
+        .replace(/<function[=\s][\s\S]*/gi, '')
+        .replace(/<parameter[=\s][\s\S]*?<\/parameter>/gi, '')
+        .replace(/<parameter[=\s][\s\S]*/gi, '')
+        .replace(/<\/?(?:tool_call|function_call|function|parameter|think)[^>]*>/gi, '')
+        .trim();
+}
+
+function renderMarkdown(text) {
+    const clean = sanitizeAgentText(text);
+    if (typeof marked !== 'undefined') {
+        return marked.parse(clean, { breaks: true });
+    }
+    return escapeHtml(clean).replace(/\n/g, '<br>');
+}
+
+function addMessage(role, content, meta = null) {
+    const chatBox = document.getElementById('chatBox');
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper ${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = `msg ${role}`;
+
+    if (role === 'agent') {
+        let html = renderMarkdown(content);
+        if (meta) {
+            const isLocal = meta.model_used && meta.model_used.toLowerCase().includes('local');
+            const modelClass = isLocal ? 'local' : 'groq';
+            const modelIcon = isLocal ? '💻' : '⚡';
+            const modelName = meta.model_used || 'Groq';
+            
+            let toolsBadge = '';
+            if (meta.tool_calls && meta.tool_calls.length > 0) {
+                toolsBadge = `<span class="meta-tag tools">🔧 ${meta.tool_calls.length} tool call${meta.tool_calls.length > 1 ? 's' : ''}</span>`;
+            }
+
+            html += `
+                <div class="msg-meta">
+                    <span class="meta-tag ${modelClass}">${modelIcon} ${escapeHtml(modelName)}</span>
+                    ${toolsBadge}
+                </div>
+            `;
+        }
+        bubble.innerHTML = html;
+    } else {
+        bubble.textContent = content;
+    }
+
+    wrapper.appendChild(bubble);
+    chatBox.appendChild(wrapper);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return wrapper;
+}
+
+function showTyping() {
+    const chatBox = document.getElementById('chatBox');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg-wrapper agent';
+    wrapper.id = 'typing';
+    wrapper.innerHTML = `<div class="msg agent"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+    chatBox.appendChild(wrapper);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+}
+
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage('user', text);
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+    showTyping();
+
+    try {
+        const res = await fetch('/api/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                question: text, 
+                session_id: currentSessionId,
+                model_mode: selectedModelMode
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || `Server error ${res.status}`);
+        }
+
+        const data = await res.json();
+        currentSessionId = data.session_id;
+        removeTyping();
+        addMessage('agent', data.answer, {
+            model_used: data.model_used,
+            tool_calls: data.tool_calls
+        });
+
+        const sessionStatus = document.getElementById('sessionStatus');
+        if (sessionStatus && currentSessionId) {
+            sessionStatus.textContent = `Session: ${currentSessionId.substring(0, 10)}…`;
+        }
+
+    } catch (err) {
+        removeTyping();
+        addMessage('agent', `⚠️ **Error communicating with the agent:**\n\n_${err.message}_\n\n*If using Local Ollama, ensure \`ollama serve\` is running.*`);
+    }
+
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+}
+
+// Initialize UI
+updateModelPillUI();
+</script>
+
+</body>
+</html>

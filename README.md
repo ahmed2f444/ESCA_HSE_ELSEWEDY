@@ -1,5 +1,6 @@
 # 🛡️ ESCA HSE Management System — Unified Enterprise Platform
 
+[![CI Pipeline](https://github.com/ahmed2f444/ESCA_HSE_ELSEWEDY/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmed2f444/ESCA_HSE_ELSEWEDY/actions/workflows/ci.yml)
 [![Spring Boot](https://img.shields.io/badge/Backend-Spring%20Boot%204%20%2F%20Java%2017-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![FastAPI](https://img.shields.io/badge/AI%20Agent-FastAPI%20%2F%20Python%203.12-blue.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/Frontend-React%2018%20%2F%20Vite%20%2F%20TailwindCSS-61DAFB.svg)](https://react.dev/)

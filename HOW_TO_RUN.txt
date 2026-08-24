@@ -18,7 +18,20 @@ All services connect directly to the live Railway MySQL Cloud Database:
   - Password:  XpHdmtESQcZsfimIUuCwdqDcXutJYMhD
 
 --------------------------------------------------------------------------------
-EASIEST METHOD: 1-CLICK LAUNCHER (ALL 3 SERVICES)
+QUICK SETUP (FIRST TIME RUN ON A NEW MACHINE)
+--------------------------------------------------------------------------------
+
+1. Backend configuration:
+     Copy backend/.env.example to backend/.env (or keep default Railway connection)
+
+2. AI Agent configuration:
+     Copy ai-agent/.env.example to ai-agent/.env
+
+3. Launch everything with 1 click:
+     Double-click 'start-all.bat' (or run '.\Start-All.ps1' in PowerShell)
+
+--------------------------------------------------------------------------------
+OPTION 1: 1-CLICK LAUNCHER (RECOMMENDED)
 --------------------------------------------------------------------------------
 
 Simply double-click or run:
@@ -38,18 +51,22 @@ Once launched, open your browser at:
 OPTION 2: RUNNING MANUALLY IN SEPARATE TERMINALS
 --------------------------------------------------------------------------------
 
-
 You will need 3 separate terminal windows (one for each service).
 
 --- TERMINAL 1: BACKEND SERVICE (Spring Boot) ---
-Prerequisites: Java 17+ (or JDK 17) and Apache Maven.
+Prerequisites: Java 17+ (JDK 17).
 
   1. Navigate to the backend directory:
        cd backend
 
-  2. Start the Spring Boot application:
-       mvn spring-boot:run
+  2. Start the Spring Boot application (using bundled Maven wrapper):
+       # On Windows:
+       .\mvnw.cmd spring-boot:run
 
+       # On Linux / macOS:
+       ./mvnw spring-boot:run
+
+     (Or if you have Apache Maven installed globally: `mvn spring-boot:run`)
      (The backend will listen on http://localhost:8080)
 
   3. Verify it is running:

@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 20
       - name: Install Dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --include=optional --no-audit --no-fund
       - name: Build Frontend
         run: npm run build
 

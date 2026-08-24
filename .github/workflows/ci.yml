@@ -19,10 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install Dependencies
-        run: npm install --include=optional --no-audit --no-fund
-      - name: Build Frontend
-        run: npm run build
+      - name: Install and Build Frontend
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
 
   build-backend:
     name: Compile Backend (Spring Boot + Java 17)

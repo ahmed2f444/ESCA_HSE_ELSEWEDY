@@ -1,10 +1,10 @@
 package com.esca.hse.config;
 
 import com.esca.hse.security.JwtAuthenticationFilter;
+import com.esca.hse.security.RbacAuthorizationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,6 +25,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtFilter,
+            RbacAuthorizationFilter rbacFilter,
             CorsConfigurationSource corsConfigurationSource,
             @Value("${app.security.enabled:false}") boolean securityEnabled) throws Exception {
         
@@ -54,26 +55,14 @@ public class SecurityConfig {
                                 "/swagger-ui/**", "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/internal/automation/**").hasAuthority("SCOPE_automation:write")
-                        .requestMatchers(HttpMethod.DELETE, "/api/**", "/api/v1/**").hasAnyRole("HSE_MANAGER", "HSE_OFFICER", "SYSTEM_ADMINISTRATOR")
-                        .requestMatchers(
-                                "/api/v1/occupational-health/**", "/api/occupational-health/**", "/api/v1/raw/occupational-health/**"
-                        ).hasAnyRole("HSE_MANAGER", "OCCUPATIONAL_DOCTOR", "SYSTEM_ADMINISTRATOR")
-                        .requestMatchers(
-                                "/api/v1/master-data/**", "/api/master-data/**",
-                                "/api/v1/departments/**", "/api/departments/**",
-                                "/api/v1/organization/**",
-                                "/api/v1/automation-rules/**", "/api/v1/raw/automation-rules/**",
-                                "/api/v1/security/**", "/api/security/**",
-                                "/api/v1/integrations/**", "/api/integrations/**"
-                        ).hasAnyRole("HSE_MANAGER", "SYSTEM_ADMINISTRATOR", "AUDITOR")
-                        .requestMatchers(
-                                "/api/v1/audit/**", "/api/audit/**",
-                                "/api/v1/audit-log/**", "/api/audit-log/**"
-                        ).hasAnyRole("HSE_MANAGER", "AUDITOR", "SYSTEM_ADMINISTRATOR")
+                        // RbacAuthorizationFilter applies the action-level policy
+                        // (read/create/update/delete/approve/export) to user APIs.
+                        .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated();
                     }
                 })
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rbacFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

@@ -30,6 +30,7 @@ The system enforces strict multi-tiered security protocols:
 - **SQL Injection Prevention:** 100% parameterized queries with compile-time table whitelisting and dynamic query sanitization.
 - **IDOR Mitigation:** Server-side ownership and role verification on all critical entity mutations (Permits approval/suspension, CAPA verification, Incident closing, equipment servicing).
 - **Backend-Enforced RBAC:** Role-Based Access Control mapped across all route patterns (`/api/**` and `/api/v1/**`) with standardized JSON responses for `401 Unauthorized` and `403 Forbidden`.
+- **Fail-Closed Authorization Matrix:** A single Spring policy defines action-level access (`create/read/update/delete/approve/export`) for every role; unknown roles and unclassified future APIs are denied by default. See [`docs/RBAC_ACCESS_MATRIX.md`](./docs/RBAC_ACCESS_MATRIX.md).
 - **Sensitive Data Safeguards:** AI tools filter and redact sensitive columns (`password_hash`, tokens, secrets) preventing unauthorized data inspection.
 
 ---
@@ -94,7 +95,7 @@ npm run dev -- --port 5180
 
 ## 🧪 Testing & Verification
 
-- **Backend Test Suite (38/38 Tests Passing)**:
+- **Backend Test Suite (49/49 Tests Passing)**:
   ```bash
   cd backend
   ./mvnw test
@@ -119,5 +120,6 @@ Detailed documentation, architecture specs, and contracts are located in the [`d
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — System components & data flow architecture
 - [`docs/SPRING_INTEGRATION_CONTRACT.md`](./docs/SPRING_INTEGRATION_CONTRACT.md) — Automation service integration contract
 - [`docs/FRONTEND_DOCS.md`](./docs/FRONTEND_DOCS.md) — UI design tokens and component hierarchy
+- [`docs/RBAC_ACCESS_MATRIX.md`](./docs/RBAC_ACCESS_MATRIX.md) — Canonical roles, module permissions, scopes, aliases, and enforcement rules
 - [`docs/AGENT_VERIFICATION_REPORT.md`](./docs/AGENT_VERIFICATION_REPORT.md) — AI Agent testing and verification report
 

@@ -129,7 +129,7 @@ export const useAuth = () => useContext(AuthCtx)
 export function useCan() {
   const { user } = useAuth()
   const role = user?.role
-  return { ...permissionsFor(role), role }
+  return { ...permissionsFor(role, user?.permissions), role }
 }
 
 /* ------------------------------------------------------------------ *

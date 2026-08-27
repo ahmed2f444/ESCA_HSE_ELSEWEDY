@@ -104,12 +104,42 @@ const FALLBACK = MATRIX.WORKER ?? {
   exportReports: false,
 }
 
-export function permissionsFor(role) {
-  return MATRIX[role] ?? FALLBACK
+function fromServerPermissions(role, serverPermissions) {
+  if (!Array.isArray(serverPermissions)) return null
+  const granted = new Set(serverPermissions)
+  const can = (module, action) => granted.has(`${module}:${action}`)
+  const canReadModule = (module) => {
+    if (can(module, 'READ')) return true
+    // Create-only roles still need to open the incident screen to submit a report.
+    if (module === 'INCIDENTS' && can('INCIDENTS', 'CREATE')) return true
+    if (module === 'HEALTH') {
+      return can('HEALTH_AGGREGATE', 'READ') || can('HEALTH_SELF', 'READ')
+    }
+    return false
+  }
+  const pages = Object.entries(PAGE_MODULE)
+    .filter(([, module]) => module === null || canReadModule(module.toUpperCase()))
+    .map(([path]) => path)
+
+  return {
+    ...(MATRIX[role] ?? FALLBACK),
+    pages,
+    report: can('INCIDENTS', 'CREATE'),
+    write: [...granted].some((permission) => /:(CREATE|UPDATE|DELETE)$/.test(permission)),
+    closeIncident: can('INCIDENTS', 'UPDATE') || can('INCIDENTS', 'DELETE'),
+    approvePermit: can('PERMITS', 'APPROVE'),
+    exportReports: can('REPORTS', 'EXPORT'),
+    health: canReadModule('HEALTH') ? 'READ' : 'NONE',
+    admin: can('ADMIN', 'UPDATE') ? 'RW' : can('ADMIN', 'READ') ? 'R' : 'NONE',
+  }
 }
 
-export function canOpen(role, path) {
-  const { pages } = permissionsFor(role)
+export function permissionsFor(role, serverPermissions) {
+  return fromServerPermissions(role, serverPermissions) ?? MATRIX[role] ?? FALLBACK
+}
+
+export function canOpen(role, path, serverPermissions) {
+  const { pages } = permissionsFor(role, serverPermissions)
   return pages === ALL_PAGES || pages.includes(path)
 }
 

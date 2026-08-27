@@ -38,7 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 } else {
                     authorities.add(new SimpleGrantedAuthority("ROLE_" + String.valueOf(claims.get("role"))));
                 }
-                SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(subject, null, authorities));
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(subject, null, authorities);
+                authentication.setDetails(claims);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (IllegalArgumentException ignored) {
                 SecurityContextHolder.clearContext();
             }

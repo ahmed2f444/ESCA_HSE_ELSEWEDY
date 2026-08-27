@@ -186,11 +186,12 @@ function NoAccess() {
 export default function AppShell() {
   const now = useClock()
   const { role } = useCan()
+  const { user } = useAuth()
   const { pathname } = useLocation()
 
-  const visibleNav = NAV.filter((n) => canOpen(role, n.to))
+  const visibleNav = NAV.filter((n) => canOpen(role, n.to, user?.permissions))
   // Only guard paths the app actually owns — anything else falls through to 404.
-  const blocked = NAV.some((n) => n.to === pathname) && !canOpen(role, pathname)
+  const blocked = NAV.some((n) => n.to === pathname) && !canOpen(role, pathname, user?.permissions)
 
   return (
     <div className="min-h-screen flex flex-col">

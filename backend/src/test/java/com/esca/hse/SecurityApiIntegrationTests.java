@@ -1,5 +1,6 @@
 package com.esca.hse;
 
+import com.esca.hse.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,6 +32,7 @@ class SecurityApiIntegrationTests {
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder encoder;
     @Autowired ObjectMapper objectMapper;
+    @Autowired JwtService jwtService;
 
     @BeforeEach
     void prepareSecurityFixtures() {
@@ -58,6 +61,8 @@ class SecurityApiIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token_type").value("Bearer"))
                 .andExpect(jsonPath("$.user.role").value("HSE_MANAGER"))
+                .andExpect(jsonPath("$.user.dataScope").value("SITE"))
+                .andExpect(jsonPath("$.user.permissions").isArray())
                 .andReturn().getResponse().getContentAsString();
 
         JsonNode login = objectMapper.readTree(loginResponse);
@@ -65,6 +70,67 @@ class SecurityApiIntegrationTests {
         mvc.perform(get("/api/v1/dashboard").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ready"));
+    }
+
+    @Test
+    void rbacSeparatesReadOnlyAuditFromAdministrationWrites() throws Exception {
+        String auditor = jwtService.userToken("audit.user", "AUDITOR", "Auditor");
+
+        mvc.perform(get("/api/v1/audit-log").header("Authorization", "Bearer " + auditor))
+                .andExpect(status().isOk());
+
+        mvc.perform(post("/api/v1/organization/departments")
+                        .header("Authorization", "Bearer " + auditor)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"department_id\":\"DEP-SEC\",\"department_name\":\"Denied write\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Access denied by RBAC policy"));
+    }
+
+    @Test
+    void rbacProtectsAdministrationAndMedicalRecordBoundaries() throws Exception {
+        String worker = jwtService.userToken("field.worker", "WORKER", "Worker");
+        String doctor = jwtService.userToken("clinic.doctor", "OCCUPATIONAL_DOCTOR", "Doctor");
+        String manager = jwtService.userToken("hse.manager", "HSE_MANAGER", "HSE Manager");
+
+        mvc.perform(get("/api/v1/dashboard").header("Authorization", "Bearer " + worker))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/security/roles").header("Authorization", "Bearer " + worker))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/occupational-health/stats").header("Authorization", "Bearer " + worker))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(get("/api/v1/occupational-health/exams").header("Authorization", "Bearer " + doctor))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/occupational-health/stats").header("Authorization", "Bearer " + manager))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/occupational-health/exams").header("Authorization", "Bearer " + manager))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void authenticatedUnknownApiRoutesFailClosed() throws Exception {
+        String manager = jwtService.userToken("hse.manager", "HSE_MANAGER", "HSE Manager");
+        mvc.perform(get("/api/v1/future-unclassified-module")
+                        .header("Authorization", "Bearer " + manager))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void ordinaryUsersCanAskTheAgentAndAcknowledgeTheirNotifications() throws Exception {
+        String worker = jwtService.userToken("field.worker", "WORKER", "Worker");
+
+        mvc.perform(post("/api/v1/agent/ask")
+                        .header("Authorization", "Bearer " + worker)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"question\":\"What PPE is required?\"}"))
+                .andExpect(status().isOk());
+
+        jdbc.update("INSERT INTO notifications (notification_id,recipient_user_id,type,title,message,status) "
+                + "VALUES ('NOT-RBAC-1','1','SYSTEM','Test','Test notification','UNREAD')");
+        mvc.perform(patch("/api/v1/notifications/NOT-RBAC-1/read")
+                        .header("Authorization", "Bearer " + worker))
+                .andExpect(status().isOk());
     }
 
     @Test

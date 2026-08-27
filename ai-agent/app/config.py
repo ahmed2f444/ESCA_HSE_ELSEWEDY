@@ -39,9 +39,9 @@ class Settings(BaseSettings):
     # Spring Boot Integration (for mutations / automation)
     spring_api_base_url: str = "http://localhost:8080"
     automation_client_id: str = "esca-hse-automation"
-    automation_client_secret: str = "local-automation-secret-change-me"
-    spring_automation_client_id: str = "esca-hse-automation"
-    spring_automation_client_secret: SecretStr = SecretStr("local-automation-secret-change-me")
+    automation_client_secret: SecretStr = SecretStr(
+        "local-automation-secret-change-me"
+    )
     spring_connect_timeout_seconds: float = 3.0
     spring_read_timeout_seconds: float = 10.0
     spring_max_attempts: int = 3

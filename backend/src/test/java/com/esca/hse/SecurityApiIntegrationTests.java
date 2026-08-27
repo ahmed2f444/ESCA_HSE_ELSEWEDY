@@ -128,5 +128,9 @@ class SecurityApiIntegrationTests {
 
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM automation_actions WHERE idempotency_key=?", Integer.class, key)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM notifications WHERE entity_id='PTW-SEC-1'", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT type FROM notifications WHERE entity_id='PTW-SEC-1'", String.class))
+                .isEqualTo("AUTOMATION_PERMIT_OVERDUE");
+        assertThat(jdbc.queryForObject("SELECT status FROM notifications WHERE entity_id='PTW-SEC-1'", String.class))
+                .isEqualTo("UNREAD");
     }
 }

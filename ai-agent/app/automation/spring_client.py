@@ -33,7 +33,9 @@ REQUIRED_SCOPE = "automation:write"
 EVENT_SCHEMA_VERSION = "1.0"
 
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
+# ``backend`` is the fixed service alias on the private Docker Compose
+# network. Public/non-local hosts still require HTTPS.
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1", "backend"}
 
 EVENT_ID_PATTERN = re.compile(r"^evt_[0-9a-f]{32}$")
 IDEMPOTENCY_KEY_PATTERN = re.compile(

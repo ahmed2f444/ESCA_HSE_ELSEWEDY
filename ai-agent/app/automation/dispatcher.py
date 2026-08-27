@@ -12,7 +12,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from typing import Any, Protocol
 
-from app.automation.spring_client import SpringAutomationClient
+from app.automation.spring_client import (
+    SpringAutomationClient,
+    SpringClientConfig,
+)
+from app.config import Settings
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +27,47 @@ SPRING_MODE = "spring"
 
 class AutomationDispatchError(ValueError):
     """Raised when an event batch is unsafe or malformed."""
+
+
+def create_event_dispatcher(settings: Settings) -> EventDispatcher:
+    """Build the configured dispatcher after validating both safety gates.
+
+    Live delivery is enabled only when the mode is ``spring`` *and* the
+    explicit live flag is true. Contradictory settings fail closed instead
+    of silently selecting a different behavior.
+    """
+
+    mode = settings.automation_delivery_mode
+    live_enabled = settings.automation_live_enabled
+
+    if mode == DRY_RUN_MODE:
+        if live_enabled:
+            raise AutomationDispatchError(
+                "Live automation requires spring delivery mode"
+            )
+        return DryRunEventDispatcher()
+
+    if mode != SPRING_MODE:
+        raise AutomationDispatchError(
+            "Unsupported automation delivery mode"
+        )
+    if not live_enabled:
+        raise AutomationDispatchError(
+            "Spring delivery requires AUTOMATION_LIVE_ENABLED=true"
+        )
+
+    client_config = SpringClientConfig(
+        base_url=settings.spring_api_base_url,
+        client_id=settings.automation_client_id,
+        client_secret=settings.automation_client_secret,
+        connect_timeout_seconds=settings.spring_connect_timeout_seconds,
+        read_timeout_seconds=settings.spring_read_timeout_seconds,
+        max_attempts=settings.spring_max_attempts,
+        token_refresh_leeway_seconds=(
+            settings.spring_token_refresh_leeway_seconds
+        ),
+    )
+    return SpringEventDispatcher(SpringAutomationClient(client_config))
 
 
 @dataclass(frozen=True, slots=True)

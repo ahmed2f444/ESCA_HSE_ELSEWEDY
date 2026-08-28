@@ -31,6 +31,18 @@ public class JwtService {
         return issue(subject, userTtlSeconds, Map.of("type", "user", "role", role, "name", displayName));
     }
 
+    public String userToken(String subject, String role, String displayName,
+            String dataScope, String scopeId, String employeeId) {
+        Map<String, Object> claims = new LinkedHashMap<>();
+        claims.put("type", "user");
+        claims.put("role", role);
+        claims.put("name", displayName);
+        claims.put("data_scope", dataScope);
+        if (scopeId != null && !scopeId.isBlank()) claims.put("scope_id", scopeId);
+        if (employeeId != null && !employeeId.isBlank()) claims.put("employee_id", employeeId);
+        return issue(subject, userTtlSeconds, claims);
+    }
+
     public String serviceToken(String subject, String scope, long ttlSeconds) {
         return issue(subject, ttlSeconds, Map.of("type", "service", "scope", scope));
     }

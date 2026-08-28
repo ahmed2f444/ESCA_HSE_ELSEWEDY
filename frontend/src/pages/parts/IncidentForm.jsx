@@ -154,7 +154,7 @@ export default function IncidentForm({ open, onClose, onCreated }) {
       {error && (
         <div
           className="text-xs px-3 py-2 rounded"
-          style={{ background: 'rgba(224,72,60,.1)', border: '1px solid rgba(224,72,60,.4)', color: '#f08b82' }}
+          style={{ background: 'rgb(var(--c-crit) / 0.1)', border: '1px solid rgb(var(--c-crit) / 0.4)', color: 'rgb(var(--c-crit))' }}
         >
           {error}
         </div>

@@ -3,6 +3,7 @@ import { Async, Btn, Card, CardBody, CardHead, Grid, PageHeader, Pill, Table } f
 import Icon from '../components/Icon.jsx'
 import { security as secApi } from '../api/endpoints.js'
 import { useApi } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 /** One CRUD grade cell. NONE reads as a dash so the eye skips it. */
 function Grade({ v }) {
@@ -14,8 +15,8 @@ function Grade({ v }) {
       <span
         className="font-mono num text-2xs font-semibold px-1.5 py-0.5 rounded"
         style={{
-          background: strong ? 'rgba(224,72,60,.14)' : write ? 'rgba(240,144,48,.14)' : 'rgba(74,157,216,.14)',
-          color: strong ? '#E0483C' : write ? '#F09030' : '#4A9DD8',
+          background: strong ? `rgb(var(--c-crit) / 0.14)` : write ? `rgb(var(--c-warn) / 0.14)` : `rgb(var(--c-info) / 0.14)`,
+          color: strong ? tc.crit() : write ? tc.warn() : tc.info(),
         }}
       >
         {v}
@@ -25,7 +26,7 @@ function Grade({ v }) {
 }
 
 const ACTION_TONE = (a) =>
-  a.includes('BLOCK') || a.includes('SUSPEND') ? '#E0483C' : a.includes('APPROVE') ? '#38B87C' : a.includes('CREATE') ? '#F09030' : '#4A9DD8'
+  a.includes('BLOCK') || a.includes('SUSPEND') ? tc.crit() : a.includes('APPROVE') ? tc.safe() : a.includes('CREATE') ? tc.warn() : tc.info()
 
 export default function Security() {
   const [q, setQ] = useState('')

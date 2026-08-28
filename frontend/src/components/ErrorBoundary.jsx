@@ -40,8 +40,7 @@ export default class ErrorBoundary extends Component {
         </p>
 
         <pre
-          className="mt-5 mx-auto max-w-xl overflow-x-auto text-start text-2xs font-mono num p-3 rounded border"
-          style={{ background: 'rgba(224,72,60,.08)', borderColor: 'rgba(224,72,60,.35)', color: '#f08b82' }}
+          className="mt-5 mx-auto max-w-xl overflow-x-auto text-start text-2xs font-mono num p-3 rounded border border-crit/40 bg-crit/10 text-crit"
         >
           {String(error?.message || error)}
         </pre>

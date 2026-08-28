@@ -147,7 +147,17 @@ export function ToastProvider({ children }) {
     setTimeout(() => setItems((s) => s.filter((i) => i.id !== id)), 3600)
   }, [])
 
-  const colors = { ok: '#38B87C', wn: '#F09030', cr: '#E0483C', in: '#4A9DD8' }
+  /** Read the current theme color as a CSS string. */
+  const themeColor = (varName) => {
+    const rgb = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+    return rgb ? `rgb(${rgb.replace(/ /g, ', ')})` : '#888'
+  }
+  const colors = {
+    ok: () => themeColor('--c-safe'),
+    wn: () => themeColor('--c-warn'),
+    cr: () => themeColor('--c-crit'),
+    in: () => themeColor('--c-info'),
+  }
 
   return (
     <ToastCtx.Provider value={push}>
@@ -158,12 +168,12 @@ export function ToastProvider({ children }) {
             key={t.id}
             className="bg-steel-3 border rounded-md px-4 py-3 text-sm flex items-center gap-2.5 animate-fade"
             style={{
-              borderColor: colors[t.tone],
+              borderColor: colors[t.tone](),
               borderInlineEndWidth: 4,
               boxShadow: '0 8px 26px rgba(0,0,0,.45)',
             }}
           >
-            <Icon name={t.tone === 'ok' ? 'check' : 'incident'} size={15} style={{ color: colors[t.tone] }} />
+            <Icon name={t.tone === 'ok' ? 'check' : 'incident'} size={15} style={{ color: colors[t.tone]() }} />
             {t.message}
           </div>
         ))}

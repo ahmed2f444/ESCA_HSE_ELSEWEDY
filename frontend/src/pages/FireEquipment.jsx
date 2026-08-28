@@ -19,12 +19,13 @@ import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { fire as fireApi } from '../api/endpoints.js'
 import { useApi, useCan, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const STATE = {
-  ok: { color: '#38B87C', label: 'صالحة وجاهزة' },
-  wn: { color: '#F09030', label: 'تنتهي قريباً' },
-  cr: { color: '#E0483C', label: 'منتهية / معطلة' },
-  nu: { color: '#5E7794', label: 'تحت الصيانة' },
+  ok: { get color() { return tc.safe() }, label: 'صالحة وجاهزة' },
+  wn: { get color() { return tc.warn() }, label: 'تنتهي قريباً' },
+  cr: { get color() { return tc.crit() }, label: 'منتهية / معطلة' },
+  nu: { get color() { return tc.txt3() }, label: 'تحت الصيانة' },
 }
 
 const stateOf = (s) => {
@@ -493,7 +494,7 @@ export default function FireEquipment() {
               <Table head={['المنطقة', 'عدد الوحدات', 'الصالحة', 'النسبة']} clickable={false}>
                 {rows.map((r) => {
                   const pct = r.pct ?? Math.round(((r.ok || 1) / (r.total || 1)) * 100)
-                  const color = pct >= 95 ? '#38B87C' : pct >= 85 ? '#F09030' : '#E0483C'
+                  const color = pct >= 95 ? tc.safe() : pct >= 85 ? tc.warn() : tc.crit()
                   return (
                     <tr key={r.zone}>
                       <td className="font-medium text-txt">{r.zone}</td>

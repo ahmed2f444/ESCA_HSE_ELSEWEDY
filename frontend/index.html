@@ -8,10 +8,68 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@700;800&family=Montserrat:wght@700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <title>ESCA HSE — نظام إدارة السلامة والصحة المهنية</title>
+    <!-- FOUC prevention: apply persisted theme & custom mode derivation before first paint -->
+    <script>
+      try {
+        function hexToRgb(hex) {
+          if (!hex || typeof hex !== 'string') return [124, 58, 237];
+          var clean = hex.replace('#', '');
+          if (clean.length === 3) {
+            return [
+              parseInt(clean[0] + clean[0], 16) || 0,
+              parseInt(clean[1] + clean[1], 16) || 0,
+              parseInt(clean[2] + clean[2], 16) || 0
+            ];
+          }
+          return [
+            parseInt(clean.slice(0, 2), 16) || 0,
+            parseInt(clean.slice(2, 4), 16) || 0,
+            parseInt(clean.slice(4, 6), 16) || 0
+          ];
+        }
+
+        function derivePalette(r, g, b) {
+          var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          var txtColor = lum > 0.58 ? '15 23 42' : '255 255 255';
+          return {
+            '--c-steel': Math.round(r * 0.12 + 6) + ' ' + Math.round(g * 0.10 + 6) + ' ' + Math.round(b * 0.18 + 8),
+            '--c-steel2': Math.round(r * 0.22 + 10) + ' ' + Math.round(g * 0.18 + 10) + ' ' + Math.round(b * 0.30 + 14),
+            '--c-steel3': Math.round(r * 0.32 + 14) + ' ' + Math.round(g * 0.26 + 14) + ' ' + Math.round(b * 0.40 + 20),
+            '--c-line': Math.round(r * 0.45 + 20) + ' ' + Math.round(g * 0.38 + 20) + ' ' + Math.round(b * 0.55 + 28),
+            '--c-txt': '248 250 255',
+            '--c-txt2': Math.min(255, Math.round(r * 0.35 + 160)) + ' ' + Math.min(255, Math.round(g * 0.35 + 165)) + ' ' + Math.min(255, Math.round(b * 0.35 + 195)),
+            '--c-txt3': Math.min(255, Math.round(r * 0.30 + 110)) + ' ' + Math.min(255, Math.round(g * 0.30 + 115)) + ' ' + Math.min(255, Math.round(b * 0.30 + 145)),
+            '--c-hi': r + ' ' + g + ' ' + b,
+            '--c-hi2': Math.min(255, Math.round(r + 35)) + ' ' + Math.min(255, Math.round(g + 35)) + ' ' + Math.min(255, Math.round(b + 35)),
+            '--c-hi-dim': Math.round(r * 0.4 + 15) + ' ' + Math.round(g * 0.4 + 15) + ' ' + Math.round(b * 0.4 + 20),
+            '--c-hi-txt': txtColor,
+            '--c-safe': '56 184 124',
+            '--c-warn': '240 144 48',
+            '--c-crit': '224 72 60',
+            '--c-info': '74 157 216'
+          };
+        }
+
+        var t = JSON.parse(localStorage.getItem('esca.hse.theme') || '{}');
+        var m = ['standard','dark','light','colorblind','custom'].indexOf(t.mode) >= 0 ? t.mode : 'standard';
+        document.documentElement.setAttribute('data-theme', m);
+        document.documentElement.className = m;
+        document.documentElement.style.colorScheme = m === 'light' ? 'light' : 'dark';
+
+        if (m === 'custom') {
+          var activeColor = t.accent || '#7C3AED';
+          var rgb = hexToRgb(activeColor);
+          var vars = derivePalette(rgb[0], rgb[1], rgb[2]);
+          for (var k in vars) {
+            document.documentElement.style.setProperty(k, vars[k]);
+          }
+        }
+      } catch(e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

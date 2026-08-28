@@ -19,6 +19,7 @@ import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { permits as permitApi } from '../api/endpoints.js'
 import { useApi, useCan, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 /** Permit-type codes come from the sheets; the icon and tone are ours. */
 const TYPE_META = {
@@ -48,10 +49,10 @@ const ZONES = [
 
 /** Board columns follow what the issuing office actually watches during a shift. */
 const COLUMNS = [
-  { key: 'pending', title: 'بانتظار الموافقة', accent: '#4A9DD8', match: (p) => p.rawStatus === 'PENDING_APPROVAL' },
-  { key: 'active', title: 'نشط تحت التنفيذ', accent: '#38B87C', match: (p) => p.rawStatus === 'ACTIVE' },
-  { key: 'expiring', title: 'ينتهي خلال ساعات', accent: '#F09030', match: (p) => ['DUE_SOON', 'EXPIRES_TODAY'].includes(p.flag) && p.rawStatus === 'ACTIVE' },
-  { key: 'blocked', title: 'موقوف / مرفوض', accent: '#E0483C', match: (p) => ['SUSPENDED', 'REJECTED', 'BLOCKED', 'EXPIRED', 'CANCELLED', 'CLOSED'].includes(p.rawStatus) },
+  { key: 'pending', title: 'بانتظار الموافقة', get accent() { return tc.info() }, match: (p) => p.rawStatus === 'PENDING_APPROVAL' },
+  { key: 'active', title: 'نشط تحت التنفيذ', get accent() { return tc.safe() }, match: (p) => p.rawStatus === 'ACTIVE' },
+  { key: 'expiring', title: 'ينتهي خلال ساعات', get accent() { return tc.warn() }, match: (p) => ['DUE_SOON', 'EXPIRES_TODAY'].includes(p.flag) && p.rawStatus === 'ACTIVE' },
+  { key: 'blocked', title: 'موقوف / مرفوض', get accent() { return tc.crit() }, match: (p) => ['SUSPENDED', 'REJECTED', 'BLOCKED', 'EXPIRED', 'CANCELLED', 'CLOSED'].includes(p.rawStatus) },
 ]
 
 export default function Permits() {
@@ -352,10 +353,9 @@ export default function Permits() {
               {(d) => (
                 <>
                   <div
-                    className="p-3.5 rounded mb-3.5"
-                    style={{ background: 'rgba(158,27,50,.13)', border: '1px solid rgba(158,27,50,.4)' }}
+                    className="p-3.5 rounded mb-3.5 bg-hi/15 border border-hi/40"
                   >
-                    <div className="text-[12.5px] font-semibold mb-2 flex items-center gap-2" style={{ color: '#e8697f' }}>
+                    <div className="text-[12.5px] font-semibold mb-2 flex items-center gap-2 text-hi-2">
                       <Icon name="close" size={14} />
                       تم رفض إصدار التصريح {d.blocked.permit}
                     </div>
@@ -793,8 +793,7 @@ function ApprovalCard({ permitId, onApproved }) {
 
               {d?.signature && (
                 <div
-                  className="mt-3.5 p-3.5 rounded text-center border border-dashed border-line"
-                  style={{ background: 'rgba(0,0,0,.15)' }}
+                  className="mt-3.5 p-3.5 rounded text-center border border-dashed border-line bg-steel-3/50"
                 >
                   <div className="text-info text-[19px] mb-1" style={{ fontFamily: '"Segoe Script", cursive' }}>
                     {d.signature.name}

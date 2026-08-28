@@ -16,6 +16,7 @@ import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { ppe as ppeApi } from '../api/endpoints.js'
 import { useApi, useCan, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 /** Matrix cell rendering: mandatory / task-dependent / not required. */
 function MatrixCell({ v }) {
@@ -308,7 +309,7 @@ export default function Ppe() {
                   <tr key={r.code}>
                     <td className="font-medium text-txt">{r.item}</td>
                     <td className="mono">{r.code}</td>
-                    <td className="mono font-semibold" style={{ color: r.balance < r.threshold ? '#E0483C' : undefined }}>
+                    <td className="mono font-semibold" style={{ color: r.balance < r.threshold ? tc.crit() : undefined }}>
                       {r.balance}
                     </td>
                     <td className="mono text-txt-2">{r.threshold}</td>
@@ -426,7 +427,7 @@ export default function Ppe() {
                           {r.balance} / {r.threshold}
                         </b>
                       </div>
-                      <MiniBar value={pct} color="#E0483C" width="100%" />
+                      <MiniBar value={pct} color={tc.crit()} width="100%" />
                       <div className="text-2xs text-txt-3 mt-1 flex justify-between">
                         <span>يكفي {monthsLeft} شهر بمعدل الاستهلاك الحالي ({r.rate} / شهر)</span>
                         <span className="text-crit font-medium">عجز: {r.threshold - r.balance} وحدة</span>

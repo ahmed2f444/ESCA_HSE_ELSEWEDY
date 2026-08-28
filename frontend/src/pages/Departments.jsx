@@ -4,8 +4,9 @@ import Modal from '../components/Modal.jsx'
 import Icon from '../components/Icon.jsx'
 import { departments as deptApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
+import tc, { toneColors } from '../themeColors.js'
 
-const TONE_COLOR = { ok: '#38B87C', wn: '#F09030', cr: '#E0483C' }
+
 
 export default function Departments() {
   const toast = useToast()
@@ -39,7 +40,7 @@ export default function Departments() {
                       onClick={() => setZone(z)}
                       className="text-start bg-steel-3 border border-line rounded-md p-3.5 transition-all duration-150
                                  hover:-translate-y-0.5 hover:border-txt-3 hover:shadow-lg"
-                      style={{ borderInlineEndWidth: 4, borderInlineEndColor: TONE_COLOR[z.status] || '#5E7794' }}
+                      style={{ borderInlineEndWidth: 4, borderInlineEndColor: toneColors()[z.status] || tc.txt3() }}
                     >
                       <div className="text-[13.5px] font-semibold mb-0.5">{z.name}</div>
                       <div className="text-xs text-txt-3 font-mono num mb-2.5">
@@ -47,7 +48,7 @@ export default function Departments() {
                       </div>
                       <div className="stat-line">
                         <span>مؤشر السلامة</span>
-                        <b style={{ color: TONE_COLOR[z.status] || '#93A9C4' }}>
+                        <b style={{ color: toneColors()[z.status] || tc.txt2() }}>
                           {z.score == null ? '—' : `${z.score}%`}
                         </b>
                       </div>

@@ -22,13 +22,14 @@ import ExcelJS from 'exceljs'
 import { PlantHeatmap, TrirTrend } from '../components/charts.jsx'
 import { reports as reportsApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const READY_REPORTS = [
   {
     id: 'monthly',
     title: 'التقرير الشهري للسلامة',
     en: 'MONTHLY HSE REPORT',
-    color: '#4A9DD8',
+    color: tc.info(),
     desc: 'ملخص شامل للحوادث والمؤشرات ومعدل TRIR والعمليات',
     data: [
       { metric: 'معدل الحوادث المسجلة TRIR', current: '0.42', target: '1.20', status: 'ضمن المستهدف' },
@@ -41,7 +42,7 @@ const READY_REPORTS = [
     id: 'incidents',
     title: 'تقرير تحليل الحوادث',
     en: 'INCIDENT ANALYSIS & RCA',
-    color: '#E0483C',
+    color: tc.crit(),
     desc: 'تحليل الأسباب الجذرية والاتجاهات الشهرية حسب الأقسام',
     data: [
       { metric: 'إجمالي الحوادث المسجلة YTD', current: '6 حوادث', target: '≤ 10', status: 'تحت السيطرة' },
@@ -53,7 +54,7 @@ const READY_REPORTS = [
     id: 'fire',
     title: 'تقرير جاهزية الحريق',
     en: 'FIRE READINESS & SUPPRESSION',
-    color: '#F09030',
+    color: tc.warn(),
     desc: 'حالة الطفايات ومضخات الحريق وجدول الاختبارات الدورية',
     data: [
       { metric: 'جاهزية طفايات الحريق بالموقع', current: '182 / 186 صالحة', target: '100%', status: '98% جاهزية' },
@@ -65,7 +66,7 @@ const READY_REPORTS = [
     id: 'competency',
     title: 'مصفوفة الكفاءات والتدريب',
     en: 'COMPETENCY & CERTIFICATIONS',
-    color: '#38B87C',
+    color: tc.safe(),
     desc: 'موقف تدريب العاملين وتواريخ تجديد شهادات السلامة',
     data: [
       { metric: 'نسبة صلاحية شهادات السلامة', current: '92%', target: '90%+', status: 'ممتاز' },
@@ -77,7 +78,7 @@ const READY_REPORTS = [
     id: 'risk',
     title: 'سجل المخاطر المحدّث (HIRA)',
     en: 'RISK REGISTER & CONTROLS',
-    color: '#9E1B32',
+    color: tc.hi(),
     desc: 'المخاطر المتبقية وضوابط التحكم الهندسية والإدارية',
     data: [
       { metric: 'مخاطر عالية متبقية (High Risk)', current: '0 مخاطر غير منضبطة', target: '0', status: 'مؤمّن بالكامل' },
@@ -89,7 +90,7 @@ const READY_REPORTS = [
     id: 'iso',
     title: 'حزمة التدقيق ISO 45001',
     en: 'ISO 45001 AUDIT PACK',
-    color: '#4A9DD8',
+    color: tc.info(),
     desc: 'الأدلة والسجلات المطلوبة لجهات المنح والتدقيق الخارجي',
     data: [
       { metric: 'معدل المطابقة الإجمالي لبنود ISO', current: '88.3%', target: '≥ 85%', status: 'جاهز للتدقيق' },
@@ -393,7 +394,7 @@ export default function Reports() {
   return (
     <>
       {/* Printable Executive Document Header (Only shows on print/PDF export) */}
-      <div className="print-only mb-6 pb-4 border-b-2 border-[#9E1B32]">
+      <div className="print-only mb-6 pb-4 border-b-2 border-hi">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Wordmark height={44} isWhite={false} />
@@ -476,7 +477,7 @@ export default function Reports() {
                 return (
                   <>
                     {d.map((c) => (
-                      <BarRow key={c.clause} label={c.clause} value={c.pct} color={c.pct >= 85 ? '#38B87C' : '#F09030'} />
+                      <BarRow key={c.clause} label={c.clause} value={c.pct} color={c.pct >= 85 ? tc.safe() : tc.warn()} />
                     ))}
                     <div className="mt-3.5 pt-3 border-t border-line flex justify-between items-center">
                       <span className="text-[12.5px]">جاهزية التدقيق الإجمالية</span>
@@ -502,7 +503,7 @@ export default function Reports() {
                     items={[
                       { label: '0 حادث', color: '#1a3a2e' },
                       { label: '1–2', color: '#8a9a34' },
-                      { label: '3–4', color: '#F09030' },
+                      { label: '3–4', color: tc.warn() },
                       { label: '5–6', color: '#c0402e' },
                       { label: '7+', color: '#8E1F17' },
                     ]}

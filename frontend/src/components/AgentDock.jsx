@@ -101,10 +101,7 @@ export default function AgentDock() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 end-6 z-[800] group flex items-center gap-3 bg-steel-2 hover:bg-steel-3 border border-line hover:border-hi/60 rounded-full ps-3.5 pe-5 py-2.5 text-xs font-semibold shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95"
-          style={{
-            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06)',
-          }}
+          className="fixed bottom-6 end-6 z-[800] group flex items-center gap-3 bg-steel-2 hover:bg-steel-3 border border-line hover:border-hi/60 rounded-full ps-3.5 pe-5 py-2.5 text-xs font-semibold shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
         >
           <span className="relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-hi to-hi-2 text-white shadow-md">
             <Icon name="chat" size={16} />
@@ -120,10 +117,9 @@ export default function AgentDock() {
       {/* Floating Chat Modal */}
       {open && (
         <section
-          className="fixed bottom-6 end-6 z-[800] w-[min(460px,calc(100vw-2rem))] bg-steel-2/95 backdrop-blur-xl border border-line/80 rounded-2xl flex flex-col overflow-hidden shadow-2xl animate-pop"
+          className="fixed bottom-6 end-6 z-[800] w-[min(460px,calc(100vw-2rem))] bg-steel-2 border border-line rounded-2xl flex flex-col overflow-hidden shadow-2xl animate-pop"
           style={{
             height: 'min(640px, calc(100vh - 5rem))',
-            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08)',
           }}
         >
           {/* Header */}

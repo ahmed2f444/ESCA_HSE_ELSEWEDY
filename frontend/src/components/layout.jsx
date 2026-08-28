@@ -3,7 +3,9 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import Icon from './Icon.jsx'
 import AgentDock from './AgentDock.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
+import ThemeSwitcher from './ThemeSwitcher.jsx'
 import { useAuth, useCan, useClock } from '../hooks.jsx'
+import { useTheme } from '../theme.jsx'
 import { canOpen } from '../permissions.js'
 import { USE_MOCK } from '../api/client.js'
 
@@ -30,62 +32,32 @@ export const NAV = [
   { to: '/reports', label: 'التقارير', icon: 'reports' },
 ]
 
-import logoImg from '../assets/logo.png'
+import elsewedyLogoWhite from '../assets/elsewedy-brand-logo-white.png'
+import elsewedyLogoDark from '../assets/elsewedy-brand-logo-dark.png'
 
-/** Official Elsewedy Cables Vector Wordmark with bright white text and red swoosh */
-export function Wordmark({ scale = 1, className = '', height = 48, width, centered = false, isWhite = true }) {
+/** Official Elsewedy Electric — Cable Accessories Brand Image Asset */
+export function Wordmark({ scale = 1, className = '', height = 42, width, centered = false, isWhite = true }) {
+  const imgSrc = isWhite ? elsewedyLogoWhite : elsewedyLogoDark
+
   return (
     <div
-      className={`inline-flex flex-col select-none ${centered ? 'items-center text-center mx-auto' : 'items-start'} ${className}`}
+      dir="ltr"
+      className={`inline-flex select-none ${centered ? 'justify-center mx-auto' : 'items-center'} ${className}`}
       style={{
         transform: scale !== 1 ? `scale(${scale})` : undefined,
-        transformOrigin: centered ? 'center center' : 'right center'
+        transformOrigin: centered ? 'center center' : 'left center',
       }}
     >
-      <svg
-        viewBox="0 0 460 100"
-        className="w-auto h-auto max-w-full drop-shadow-md"
+      <img
+        src={imgSrc}
+        alt="ELSEWEDY ELECTRIC | CABLE ACCESSORIES"
+        className="w-auto object-contain block max-w-full drop-shadow-md select-none"
         style={{
-          height: height ? `${height}px` : undefined,
-          width: width ? `${width}px` : undefined,
+          height: height ? `${height}px` : '42px',
+          width: width ? `${width}px` : 'auto',
         }}
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* ELSEWEDY bold uppercase text */}
-        <text
-          x="230"
-          y="44"
-          textAnchor="middle"
-          fill={isWhite ? "#FFFFFF" : "#111827"}
-          fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, 'Inter', Arial, sans-serif"
-          fontWeight="900"
-          fontSize="42"
-          letterSpacing="12"
-        >
-          ELSEWEDY
-        </text>
-
-        {/* CABLES spaced uppercase text */}
-        <text
-          x="230"
-          y="72"
-          textAnchor="middle"
-          fill={isWhite ? "#FFFFFF" : "#1F2937"}
-          fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, 'Inter', Arial, sans-serif"
-          fontWeight="700"
-          fontSize="21"
-          letterSpacing="22"
-        >
-          CABLES
-        </text>
-
-        {/* Dynamic Red Swoosh Arc */}
-        <path
-          d="M 25 82 C 130 106, 330 106, 435 82 C 330 94, 130 94, 25 82 Z"
-          fill="#ED1C24"
-        />
-      </svg>
+        draggable={false}
+      />
     </div>
   )
 }
@@ -187,33 +159,35 @@ export default function AppShell() {
   const now = useClock()
   const { role } = useCan()
   const { pathname } = useLocation()
+  const { mode } = useTheme()
 
   const visibleNav = NAV.filter((n) => canOpen(role, n.to))
   // Only guard paths the app actually owns — anything else falls through to 404.
   const blocked = NAV.some((n) => n.to === pathname) && !canOpen(role, pathname)
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-steel text-txt">
       <div className="hz-stripe no-print" />
 
       <header className="bg-steel-2 border-b border-line sticky top-0 z-[100] no-print">
-        <div className="flex items-center justify-between gap-4 flex-wrap px-[22px] py-3">
-          <div className="flex items-center">
-            <Wordmark />
-            <span className="w-px h-10 bg-line mx-4" />
+        <div className="flex items-center justify-between gap-4 px-[22px] py-2.5 min-h-[64px]">
+          {/* Right Side (RTL Start): Logo & Title */}
+          <div className="flex items-center gap-3 shrink-0">
+            <Wordmark isWhite={mode !== 'light'} height={36} />
+            <span className="w-px h-8 bg-line" />
             <div>
-              <h1 className="text-base font-semibold tracking-tight">نظام إدارة السلامة والصحة المهنية</h1>
-              <span className="block text-xs text-txt-3 font-mono num tracking-wide mt-px">
+              <h1 className="text-[14.5px] font-bold tracking-tight leading-tight">نظام إدارة السلامة والصحة المهنية</h1>
+              <span className="block text-[11px] text-txt-3 font-mono num tracking-wide mt-0.5">
                 CABLE ACCESSORIES — ESCA · HSE-MS v2.4 · ISO 45001
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-5 font-mono num text-xs text-txt-2">
+          {/* Left Side (RTL End): Badges, Clock, Theme Switcher & User Profile */}
+          <div className="flex items-center gap-3.5 font-mono num text-xs text-txt-2 shrink-0">
             {USE_MOCK && (
               <span
-                className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded border text-2xs"
-                style={{ borderColor: 'rgba(240,144,48,.4)', background: 'rgba(240,144,48,.1)', color: '#F09030' }}
+                className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded border border-warn/40 bg-warn/10 text-warn text-2xs"
                 title="الواجهة تعمل على بيانات محاكاة — بدّل VITE_USE_MOCK=false للربط بـ Spring Boot"
               >
                 <Icon name="integrations" size={12} /> MOCK API
@@ -223,7 +197,8 @@ export default function AppShell() {
               <i className="w-[7px] h-[7px] rounded-full bg-safe animate-blip" />
               النظام يعمل
             </span>
-            <span className="hidden sm:block">{now.toTimeString().slice(0, 8)}</span>
+            <span className="hidden sm:block text-txt-3">{now.toTimeString().slice(0, 8)}</span>
+            <ThemeSwitcher />
             <UserChip />
           </div>
         </div>
@@ -235,12 +210,7 @@ export default function AppShell() {
               to={n.to}
               end={n.end}
               className={({ isActive }) =>
-                [
-                  'px-4 py-2.5 text-[13px] font-medium whitespace-nowrap flex items-center gap-2 border-b-[3px] transition-colors duration-150',
-                  isActive
-                    ? 'text-white border-hi bg-hi/[.18]'
-                    : 'text-txt-2 border-transparent hover:text-txt hover:bg-hi/10',
-                ].join(' ')
+                `nav-tab ${isActive ? 'active' : ''}`
               }
             >
               <Icon name={n.icon} size={15} />
@@ -260,9 +230,9 @@ export default function AppShell() {
       </main>
 
       <footer className="border-t border-line bg-steel-2 px-[22px] py-4 mt-6 flex items-center justify-between gap-3.5 flex-wrap no-print">
-        <div className="flex items-center gap-2.5">
-          <Wordmark scale={0.62} />
-          <span className="text-xs text-txt-2 -ms-11">
+        <div className="flex items-center gap-3.5">
+          <Wordmark height={26} isWhite={mode !== 'light'} />
+          <span className="text-xs text-txt-2">
             Elsewedy Cables — Cable Accessories (ESCA) · إدارة السلامة والصحة المهنية
           </span>
         </div>

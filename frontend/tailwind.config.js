@@ -4,15 +4,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Plant console palette — carried over from the ESCA HSE mockup.
-        steel: { DEFAULT: '#0B1526', 2: '#122036', 3: '#1B2E4A' },
-        line: '#27405F',
-        hi: { DEFAULT: '#9E1B32', 2: '#C42440', dim: '#5E101D' },
-        safe: '#38B87C',
-        warn: '#F09030',
-        crit: '#E0483C',
-        info: '#4A9DD8',
-        txt: { DEFAULT: '#E9EFF7', 2: '#93A9C4', 3: '#5E7794' },
+        // Plant console palette — now driven by CSS variables so themes can swap them.
+        // The rgb(var(--c-x) / <alpha-value>) pattern lets Tailwind opacity modifiers work.
+        steel: {
+          DEFAULT: 'rgb(var(--c-steel) / <alpha-value>)',
+          1: 'rgb(var(--c-steel) / <alpha-value>)',
+          2: 'rgb(var(--c-steel2) / <alpha-value>)',
+          3: 'rgb(var(--c-steel3) / <alpha-value>)',
+        },
+        line: 'rgb(var(--c-line) / <alpha-value>)',
+        hi: {
+          DEFAULT: 'rgb(var(--c-hi) / <alpha-value>)',
+          2: 'rgb(var(--c-hi2) / <alpha-value>)',
+          dim: 'rgb(var(--c-hi-dim) / <alpha-value>)',
+          txt: 'rgb(var(--c-hi-txt) / <alpha-value>)',
+        },
+        safe: 'rgb(var(--c-safe) / <alpha-value>)',
+        warn: 'rgb(var(--c-warn) / <alpha-value>)',
+        crit: 'rgb(var(--c-crit) / <alpha-value>)',
+        info: 'rgb(var(--c-info) / <alpha-value>)',
+        txt: {
+          DEFAULT: 'rgb(var(--c-txt) / <alpha-value>)',
+          2: 'rgb(var(--c-txt2) / <alpha-value>)',
+          3: 'rgb(var(--c-txt3) / <alpha-value>)',
+        },
       },
       fontFamily: {
         sans: ['"IBM Plex Sans Arabic"', 'Segoe UI', 'Tahoma', 'sans-serif'],

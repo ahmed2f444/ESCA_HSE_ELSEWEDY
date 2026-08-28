@@ -264,7 +264,9 @@ export default function ThemeSwitcher() {
                 className="relative w-8 h-8 rounded-md overflow-hidden cursor-pointer shrink-0 border border-white/25 hover:border-hi transition-all hover:scale-105 flex items-center justify-center shadow-md ring-1 ring-black/20"
                 title="اختر لونًا مخصصًا"
                 style={{
-                  background: 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 18%, #06B6D4 36%, #10B981 54%, #FBBF24 72%, #F97316 88%, #EF4444 100%)',
+                  background: mode === 'custom'
+                    ? (accent || '#9E1B32')
+                    : 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 18%, #06B6D4 36%, #10B981 54%, #FBBF24 72%, #F97316 88%, #EF4444 100%)',
                 }}
               >
                 <input
@@ -273,11 +275,8 @@ export default function ThemeSwitcher() {
                   onChange={(e) => handleColorChange(e.target.value)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/30 pointer-events-none" />
-                <div
-                  className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm pointer-events-none transition-colors"
-                  style={{ background: accent || '#9E1B32' }}
-                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/15 via-transparent to-white/25 pointer-events-none" />
+                <PenIcon size={14} className="text-white drop-shadow pointer-events-none relative z-[1]" />
               </label>
               <div className="text-[12px] font-bold text-txt flex-1 leading-tight select-none font-sans">
                 اختر لونًا مخصصًا

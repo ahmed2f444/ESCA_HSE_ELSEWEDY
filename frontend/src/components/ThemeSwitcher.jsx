@@ -113,8 +113,8 @@ function ResetIcon({ size = 12 }) {
 
 const ICON_MAP = { standard: StandardIcon, dark: MoonIcon, light: SunIcon, colorblind: EyeIcon, custom: PaletteIcon }
 
-const IPHONE_ARABIC_FONT = {
-  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Arabic", "SF Pro Text", "SF Pro Display", "SF Arabic", "Almarai", "Cairo", "Segoe UI", system-ui, sans-serif',
+const ARABIC_BRAND_FONT = {
+  fontFamily: '"IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif',
   letterSpacing: 'normal',
 }
 
@@ -151,15 +151,15 @@ export default function ThemeSwitcher() {
   }
 
   return (
-    <div className="relative select-none text-txt" ref={wrap} style={IPHONE_ARABIC_FONT}>
+    <div className="relative select-none text-txt font-sans" ref={wrap} style={ARABIC_BRAND_FONT}>
       {/* Trigger button */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label="تخصيص وتلوين المظهر"
         title="تخصيص وتلوين المظهر"
-        style={IPHONE_ARABIC_FONT}
-        className="flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
+        style={ARABIC_BRAND_FONT}
+        className="flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105 font-sans"
       >
         <TriggerIcon size={15} />
         <span className="text-[12px] font-bold leading-none select-none">
@@ -174,8 +174,8 @@ export default function ThemeSwitcher() {
       {/* Popover */}
       {open && (
         <div
-          style={IPHONE_ARABIC_FONT}
-          className="absolute end-0 mt-2 w-[340px] bg-steel-2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden animate-pop"
+          style={ARABIC_BRAND_FONT}
+          className="absolute end-0 mt-2 w-[340px] bg-steel-2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden animate-pop font-sans"
         >
           {/* Header */}
           <div className="px-4 py-3 border-b border-line flex items-center justify-between bg-steel-3/40">
@@ -193,7 +193,7 @@ export default function ThemeSwitcher() {
                 }}
                 className="flex items-center gap-1 text-[11.5px] font-bold text-txt-3 hover:text-hi transition-colors"
                 title="استعادة المظهر القياسي"
-                style={IPHONE_ARABIC_FONT}
+                style={ARABIC_BRAND_FONT}
               >
                 <ResetIcon size={11} />
                 <span>الافتراضي</span>
@@ -212,9 +212,9 @@ export default function ThemeSwitcher() {
                   <button
                     key={opt.value}
                     onClick={() => setMode(opt.value)}
-                    style={IPHONE_ARABIC_FONT}
+                    style={ARABIC_BRAND_FONT}
                     className={[
-                      'flex flex-col items-center justify-center gap-1.5 py-2 px-1 rounded-md text-[11px] font-bold transition-all',
+                      'flex flex-col items-center justify-center gap-1.5 py-2 px-1 rounded-md text-[11px] font-bold transition-all font-sans',
                       active
                         ? 'bg-hi text-white font-bold shadow-sm'
                         : 'bg-steel-3 text-txt-2 hover:text-txt hover:bg-steel border border-line/60',
@@ -273,7 +273,7 @@ export default function ThemeSwitcher() {
                 />
                 <PenIcon size={14} className="text-white drop-shadow pointer-events-none" />
               </label>
-              <div className="text-[12px] font-bold text-txt flex-1 leading-tight select-none">
+              <div className="text-[12px] font-bold text-txt flex-1 leading-tight select-none font-sans">
                 اختر لونًا مخصصًا
               </div>
             </div>

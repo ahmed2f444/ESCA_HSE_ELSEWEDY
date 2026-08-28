@@ -222,11 +222,8 @@ export default function ThemeSwitcher() {
 
           {/* Color Presets & Custom Picker */}
           <div className="p-3 bg-steel-3/20">
-            <div className="flex items-center justify-between mb-2 px-1">
+            <div className="mb-2 px-1">
               <span className="text-[11px] font-semibold text-txt-3">لون النظام:</span>
-              <span className="text-[10.5px] font-mono text-txt-2 font-bold">
-                {accent ? accent.toUpperCase() : (mode === 'custom' ? '#9E1B32' : 'الافتراضي')}
-              </span>
             </div>
 
             {/* Presets grid */}

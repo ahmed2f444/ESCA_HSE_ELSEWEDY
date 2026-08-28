@@ -119,9 +119,12 @@ export default function ThemeSwitcher() {
         aria-expanded={open}
         aria-label="تخصيص وتلوين المظهر"
         title="تخصيص وتلوين المظهر"
-        className="flex items-center justify-center w-[34px] h-[34px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
+        className="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 min-h-[38px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
       >
-        <TriggerIcon size={16} />
+        <TriggerIcon size={14} />
+        <span className="text-[10px] font-bold leading-none text-txt select-none">
+          المظهر
+        </span>
       </button>
 
       {/* Popover */}

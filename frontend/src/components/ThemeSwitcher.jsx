@@ -85,6 +85,23 @@ function ChevronDownIcon({ size = 11, className = '' }) {
     </svg>
   )
 }
+function PenIcon({ size = 14, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  )
+}
 function ResetIcon({ size = 12 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -150,7 +167,7 @@ export default function ThemeSwitcher() {
 
       {/* Popover */}
       {open && (
-        <div className="absolute end-0 mt-2 w-80 bg-steel-2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden animate-pop">
+        <div className="absolute end-0 mt-2 w-[330px] bg-steel-2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden animate-pop">
           {/* Header */}
           <div className="px-4 py-3 border-b border-line flex items-center justify-between bg-steel-3/40">
             <div className="flex items-center gap-2">
@@ -206,7 +223,7 @@ export default function ThemeSwitcher() {
           {/* Color Presets & Custom Picker */}
           <div className="p-3 bg-steel-3/20">
             <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[11px] font-semibold text-txt-3">تلوين النظام بالكامل:</span>
+              <span className="text-[11px] font-semibold text-txt-3">لون النظام:</span>
               <span className="text-[10.5px] font-mono text-txt-2 font-bold">
                 {accent ? accent.toUpperCase() : (mode === 'custom' ? '#9E1B32' : 'الافتراضي')}
               </span>
@@ -236,22 +253,20 @@ export default function ThemeSwitcher() {
             {/* Custom Color Input */}
             <div className="flex items-center gap-2.5 bg-steel-3 p-2 rounded-md border border-line">
               <label
-                className="relative w-8 h-8 rounded overflow-hidden cursor-pointer shrink-0 border border-line hover:border-hi transition-colors"
-                title="اختر أي لون مخصص لتحويل كل النظام لدرجاته"
+                className="relative w-8 h-8 rounded overflow-hidden cursor-pointer shrink-0 border border-line hover:border-hi transition-all hover:scale-105 flex items-center justify-center shadow-sm"
+                title="اختر لونًا مخصصًا"
+                style={{ background: accent || '#9E1B32' }}
               >
                 <input
                   type="color"
                   value={accent || '#9E1B32'}
                   onChange={(e) => handleColorChange(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <span
-                  className="block w-full h-full"
-                  style={{ background: accent || '#9E1B32' }}
-                />
+                <PenIcon size={14} className="text-white drop-shadow pointer-events-none" />
               </label>
-              <div className="text-[11px] text-txt-2 flex-1 leading-tight">
-                اختر أي لون من لوحة الألوان لتلوين كل الواجهة والقوائم والجداول به
+              <div className="text-[11.5px] font-medium text-txt flex-1 leading-tight select-none">
+                اختر لونًا مخصصًا
               </div>
             </div>
           </div>

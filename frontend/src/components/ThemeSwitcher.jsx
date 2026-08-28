@@ -68,6 +68,23 @@ function PaletteIcon({ size = 15 }) {
     </svg>
   )
 }
+function ChevronDownIcon({ size = 11, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
 function ResetIcon({ size = 12 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -119,12 +136,16 @@ export default function ThemeSwitcher() {
         aria-expanded={open}
         aria-label="تخصيص وتلوين المظهر"
         title="تخصيص وتلوين المظهر"
-        className="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 min-h-[38px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[36px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
       >
-        <TriggerIcon size={14} />
-        <span className="text-[10px] font-bold leading-none text-txt select-none">
+        <TriggerIcon size={15} />
+        <span className="text-[11.5px] font-bold leading-none select-none">
           المظهر
         </span>
+        <ChevronDownIcon
+          size={12}
+          className={`text-txt-3 transition-transform duration-200 ${open ? 'rotate-180 text-hi' : ''}`}
+        />
       </button>
 
       {/* Popover */}

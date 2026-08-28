@@ -113,6 +113,11 @@ function ResetIcon({ size = 12 }) {
 
 const ICON_MAP = { standard: StandardIcon, dark: MoonIcon, light: SunIcon, colorblind: EyeIcon, custom: PaletteIcon }
 
+const IPHONE_ARABIC_FONT = {
+  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Arabic", "SF Pro Text", "SF Pro Display", "SF Arabic", "Almarai", "Cairo", "Segoe UI", system-ui, sans-serif',
+  letterSpacing: 'normal',
+}
+
 export default function ThemeSwitcher() {
   const { mode, setMode, accent, setAccentColor, resetAccent } = useTheme()
   const [open, setOpen] = useState(false)
@@ -146,17 +151,18 @@ export default function ThemeSwitcher() {
   }
 
   return (
-    <div className="relative" ref={wrap}>
+    <div className="relative select-none text-txt" ref={wrap} style={IPHONE_ARABIC_FONT}>
       {/* Trigger button */}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label="تخصيص وتلوين المظهر"
         title="تخصيص وتلوين المظهر"
-        className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[36px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
+        style={IPHONE_ARABIC_FONT}
+        className="flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] bg-steel-3 rounded border border-line hover:border-hi text-txt transition-all hover:scale-105"
       >
         <TriggerIcon size={15} />
-        <span className="text-[11.5px] font-bold leading-none select-none">
+        <span className="text-[12px] font-bold leading-none select-none">
           المظهر
         </span>
         <ChevronDownIcon
@@ -167,12 +173,15 @@ export default function ThemeSwitcher() {
 
       {/* Popover */}
       {open && (
-        <div className="absolute end-0 mt-2 w-[330px] bg-steel-2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden animate-pop">
+        <div
+          style={IPHONE_ARABIC_FONT}
+          className="absolute end-0 mt-2 w-[340px] bg-steel-2 border border-line rounded-lg shadow-2xl z-50 overflow-hidden animate-pop"
+        >
           {/* Header */}
           <div className="px-4 py-3 border-b border-line flex items-center justify-between bg-steel-3/40">
             <div className="flex items-center gap-2">
               <PaletteIcon size={15} />
-              <span className="text-xs font-bold text-txt">تخصيص المظهر وتلوين النظام</span>
+              <span className="text-[13px] font-bold text-txt">تخصيص المظهر وتلوين النظام</span>
             </div>
             {(mode === 'custom' || accent || mode !== 'standard') && (
               <button
@@ -182,8 +191,9 @@ export default function ThemeSwitcher() {
                   setMode('standard')
                   resetAccent()
                 }}
-                className="flex items-center gap-1 text-[11px] font-medium text-txt-3 hover:text-hi transition-colors"
+                className="flex items-center gap-1 text-[11.5px] font-bold text-txt-3 hover:text-hi transition-colors"
                 title="استعادة المظهر القياسي"
+                style={IPHONE_ARABIC_FONT}
               >
                 <ResetIcon size={11} />
                 <span>الافتراضي</span>
@@ -193,8 +203,8 @@ export default function ThemeSwitcher() {
 
           {/* Mode options */}
           <div className="p-3">
-            <div className="text-[11px] font-semibold text-txt-3 mb-1.5 px-1">النمط العام:</div>
-            <div className="grid grid-cols-5 gap-1">
+            <div className="text-[12px] font-bold text-txt mb-2 px-1">النمط العام:</div>
+            <div className="grid grid-cols-5 gap-1.5">
               {MODE_OPTIONS.map((opt) => {
                 const active = mode === opt.value
                 const OptIcon = ICON_MAP[opt.value] || StandardIcon
@@ -202,15 +212,16 @@ export default function ThemeSwitcher() {
                   <button
                     key={opt.value}
                     onClick={() => setMode(opt.value)}
+                    style={IPHONE_ARABIC_FONT}
                     className={[
-                      'flex flex-col items-center justify-center gap-1 py-2 px-0.5 rounded-md text-[10.5px] font-medium transition-all',
+                      'flex flex-col items-center justify-center gap-1.5 py-2 px-1 rounded-md text-[11px] font-bold transition-all',
                       active
                         ? 'bg-hi text-white font-bold shadow-sm'
                         : 'bg-steel-3 text-txt-2 hover:text-txt hover:bg-steel border border-line/60',
                     ].join(' ')}
                   >
-                    <OptIcon size={13} />
-                    <span className="whitespace-nowrap truncate max-w-full">{opt.label}</span>
+                    <OptIcon size={14} />
+                    <span className="whitespace-nowrap truncate max-w-full font-bold">{opt.label}</span>
                   </button>
                 )
               })}
@@ -223,7 +234,7 @@ export default function ThemeSwitcher() {
           {/* Color Presets & Custom Picker */}
           <div className="p-3 bg-steel-3/20">
             <div className="mb-2 px-1">
-              <span className="text-[11px] font-semibold text-txt-3">لون النظام:</span>
+              <span className="text-[12px] font-bold text-txt">لون النظام:</span>
             </div>
 
             {/* Presets grid */}
@@ -262,7 +273,7 @@ export default function ThemeSwitcher() {
                 />
                 <PenIcon size={14} className="text-white drop-shadow pointer-events-none" />
               </label>
-              <div className="text-[11.5px] font-medium text-txt flex-1 leading-tight select-none">
+              <div className="text-[12px] font-bold text-txt flex-1 leading-tight select-none">
                 اختر لونًا مخصصًا
               </div>
             </div>

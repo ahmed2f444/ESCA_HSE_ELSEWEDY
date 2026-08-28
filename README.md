@@ -45,6 +45,7 @@ All services connect directly to the central Railway MySQL cloud instance:
 ### 🛡️ Architectural Guardrails
 - **Read Operations**: The AI Agent performs fast, direct SQL read queries via SQLAlchemy connection pooling across all domain tables.
 - **Write / Mutation Operations**: The AI Agent **never writes directly to the database**. All automated state mutations (overdue permit flagging, training certificate reminders, CAPA escalations, risk reviews) are dispatched through Spring Boot's internal automation endpoint (`POST /api/v1/internal/automation/actions`) using `SCOPE_automation:write` service JWTs and idempotency keys to enforce business validation and preserve complete audit trails.
+- **Live Notifications**: Active automation rules now create unread in-app HSE notifications through Spring Boot. Every accepted event is revalidated against current entity state, deduplicated by its idempotency key, and paired with an audit record.
 
 ---
 

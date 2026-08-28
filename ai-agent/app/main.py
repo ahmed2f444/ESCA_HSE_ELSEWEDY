@@ -15,30 +15,56 @@ from app.routers import chat
 
 logger = logging.getLogger("esca_agent")
 scheduler = None
+scheduler_controller = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global scheduler
+    global scheduler, scheduler_controller
     if settings.enable_scheduler:
+        background_scheduler = None
+        controller = None
         try:
             from apscheduler.schedulers.background import BackgroundScheduler
-            from app.automation.scheduler import AutomationSchedulerController
+            from app.automation.runtime import create_scheduler_controller
 
             background_scheduler = BackgroundScheduler()
-            controller = AutomationSchedulerController(scheduler=background_scheduler)
-            controller.refresh_schedules()
+            controller = create_scheduler_controller(
+                background_scheduler,
+                settings,
+            )
+            scheduled_rules = controller.refresh_schedules(fail_fast=True)
             background_scheduler.start()
             scheduler = background_scheduler
-            logger.info("APScheduler automation background worker started successfully.")
+            scheduler_controller = controller
+            logger.info(
+                "automation_scheduler_started mode=%s scheduled_rules=%d",
+                controller.delivery_mode,
+                scheduled_rules,
+            )
         except Exception as exc:
-            logger.warning(f"Could not start APScheduler background worker: {exc}")
+            if background_scheduler and background_scheduler.running:
+                background_scheduler.shutdown(wait=False)
+            if controller:
+                controller.close()
+            logger.error(
+                "automation_scheduler_start_failed error_type=%s",
+                type(exc).__name__,
+            )
+            if settings.automation_live_enabled:
+                raise RuntimeError(
+                    "Live automation scheduler could not start safely"
+                ) from None
 
     yield
 
     if scheduler and scheduler.running:
         scheduler.shutdown(wait=False)
-        logger.info("APScheduler background worker stopped.")
+    if scheduler_controller:
+        scheduler_controller.close()
+    scheduler = None
+    scheduler_controller = None
+    logger.info("automation_scheduler_stopped")
 
 
 app = FastAPI(
@@ -79,6 +105,8 @@ def health_check():
         "database": engine.url.database,
         "llm": f"Groq ({settings.groq_model}) + local Ollama fallback",
         "scheduler": "running" if scheduler and scheduler.running else "idle",
+        "automation_delivery": settings.automation_delivery_mode,
+        "automation_live": settings.automation_live_enabled,
     }
 
 

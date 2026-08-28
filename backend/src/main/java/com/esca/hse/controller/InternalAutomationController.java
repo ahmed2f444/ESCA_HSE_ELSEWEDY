@@ -99,17 +99,19 @@ public class InternalAutomationController {
 
         String actionId = identifier("ACT");
         String notificationId = identifier("NTF");
-        String message = switch (ruleId) {
-            case "AUT-001" -> "يوجد تصريح عمل تجاوز موعد انتهائه ويحتاج إلى مراجعة.";
-            case "AUT-002" -> "يوجد اعتماد تدريبي منتهي أو يقترب من الانتهاء.";
-            case "AUT-003" -> "يوجد إجراء تصحيحي متأخر يحتاج إلى تصعيد.";
-            default -> "يوجد خطر مرتفع يحتاج إلى مراجعة محدثة.";
-        };
+        NotificationContent notification = notificationFor(ruleId, authoritative, entityId);
         Map<String, Object> details = Map.of("event_id", eventId, "rule_id", ruleId, "outcome", "APPLIED");
         String auditId = platformService.audit("AUTOMATION_ACTION", text(event, "entity_type"), entityId, details, correlationHeader);
-        jdbc.update("INSERT INTO notifications (notification_id, type, title, message, entity_type, entity_id, status) "
-                        + "VALUES (:id, 'AUTOMATION', :title, :message, :entity_type, :entity_id, 'UNREAD')",
-                Map.of("id", notificationId, "title", "تنبيه HSE آلي", "message", message, "entity_type", text(event, "entity_type"), "entity_id", entityId));
+        jdbc.update("INSERT INTO notifications (notification_id, recipient_employee_id, type, title, message, entity_type, entity_id, status) "
+                        + "VALUES (:id, :recipient_employee_id, :type, :title, :message, :entity_type, :entity_id, 'UNREAD')",
+                new MapSqlParameterSource()
+                        .addValue("id", notificationId)
+                        .addValue("recipient_employee_id", notification.recipientEmployeeId())
+                        .addValue("type", notification.type())
+                        .addValue("title", notification.title())
+                        .addValue("message", notification.message())
+                        .addValue("entity_type", text(event, "entity_type"))
+                        .addValue("entity_id", entityId));
         Instant processed = Instant.now();
         jdbc.update("INSERT INTO automation_actions (action_record_id, event_id, idempotency_key, rule_id, entity_type, entity_id, action, alert_code, status, payload_json, processed_at_utc, audit_id) "
                         + "VALUES (:action_id, :event_id, :key, :rule_id, :entity_type, :entity_id, :action, :alert_code, 'APPLIED', :payload, :processed, :audit_id)",
@@ -167,6 +169,38 @@ public class InternalAutomationController {
                 "audit_id", row.get("audit_id"), "processed_at_utc", timestamp);
     }
 
+    private NotificationContent notificationFor(String ruleId, Map<String, Object> entity, String entityId) {
+        return switch (ruleId) {
+            case "AUT-001" -> new NotificationContent(
+                    "AUTOMATION_PERMIT_OVERDUE",
+                    "تصريح عمل متأخر",
+                    "التصريح " + entityId + " تجاوز موعد انتهائه ويحتاج إلى مراجعة.",
+                    firstText(entity.get("issuer_id"), entity.get("requester_id")));
+            case "AUT-002" -> new NotificationContent(
+                    "AUTOMATION_CERTIFICATE_EXPIRY",
+                    "تنبيه اعتماد تدريبي",
+                    "الاعتماد " + entityId + " منتهي أو يقترب من الانتهاء.",
+                    firstText(entity.get("employee_id")));
+            case "AUT-003" -> new NotificationContent(
+                    "AUTOMATION_CAPA_OVERDUE",
+                    "إجراء تصحيحي متأخر",
+                    "الإجراء التصحيحي " + entityId + " متأخر ويحتاج إلى تصعيد.",
+                    firstText(entity.get("assigned_to")));
+            default -> new NotificationContent(
+                    "AUTOMATION_RISK_REVIEW",
+                    "مراجعة خطر مرتفع",
+                    "الخطر " + entityId + " مرتفع ويحتاج إلى مراجعة محدثة.",
+                    firstText(entity.get("owner_id")));
+        };
+    }
+
+    private String firstText(Object... values) {
+        for (Object value : values) {
+            if (value != null && !String.valueOf(value).isBlank()) return String.valueOf(value);
+        }
+        return null;
+    }
+
     private LocalDate date(Object value) {
         if (value instanceof java.sql.Date sqlDate) return sqlDate.toLocalDate();
         if (value instanceof LocalDate localDate) return localDate;
@@ -185,5 +219,6 @@ public class InternalAutomationController {
         byte[] right = supplied == null ? new byte[0] : supplied.getBytes(StandardCharsets.UTF_8);
         return MessageDigest.isEqual(left, right);
     }
+    private record NotificationContent(String type, String title, String message, String recipientEmployeeId) {}
     private record RuleContract(String entityType, String action, String module, Set<String> payloadFields) {}
 }

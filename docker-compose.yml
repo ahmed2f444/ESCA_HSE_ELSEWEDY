@@ -19,6 +19,8 @@ services:
       - SQL_INIT_MODE=never
       - APP_SECURITY_ENABLED=false
       - APP_DEMO_DATA_ENABLED=false
+      - AUTOMATION_CLIENT_ID=${AUTOMATION_CLIENT_ID:-esca-hse-automation}
+      - AUTOMATION_CLIENT_SECRET=${AUTOMATION_CLIENT_SECRET:-local-automation-secret-change-me}
       - CORS_ALLOWED_ORIGINS=http://localhost:5180,http://localhost:3000,http://localhost:3100,http://localhost:3200,http://frontend:5180
     restart: unless-stopped
 
@@ -43,10 +45,10 @@ services:
       - LOCAL_LLM_BASE_URL=http://localhost:11434/v1
       - LOCAL_LLM_MODEL=esca-agent-local
       - SPRING_API_BASE_URL=http://backend:8080
-      - AUTOMATION_CLIENT_ID=esca-hse-automation
-      - AUTOMATION_CLIENT_SECRET=local-automation-secret-change-me
-      - AUTOMATION_DELIVERY_MODE=dry_run
-      - AUTOMATION_LIVE_ENABLED=false
+      - AUTOMATION_CLIENT_ID=${AUTOMATION_CLIENT_ID:-esca-hse-automation}
+      - AUTOMATION_CLIENT_SECRET=${AUTOMATION_CLIENT_SECRET:-local-automation-secret-change-me}
+      - AUTOMATION_DELIVERY_MODE=spring
+      - AUTOMATION_LIVE_ENABLED=true
       - ENABLE_SCHEDULER=true
     depends_on:
       - backend

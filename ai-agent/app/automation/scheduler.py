@@ -358,6 +358,12 @@ class AutomationSchedulerController:
             if job.id.startswith(RULE_JOB_PREFIX)
         )
 
+    @property
+    def delivery_mode(self) -> str:
+        """Expose the non-sensitive dispatcher mode for diagnostics."""
+
+        return self._dispatcher.mode
+
     def close(self) -> None:
         """Release dispatcher resources after scheduled work has stopped."""
 

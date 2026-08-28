@@ -230,9 +230,9 @@ export default function AppShell() {
       </main>
 
       <footer className="border-t border-line bg-steel-2 px-[22px] py-4 mt-6 flex items-center justify-between gap-3.5 flex-wrap no-print">
-        <div className="flex items-center gap-2.5">
-          <Wordmark scale={0.62} isWhite={mode !== 'light'} />
-          <span className="text-xs text-txt-2 -ms-11">
+        <div className="flex items-center gap-3.5">
+          <Wordmark height={26} isWhite={mode !== 'light'} />
+          <span className="text-xs text-txt-2">
             Elsewedy Cables — Cable Accessories (ESCA) · إدارة السلامة والصحة المهنية
           </span>
         </div>

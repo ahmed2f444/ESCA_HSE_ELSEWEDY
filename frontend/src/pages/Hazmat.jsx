@@ -1,11 +1,12 @@
 import { Async, Btn, Card, CardBody, CardHead, Grid, Kpi, KpiRow, PageHeader, Pill, Table } from '../components/ui.jsx'
 import { hazmat as hazmatApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const CELL = {
-  '✓': { color: '#38B87C', label: 'تخزين مشترك مسموح' },
-  '!': { color: '#F09030', label: 'فصل إلزامي' },
-  X: { color: '#E0483C', label: 'محظور التخزين معاً' },
+  '✓': { get color() { return tc.safe() }, label: 'تخزين مشترك مسموح' },
+  '!': { get color() { return tc.warn() }, label: 'فصل إلزامي' },
+  X: { get color() { return tc.crit() }, label: 'محظور التخزين معاً' },
 }
 
 export default function Hazmat() {
@@ -52,7 +53,7 @@ export default function Hazmat() {
                   <td className="mono">{c.qty}</td>
                   <td className="text-xs text-txt-2">{c.location}</td>
                   <td className="mono text-2xs">{c.class}</td>
-                  <td className="mono" style={{ color: c.sds < '2025-06' ? '#E0483C' : undefined }}>
+                  <td className="mono" style={{ color: c.sds < '2025-06' ? tc.crit() : undefined }}>
                     {c.sds}
                   </td>
                 </tr>

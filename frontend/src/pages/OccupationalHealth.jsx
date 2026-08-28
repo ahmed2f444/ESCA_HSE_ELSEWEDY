@@ -17,7 +17,8 @@ import {
 import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { health as healthApi } from '../api/endpoints.js'
-import { useApi, useToast } from '../hooks.jsx'
+import { useApi, useCan, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const EMPLOYEES = [
   'محمود عبد الله (خط الإنتاج A)',
@@ -160,7 +161,7 @@ export default function OccupationalHealth() {
                     <td className="text-xs text-txt-2">{e.target}</td>
                     <td className="text-xs font-mono">{e.frequency}</td>
                     <td className="mono text-safe font-bold">{e.done}</td>
-                    <td className="mono" style={{ color: e.due > 0 ? '#F09030' : undefined }}>
+                    <td className="mono" style={{ color: e.due > 0 ? tc.warn() : undefined }}>
                       {e.due}
                     </td>
                   </tr>
@@ -179,7 +180,7 @@ export default function OccupationalHealth() {
                   <tr key={i}>
                     <td className="font-medium">{r.agent}</td>
                     <td className="text-xs text-txt-2">{r.zone}</td>
-                    <td className="mono font-semibold" style={{ color: r.tone === 'wn' ? '#F09030' : '#38B87C' }}>
+                    <td className="mono font-semibold" style={{ color: r.tone === 'wn' ? tc.warn() : tc.safe() }}>
                       {r.measured}
                     </td>
                     <td className="text-xs text-txt-3">{r.limit}</td>

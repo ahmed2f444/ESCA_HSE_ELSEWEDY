@@ -21,6 +21,7 @@ import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { inspections as inspApi, fire as fireApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const FIELD_TYPES = [
   { name: 'نعم / لا / لا ينطبق', desc: 'خيارات التقييم الثنائية السريعة (Pass / Fail / NA) مع درجات الامتثال' },
@@ -288,7 +289,7 @@ export default function Inspections() {
         category: findingForm.category,
         grade: findingForm.grade,
         state: 'مفتوح',
-        color: findingForm.grade === 'CRITICAL' ? '#E0483C' : findingForm.grade === 'MAJOR' ? '#F09030' : '#4A9DD8',
+        color: findingForm.grade === 'CRITICAL' ? tc.crit() : findingForm.grade === 'MAJOR' ? tc.warn() : tc.info(),
         meta: `${findingForm.category} · المسؤول: ${walkForm.inspector} · الموعد: اليوم`,
       }
       walkFindings.push(newF)
@@ -1107,8 +1108,8 @@ export default function Inspections() {
                 <span
                   className="font-mono text-2xs px-2 py-0.5 rounded font-bold"
                   style={{
-                    backgroundColor: `${selectedFinding.color || '#F09030'}22`,
-                    color: selectedFinding.color || '#F09030',
+                    backgroundColor: `${selectedFinding.color || tc.warn()}22`,
+                    color: selectedFinding.color || tc.warn(),
                   }}
                 >
                   {selectedFinding.grade}

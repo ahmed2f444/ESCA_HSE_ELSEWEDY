@@ -16,8 +16,14 @@ import {
    axis direction, the grid colour and the tooltip chrome so every chart in
    the console looks like it came off the same plotter. */
 
-const AXIS = { stroke: '#5E7794', fontSize: 11, fontFamily: '"IBM Plex Mono", monospace' }
-const GRID = '#2E3D4E'
+/** Read a CSS variable as an rgb() color string. */
+const themeRgb = (varName) => {
+  const rgb = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+  return rgb ? `rgb(${rgb.replace(/ /g, ', ')})` : '#888'
+}
+
+const axisStyle = () => ({ stroke: themeRgb('--c-txt3'), fontSize: 11, fontFamily: '"IBM Plex Mono", monospace' })
+const gridColor = () => themeRgb('--c-line')
 
 function TipBox({ active, payload, label, unit = '' }) {
   if (!active || !payload?.length) return null
@@ -42,16 +48,21 @@ function TipBox({ active, payload, label, unit = '' }) {
 
 /** Monthly incidents / near misses / observations. */
 export function MonthlyBars({ data }) {
+  const AXIS = axisStyle()
+  const GRID = gridColor()
+  const critC = themeRgb('--c-crit')
+  const warnC = themeRgb('--c-warn')
+  const safeC = themeRgb('--c-safe')
   return (
     <ResponsiveContainer width="100%" height={215}>
       <BarChart data={data} margin={{ top: 8, right: 4, left: -18, bottom: 0 }} barGap={2}>
         <CartesianGrid stroke={GRID} strokeDasharray="0" vertical={false} />
         <XAxis dataKey="month" reversed tickLine={false} axisLine={{ stroke: GRID }} tick={AXIS} />
         <YAxis orientation="right" tickLine={false} axisLine={false} tick={AXIS} width={44} />
-        <Tooltip content={<TipBox />} cursor={{ fill: 'rgba(158,27,50,.10)' }} />
-        <Bar dataKey="incidents" name="حوادث مسجّلة" fill="#E0483C" radius={[2, 2, 0, 0]} />
-        <Bar dataKey="nearMiss" name="أشباه حوادث" fill="#F09030" radius={[2, 2, 0, 0]} />
-        <Bar dataKey="observations" name="ملاحظات سلامة" fill="#38B87C" radius={[2, 2, 0, 0]} />
+        <Tooltip content={<TipBox />} cursor={{ fill: `rgb(var(--c-hi) / 0.10)` }} />
+        <Bar dataKey="incidents" name="حوادث مسجّلة" fill={critC} radius={[2, 2, 0, 0]} />
+        <Bar dataKey="nearMiss" name="أشباه حوادث" fill={warnC} radius={[2, 2, 0, 0]} />
+        <Bar dataKey="observations" name="ملاحظات سلامة" fill={safeC} radius={[2, 2, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -59,34 +70,40 @@ export function MonthlyBars({ data }) {
 
 /** Five-year TRIR trend with the value printed on each point. */
 export function TrirTrend({ data }) {
+  const AXIS = axisStyle()
+  const GRID = gridColor()
+  const safeC = themeRgb('--c-safe')
+  const steelC = themeRgb('--c-steel')
+  const txtC = themeRgb('--c-txt')
+  const txt3C = themeRgb('--c-txt3')
   return (
     <ResponsiveContainer width="100%" height={205}>
       <AreaChart data={data} margin={{ top: 22, right: 6, left: -14, bottom: 0 }}>
         <defs>
           <linearGradient id="trirFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#38B87C" stopOpacity={0.34} />
-            <stop offset="100%" stopColor="#38B87C" stopOpacity={0} />
+            <stop offset="0%" stopColor={safeC} stopOpacity={0.34} />
+            <stop offset="100%" stopColor={safeC} stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="year" reversed tickLine={false} axisLine={{ stroke: GRID }} tick={AXIS} />
         <YAxis orientation="right" tickLine={false} axisLine={false} tick={AXIS} width={46} />
-        <Tooltip content={<TipBox />} cursor={{ stroke: '#5E7794', strokeDasharray: '3 3' }} />
+        <Tooltip content={<TipBox />} cursor={{ stroke: txt3C, strokeDasharray: '3 3' }} />
         <Area
           type="monotone"
           dataKey="trir"
           name="TRIR"
-          stroke="#38B87C"
+          stroke={safeC}
           strokeWidth={2.4}
           fill="url(#trirFill)"
-          dot={{ r: 4, fill: '#0B1526', stroke: '#38B87C', strokeWidth: 2.4 }}
+          dot={{ r: 4, fill: steelC, stroke: safeC, strokeWidth: 2.4 }}
           activeDot={{ r: 6 }}
         >
           <LabelList
             dataKey="trir"
             position="top"
             offset={11}
-            style={{ fill: '#E9EFF7', fontSize: 11, fontFamily: '"IBM Plex Mono", monospace', fontWeight: 600 }}
+            style={{ fill: txtC, fontSize: 11, fontFamily: '"IBM Plex Mono", monospace', fontWeight: 600 }}
           />
         </Area>
       </AreaChart>
@@ -95,7 +112,10 @@ export function TrirTrend({ data }) {
 }
 
 /** Horizontal comparison used for fire-equipment coverage per zone. */
-export function ZoneBars({ data, dataKey, nameKey, color = '#4A9DD8', height = 250 }) {
+export function ZoneBars({ data, dataKey, nameKey, color = null, height = 250 }) {
+  const AXIS = axisStyle()
+  const GRID = gridColor()
+  const defColor = color || themeRgb('--c-info')
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 8, left: 8, bottom: 4 }}>
@@ -110,10 +130,10 @@ export function ZoneBars({ data, dataKey, nameKey, color = '#4A9DD8', height = 2
           width={118}
           tick={{ ...AXIS, fontFamily: '"IBM Plex Sans Arabic", sans-serif', fontSize: 11 }}
         />
-        <Tooltip content={<TipBox />} cursor={{ fill: 'rgba(158,27,50,.10)' }} />
+        <Tooltip content={<TipBox />} cursor={{ fill: `rgb(var(--c-hi) / 0.10)` }} />
         <Bar dataKey={dataKey} name="العدد" radius={[0, 2, 2, 0]}>
           {data.map((d, i) => (
-            <Cell key={i} fill={d.color || color} />
+            <Cell key={i} fill={d.color || defColor} />
           ))}
         </Bar>
       </BarChart>
@@ -122,8 +142,9 @@ export function ZoneBars({ data, dataKey, nameKey, color = '#4A9DD8', height = 2
 }
 
 /** 24-point sparkline for a single sensor channel. */
-export function Spark({ values = [], color = '#4A9DD8' }) {
+export function Spark({ values = [], color = null }) {
   if (!values || !values.length) return null
+  const c = color || themeRgb('--c-info')
   const min = Math.min(...values)
   const max = Math.max(...values)
   const span = max - min || 1
@@ -132,7 +153,7 @@ export function Spark({ values = [], color = '#4A9DD8' }) {
     .join(' ')
   return (
     <svg viewBox="0 0 100 28" preserveAspectRatio="none" className="w-full h-7">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
+      <polyline points={pts} fill="none" stroke={c} strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
@@ -142,7 +163,7 @@ export function Spark({ values = [], color = '#4A9DD8' }) {
 /* ------------------------------------------------------------------ */
 
 export const bandColor = (score) =>
-  score <= 4 ? '#38B87C' : score <= 9 ? '#C6C43A' : score <= 14 ? '#F09030' : score <= 19 ? '#E0483C' : '#8E1F17'
+  score <= 4 ? themeRgb('--c-safe') : score <= 9 ? '#C6C43A' : score <= 14 ? themeRgb('--c-warn') : score <= 19 ? themeRgb('--c-crit') : '#8E1F17'
 
 export const bandLabel = (score) =>
   score <= 4 ? 'مقبول' : score <= 9 ? 'منخفض' : score <= 14 ? 'متوسط' : score <= 19 ? 'عالي' : 'حرج'
@@ -194,7 +215,7 @@ function FragmentRow({ p, count, selected, onSelect }) {
             style={{
               background: bandColor(v),
               color: v >= 15 ? '#fff' : '#0d1218',
-              outline: isSel ? '2px solid #E9EFF7' : 'none',
+              outline: isSel ? `2px solid ${themeRgb('--c-txt')}` : 'none',
               outlineOffset: isSel ? '1px' : 0,
             }}
           >

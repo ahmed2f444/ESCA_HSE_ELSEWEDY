@@ -16,8 +16,9 @@ import Icon from '../components/Icon.jsx'
 import { Spark } from '../components/charts.jsx'
 import { iot as iotApi } from '../api/endpoints.js'
 import { useApi, usePolling } from '../hooks.jsx'
+import tc, { toneColors } from '../themeColors.js'
 
-const TONE_COLOR = { ok: '#38B87C', wn: '#F09030', cr: '#E0483C', in: '#4A9DD8' }
+
 
 /**
  * Live monitoring view.
@@ -39,7 +40,7 @@ export default function AiIot() {
 
       <div
         className="flex items-center gap-2.5 text-xs px-3.5 py-2.5 rounded-md mb-5"
-        style={{ background: 'rgba(240,144,48,.09)', border: '1px solid rgba(240,144,48,.35)', color: '#F09030' }}
+        style={{ background: `rgb(var(--c-warn) / 0.09)`, border: `1px solid rgb(var(--c-warn) / 0.35)`, color: tc.warn() }}
       >
         <Icon name="incident" size={15} />
         <span>
@@ -72,13 +73,13 @@ export default function AiIot() {
                 <>
                   <div
                     className="relative overflow-hidden rounded-md border border-line"
-                    style={{ background: '#0a0f16', aspectRatio: '16/10' }}
+                    style={{ background: 'rgb(var(--c-steel))', aspectRatio: '16/10' }}
                   >
                     <div
                       className="absolute inset-0"
                       style={{
                         backgroundImage:
-                          'linear-gradient(rgba(158,27,50,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(158,27,50,.07) 1px,transparent 1px)',
+                          'linear-gradient(rgb(var(--c-hi) / 0.08) 1px,transparent 1px),linear-gradient(90deg,rgb(var(--c-hi) / 0.08) 1px,transparent 1px)',
                         backgroundSize: '22px 22px',
                       }}
                     />
@@ -89,11 +90,11 @@ export default function AiIot() {
                       <div
                         key={b.id}
                         className="absolute rounded-sm"
-                        style={{ ...b.box, border: `2px solid ${b.ok ? '#38B87C' : '#E0483C'}` }}
+                        style={{ ...b.box, border: `2px solid ${b.ok ? tc.safe() : tc.crit()}` }}
                       >
                         <span
                           className="absolute -top-[19px] end-0 text-[9.5px] px-1.5 font-mono num whitespace-nowrap rounded-sm"
-                          style={{ background: b.ok ? '#38B87C' : '#E0483C', color: b.ok ? '#06180f' : '#fff' }}
+                          style={{ background: b.ok ? tc.safe() : tc.crit(), color: '#fff' }}
                         >
                           {b.label} — {b.confidence}%
                         </span>
@@ -140,12 +141,11 @@ export default function AiIot() {
                 sensors.map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center gap-3 py-2.5 border-b last:border-b-0"
-                    style={{ borderColor: 'rgba(39,64,95,.45)' }}
+                    className="flex items-center gap-3 py-2.5 border-b border-line/60 last:border-b-0"
                   >
                     <span
                       className="w-[34px] h-[34px] rounded-md bg-steel-3 flex items-center justify-center shrink-0"
-                      style={{ color: TONE_COLOR[s.tone] }}
+                      style={{ color: toneColors()[s.tone] }}
                     >
                       <Icon name="sensor" size={17} />
                     </span>
@@ -154,9 +154,9 @@ export default function AiIot() {
                       <div className="text-2xs text-txt-3 font-mono num">{s.limitLabel}</div>
                     </div>
                     <div className="w-16 hidden sm:block">
-                      <Spark values={s.history} color={TONE_COLOR[s.tone]} />
+                      <Spark values={s.history} color={toneColors()[s.tone]} />
                     </div>
-                    <div className="font-mono num font-bold text-[15px] text-end w-20" style={{ color: TONE_COLOR[s.tone] }}>
+                    <div className="font-mono num font-bold text-[15px] text-end w-20" style={{ color: toneColors()[s.tone] }}>
                       {s.value} <span className="text-2xs font-normal">{s.unit}</span>
                     </div>
                   </div>
@@ -174,7 +174,7 @@ export default function AiIot() {
                 {(events || []).map((e, i) => (
                   <div key={i} className="whitespace-nowrap">
                     <span className="text-txt-3">{e.at}</span> ·{' '}
-                    <b style={{ color: TONE_COLOR[e.tone] }}>{e.code}</b> ·{' '}
+                    <b style={{ color: toneColors()[e.tone] }}>{e.code}</b> ·{' '}
                     <span className="text-txt">{e.source}</span> · {e.detail} ·{' '}
                     <span className="text-txt-3">{e.action}</span>
                   </div>

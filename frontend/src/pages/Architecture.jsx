@@ -3,17 +3,18 @@ import { Card, CardBody, CardHead, Grid, PageHeader, StatLine, Tag, Pill, Btn } 
 import Icon from '../components/Icon.jsx'
 import { auth, masterData } from '../api/endpoints.js'
 import { useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const LAYERS = [
   {
     layer: 'واجهات المستخدم (Frontend Presentation Layer)',
-    color: '#4A9DD8',
+    color: tc.info(),
     owner: 'Member 3 (Frontend & UX Lead)',
     items: ['React 18 + Vite', 'Vanilla CSS & Dark Glassmorphism', 'Recharts 2.x', 'Axios + Interceptors', 'React Router v6', 'PWA & Mobile Responsive'],
   },
   {
     layer: 'خدمات الأعمال (Enterprise Business APIs) — Spring Boot 3',
-    color: '#9E1B32',
+    color: tc.hi(),
     owner: 'Member 1 · Member 2 · Member 6',
     items: [
       'Incidents & Near-Misses',
@@ -32,7 +33,7 @@ const LAYERS = [
   },
   {
     layer: 'خدمة الوكيل الذكي (AI Automation & Agent Engine) — Python FastAPI',
-    color: '#38B87C',
+    color: tc.safe(),
     owner: 'AI Student 1 · AI Student 2',
     items: [
       'Groq LLaMA 3.3 70B Versatile',
@@ -46,7 +47,7 @@ const LAYERS = [
   },
   {
     layer: 'قاعدة البيانات والتخزين (Data & Storage Layer)',
-    color: '#F09030',
+    color: tc.warn(),
     owner: 'Database Architecture Team',
     items: [
       'MySQL 9.4 (Railway Cloud DB)',
@@ -58,7 +59,7 @@ const LAYERS = [
   },
   {
     layer: 'التشغيل والنشر (DevOps & Infrastructure)',
-    color: '#5E7794',
+    color: tc.txt3(),
     owner: 'DevOps & Systems Team',
     items: ['Multi-Service Orchestration', 'Start-All Automation Batch', 'Vite Production Bundler', 'REST API / Swagger Specs'],
   },
@@ -190,8 +191,7 @@ export default function Architecture() {
             <CardHead title="القاعدة الحاكمة لتكامل الذكاء الاصطناعي" hint="DESIGN PRINCIPLE & GOVERNANCE" />
             <CardBody>
               <div
-                className="p-3.5 rounded text-sm leading-8"
-                style={{ background: 'rgba(158,27,50,.12)', border: '1px solid rgba(158,27,50,.4)' }}
+                className="p-3.5 rounded text-sm leading-8 bg-hi/15 border border-hi/40"
               >
                 الوكيل <b>يقرأ</b> من قاعدة البيانات مباشرة للسرعة، لكن أي <b>إجراء أو تعديل أو كتابة</b> بتمر عبر
                 Spring Boot REST API — فبتخضع لنفس التحقق والصلاحيات وسجل التدقيق <span className="font-mono">(Audit Log)</span> زي أي إجراء بشري تماماً.

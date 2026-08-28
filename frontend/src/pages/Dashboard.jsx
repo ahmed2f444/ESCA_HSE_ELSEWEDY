@@ -19,10 +19,11 @@ import {
 import { MonthlyBars, SafetyPyramid } from '../components/charts.jsx'
 import { dashboard } from '../api/endpoints.js'
 import { useApi, useCan, useToast } from '../hooks.jsx'
+import tc, { scoreColor } from '../themeColors.js'
 import IncidentForm from './parts/IncidentForm.jsx'
 import { useState } from 'react'
 
-const scoreColor = (s) => (s >= 85 ? '#38B87C' : s >= 70 ? '#F09030' : '#E0483C')
+
 
 export default function Dashboard() {
   const nav = useNavigate()
@@ -77,9 +78,9 @@ export default function Dashboard() {
                   <MonthlyBars data={d} />
                   <Legend
                     items={[
-                      { label: 'حوادث مسجّلة', color: '#E0483C' },
-                      { label: 'أشباه حوادث (Near Miss)', color: '#F09030' },
-                      { label: 'ملاحظات سلامة', color: '#38B87C' },
+                      { label: 'حوادث مسجّلة', color: tc.crit() },
+                      { label: 'أشباه حوادث (Near Miss)', color: tc.warn() },
+                      { label: 'ملاحظات سلامة', color: tc.safe() },
                     ]}
                   />
                 </>

@@ -3,9 +3,11 @@ import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-route
 import Icon from '../components/Icon.jsx'
 import { Wordmark } from '../components/layout.jsx'
 import { useAuth } from '../hooks.jsx'
+import { useTheme } from '../theme.jsx'
 
 export default function Login() {
   const { user, login } = useAuth()
+  const { mode } = useTheme()
   const nav = useNavigate()
   const loc = useLocation()
   const [params] = useSearchParams()
@@ -44,7 +46,7 @@ export default function Login() {
         {/* Left: what this console is. Kept factual — it's an internal tool. */}
         <section className="hidden lg:flex flex-col justify-between p-12 border-e border-line bg-steel-2">
           <div className="w-full flex justify-center py-2">
-            <Wordmark width={520} height={115} centered={true} isWhite={true} />
+            <Wordmark width={520} height={115} centered={true} isWhite={mode !== 'light'} />
           </div>
 
           <div className="max-w-xl">
@@ -80,7 +82,7 @@ export default function Login() {
         <section className="flex items-center justify-center p-6">
           <div className="w-full max-w-[340px]">
             <div className="lg:hidden mb-8">
-              <Wordmark width={280} height={65} centered={false} isWhite={true} />
+              <Wordmark width={280} height={65} centered={false} isWhite={mode !== 'light'} />
             </div>
 
             <h2 className="text-lg font-semibold">تسجيل الدخول</h2>
@@ -137,7 +139,7 @@ export default function Login() {
               {error && (
                 <div
                   className="text-xs px-3 py-2.5 rounded mb-3.5 flex items-start gap-2"
-                  style={{ background: 'rgba(224,72,60,.1)', border: '1px solid rgba(224,72,60,.4)', color: '#f08b82' }}
+                  style={{ background: 'rgb(var(--c-crit) / 0.1)', border: '1px solid rgb(var(--c-crit) / 0.4)', color: 'rgb(var(--c-crit))' }}
                 >
                   <Icon name="incident" size={14} className="mt-0.5" />
                   {error}

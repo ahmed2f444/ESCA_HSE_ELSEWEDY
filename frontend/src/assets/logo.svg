@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 100" width="540" height="100" fill="none" dir="ltr">
+  <g direction="ltr" style="direction:ltr;unicode-bidi:isolate;">
+    <!-- ELSEWEDY -->
+    <text x="12" y="38" fill="currentColor" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Montserrat', sans-serif" font-weight="900" font-size="34" letter-spacing="4.5">ELSEWEDY</text>
+    <!-- Divider -->
+    <rect x="12" y="45" width="242" height="4" rx="1" fill="currentColor"/>
+    <!-- ELECTRIC -->
+    <text x="12" y="78" fill="currentColor" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Montserrat', sans-serif" font-weight="900" font-size="34" letter-spacing="4.5">ELECTRIC</text>
+    <!-- Red Smile Swoosh -->
+    <path d="M 52 86 C 98 97, 166 97, 212 86 C 166 92, 98 92, 52 86 Z" fill="#C41230"/>
+    <!-- Vertical Divider -->
+    <rect x="272" y="16" width="3.5" height="70" rx="1.5" fill="currentColor"/>
+    <!-- CABLE -->
+    <text x="292" y="42" fill="#C41230" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Montserrat', sans-serif" font-weight="800" font-size="30" letter-spacing="2.5">CABLE</text>
+    <!-- ACCESSORIES -->
+    <text x="292" y="76" fill="#C41230" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Montserrat', sans-serif" font-weight="800" font-size="27" letter-spacing="2">ACCESSORIES</text>
+  </g>
+</svg>

@@ -19,6 +19,7 @@ import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { training as trainingApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 const EMPLOYEES = [
   { id: 1, name: 'محمود عبد الله', dept: 'خط الإنتاج A' },
@@ -46,7 +47,7 @@ const COURSES = [
   { id: 10, name: 'الإسعافات الأولية والإنعاش القلبي الرئوي (First Aid CPR)', validityMonths: 24, provider: 'Elsewedy Technical Training Center' },
 ]
 
-const coverageColor = (pct) => (pct >= 90 ? '#38B87C' : pct >= 75 ? '#F09030' : '#E0483C')
+const coverageColor = (pct) => (pct >= 90 ? tc.safe() : pct >= 75 ? tc.warn() : tc.crit())
 
 export default function Training() {
   const toast = useToast()
@@ -220,7 +221,7 @@ export default function Training() {
                     <td className="mono text-2xs text-txt-3">{e.employeeNo}</td>
                     <td className="text-2xs text-txt-2">{e.dept}</td>
                     <td className="text-xs text-txt-1">{e.certificate}</td>
-                    <td className="mono text-2xs font-semibold" style={{ color: e.tone === 'cr' ? '#E0483C' : '#F09030' }}>
+                    <td className="mono text-2xs font-semibold" style={{ color: e.tone === 'cr' ? tc.crit() : tc.warn() }}>
                       {e.expires}
                     </td>
                     <td>

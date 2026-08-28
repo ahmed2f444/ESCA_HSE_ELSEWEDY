@@ -16,6 +16,7 @@ import {
 import { RiskMatrix, bandColor, bandLabel } from '../components/charts.jsx'
 import { risk as riskApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
+import tc from '../themeColors.js'
 
 export default function Risk() {
   const toast = useToast()
@@ -50,10 +51,10 @@ export default function Risk() {
                   <RiskMatrix hazards={d} selected={cell} onSelect={setCell} />
                   <Legend
                     items={[
-                      { label: 'مقبول (1–4)', color: '#38B87C' },
+                      { label: 'مقبول (1–4)', color: tc.safe() },
                       { label: 'منخفض (5–9)', color: '#C6C43A' },
-                      { label: 'متوسط (10–14)', color: '#F09030' },
-                      { label: 'عالي (15–19)', color: '#E0483C' },
+                      { label: 'متوسط (10–14)', color: tc.warn() },
+                      { label: 'عالي (15–19)', color: tc.crit() },
                       { label: 'حرج (20–25)', color: '#8E1F17' },
                     ]}
                   />

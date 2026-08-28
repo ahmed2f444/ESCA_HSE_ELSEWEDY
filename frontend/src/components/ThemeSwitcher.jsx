@@ -119,9 +119,11 @@ const ARABIC_BRAND_FONT = {
 }
 
 export default function ThemeSwitcher() {
-  const { mode, setMode, accent, setAccentColor, resetAccent } = useTheme()
+  const { mode, setMode, accent, lastCustomAccent, setAccentColor, resetAccent } = useTheme()
   const [open, setOpen] = useState(false)
   const wrap = useRef(null)
+
+  const currentCustomColor = accent || lastCustomAccent || '#7C3AED'
 
   // Close on outside click or Escape
   useEffect(() => {
@@ -240,7 +242,7 @@ export default function ThemeSwitcher() {
             {/* Presets grid */}
             <div className="grid grid-cols-6 gap-2 mb-3">
               {ACCENT_PRESETS.map((p) => {
-                const selected = mode === 'custom' && (accent?.toUpperCase() === p.hex.toUpperCase() || (!accent && p.hex === '#9E1B32'))
+                const selected = mode === 'custom' && currentCustomColor.toUpperCase() === p.hex.toUpperCase()
                 return (
                   <button
                     key={p.hex}
@@ -265,13 +267,13 @@ export default function ThemeSwitcher() {
                 title="اختر لونًا مخصصًا"
                 style={{
                   background: mode === 'custom'
-                    ? (accent || '#9E1B32')
+                    ? currentCustomColor
                     : 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 18%, #06B6D4 36%, #10B981 54%, #FBBF24 72%, #F97316 88%, #EF4444 100%)',
                 }}
               >
                 <input
                   type="color"
-                  value={accent || '#9E1B32'}
+                  value={currentCustomColor}
                   onChange={(e) => handleColorChange(e.target.value)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />

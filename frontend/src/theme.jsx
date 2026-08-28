@@ -88,20 +88,24 @@ export function derivePaletteFromRgb(r, g, b) {
 function readStored() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { mode: DEFAULT_MODE, accent: null }
+    if (!raw) return { mode: DEFAULT_MODE, accent: null, lastCustomAccent: DEFAULT_CUSTOM_ACCENT }
     const parsed = JSON.parse(raw)
     const validMode = MODES.includes(parsed.mode) ? parsed.mode : DEFAULT_MODE
+    const lastColor = typeof parsed.lastCustomAccent === 'string'
+      ? parsed.lastCustomAccent
+      : (typeof parsed.accent === 'string' ? parsed.accent : DEFAULT_CUSTOM_ACCENT)
     return {
       mode: validMode,
-      accent: typeof parsed.accent === 'string' ? parsed.accent : (validMode === 'custom' ? DEFAULT_CUSTOM_ACCENT : null),
+      accent: validMode === 'custom' ? (typeof parsed.accent === 'string' ? parsed.accent : lastColor) : null,
+      lastCustomAccent: lastColor,
     }
   } catch {
-    return { mode: DEFAULT_MODE, accent: null }
+    return { mode: DEFAULT_MODE, accent: null, lastCustomAccent: DEFAULT_CUSTOM_ACCENT }
   }
 }
 
 /** Apply theme values to DOM elements. */
-export function applyToDOM(mode, accent) {
+export function applyToDOM(mode, accent, lastCustomAccent) {
   const html = document.documentElement
   const body = document.body
   
@@ -115,7 +119,7 @@ export function applyToDOM(mode, accent) {
 
   if (mode === 'custom') {
     // ONLY in Custom Mode: calculate and inject dynamic surface and accent variables
-    const activeColor = accent || DEFAULT_CUSTOM_ACCENT
+    const activeColor = accent || lastCustomAccent || DEFAULT_CUSTOM_ACCENT
     const [r, g, b] = hexToRgb(activeColor)
     const vars = derivePaletteFromRgb(r, g, b)
 
@@ -140,31 +144,43 @@ export function applyToDOM(mode, accent) {
 const ThemeCtx = createContext(null)
 
 export function ThemeProvider({ children }) {
-  const [{ mode, accent }, setState] = useState(readStored)
+  const [{ mode, accent, lastCustomAccent }, setState] = useState(readStored)
 
   // Sync DOM whenever state changes
   useEffect(() => {
-    applyToDOM(mode, accent)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, accent }))
-  }, [mode, accent])
+    applyToDOM(mode, accent, lastCustomAccent)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, accent, lastCustomAccent }))
+  }, [mode, accent, lastCustomAccent])
 
   const setMode = useCallback((m) => {
     if (MODES.includes(m)) {
       setState((s) => {
-        const nextAccent = m === 'custom' ? (s.accent || DEFAULT_CUSTOM_ACCENT) : null
-        return { mode: m, accent: nextAccent }
+        const nextAccent = m === 'custom' ? (s.lastCustomAccent || DEFAULT_CUSTOM_ACCENT) : null
+        return {
+          ...s,
+          mode: m,
+          accent: nextAccent,
+        }
       })
     }
   }, [])
 
   const setAccentColor = useCallback((hex) => {
     if (hex && typeof hex === 'string') {
-      setState({ mode: 'custom', accent: hex })
+      setState({
+        mode: 'custom',
+        accent: hex,
+        lastCustomAccent: hex,
+      })
     }
   }, [])
 
   const resetAccent = useCallback(() => {
-    setState({ mode: DEFAULT_MODE, accent: null })
+    setState((s) => ({
+      mode: DEFAULT_MODE,
+      accent: null,
+      lastCustomAccent: s.lastCustomAccent || DEFAULT_CUSTOM_ACCENT,
+    }))
   }, [])
 
   return (
@@ -172,6 +188,7 @@ export function ThemeProvider({ children }) {
       mode,
       setMode,
       accent,
+      lastCustomAccent: lastCustomAccent || DEFAULT_CUSTOM_ACCENT,
       setAccent: setAccentColor,
       setAccentColor,
       resetAccent,

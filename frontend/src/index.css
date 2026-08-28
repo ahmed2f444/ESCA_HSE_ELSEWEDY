@@ -220,6 +220,51 @@ body.custom {
     @apply text-xs text-txt-3 font-mono num;
   }
 
+  /* ---------- navigation tabs ---------- */
+  .nav-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 3px solid transparent;
+    color: rgb(var(--c-txt2)) !important;
+    background-color: transparent !important;
+    transition: all 150ms ease;
+    user-select: none;
+    cursor: pointer;
+  }
+  .nav-tab:hover {
+    color: rgb(var(--c-txt)) !important;
+    background-color: rgb(var(--c-steel3)) !important;
+  }
+  [data-theme="light"] .nav-tab,
+  html.light .nav-tab,
+  body.light .nav-tab {
+    color: #475569 !important;
+  }
+  [data-theme="light"] .nav-tab:hover,
+  html.light .nav-tab:hover,
+  body.light .nav-tab:hover {
+    background-color: #E8EDF1 !important;
+    color: #0F172A !important;
+  }
+  .nav-tab.active {
+    color: rgb(var(--c-txt)) !important;
+    font-weight: 600 !important;
+    border-bottom-color: rgb(var(--c-hi)) !important;
+    background-color: rgb(var(--c-hi) / 0.15) !important;
+  }
+  [data-theme="light"] .nav-tab.active,
+  html.light .nav-tab.active,
+  body.light .nav-tab.active {
+    background-color: rgb(var(--c-hi) / 0.12) !important;
+    color: #0F172A !important;
+    border-bottom-color: rgb(var(--c-hi)) !important;
+  }
+
   /* ---------- buttons ---------- */
   .btn {
     background-color: rgb(var(--c-steel3)) !important;

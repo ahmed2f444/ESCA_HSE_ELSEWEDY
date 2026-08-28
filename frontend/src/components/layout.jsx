@@ -210,12 +210,7 @@ export default function AppShell() {
               to={n.to}
               end={n.end}
               className={({ isActive }) =>
-                [
-                  'px-4 py-2.5 text-[13px] font-medium whitespace-nowrap flex items-center gap-2 border-b-[3px] transition-colors duration-150',
-                  isActive
-                    ? 'text-txt font-semibold border-hi bg-hi/15'
-                    : 'text-txt-2 border-transparent hover:text-txt hover:bg-steel-3',
-                ].join(' ')
+                `nav-tab ${isActive ? 'active' : ''}`
               }
             >
               <Icon name={n.icon} size={15} />

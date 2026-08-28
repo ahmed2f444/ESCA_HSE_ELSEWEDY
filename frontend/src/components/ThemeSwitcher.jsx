@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from '../theme.jsx'
+import rgbGradientImg from '../assets/rgb-gradient.png'
 
 /* ------------------------------------------------------------------
    Theme Switcher — header popover with dedicated Custom Mode & Tinting.
@@ -268,7 +269,7 @@ export default function ThemeSwitcher() {
                 style={{
                   background: mode === 'custom'
                     ? currentCustomColor
-                    : 'linear-gradient(135deg, #4F46E5 0%, #3B82F6 18%, #06B6D4 36%, #10B981 54%, #FBBF24 72%, #F97316 88%, #EF4444 100%)',
+                    : `url(${rgbGradientImg}) center/cover no-repeat`,
                 }}
               >
                 <input
@@ -277,7 +278,7 @@ export default function ThemeSwitcher() {
                   onChange={(e) => handleColorChange(e.target.value)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/15 via-transparent to-white/25 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/20 pointer-events-none" />
                 <PenIcon size={14} className="text-white drop-shadow pointer-events-none relative z-[1]" />
               </label>
               <div className="text-[12px] font-bold text-txt flex-1 leading-tight select-none font-sans">

@@ -5,17 +5,17 @@ from openai import OpenAI, RateLimitError
 from app.config import settings
 
 logger = logging.getLogger(__name__)
-client = OpenAI(api_key=settings.groq_api_key, base_url=settings.groq_base_url, timeout=12.0)
+client = OpenAI(api_key=settings.groq_api_key, base_url=settings.groq_base_url, timeout=8.0)
 
 # Local Ollama instance — OpenAI-compatible endpoint, no real API key needed.
 # Only ever reached once every Groq model below has failed or is rate-limited.
 local_client = OpenAI(api_key="ollama", base_url=settings.local_llm_base_url, timeout=60.0)
 
 _FALLBACK_MODELS = [
-    "qwen/qwen3.6-27b",
     "qwen/qwen3.8-27b",
-    "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.6-27b",
 ]
 
 

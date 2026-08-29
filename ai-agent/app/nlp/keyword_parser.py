@@ -247,11 +247,11 @@ HSE_INTENTS_KEYWORDS = {
     # ── Master Data & Org
     "LIST_DEPARTMENTS": [
         "departments", "list departments", "headcount by department", "show departments", "all departments",
-        "الاقسام", "الأقسام", "قائمة الاقسام", "قطاعات المصنع", "هيكل المصنع", "مدراء الاقسام", "عرض الاقسام"
+        "الاقسام", "الأقسام", "قائمة الاقسام", "قطاعات المصنع", "هيكل المصنع", "مدراء الاقسام", "عرض الاقسام", "اقسام", "الأقسام", "عنابر", "العنابر", "مناطق", "المناطق", "مصنع"
     ],
     "LIST_ZONES": [
         "plant zones", "list zones", "all zones", "work zones", "show zones",
-        "المناطق", "العنابر", "قائمة المناطق", "عنابر الانتاج", "مناطق العمل", "مناطق المصنع", "عرض المناطق"
+        "المناطق", "العنابر", "قائمة المناطق", "عنابر الانتاج", "مناطق العمل", "مناطق المصنع", "عرض المناطق", "عنابر", "مناطق", "عنبر"
     ],
     "LIST_EMPLOYEES": [
         "list employees", "all employees", "all workers", "staff list", "personnel list",
@@ -273,11 +273,11 @@ HSE_INTENTS_KEYWORDS = {
     # ── Dashboard & KPIs
     "GET_DASHBOARD_SUMMARY": [
         "dashboard", "summary", "safety stats", "overview", "kpis summary", "safe hours", "days without lti",
-        "لوحة القيادة", "ملخص السلامة", "احصائيات عامة", "ساعات العمل الآمنة", "أيام بدون إصابات", "مؤشرات الاداء", "داشبورد", "لوحه القياده"
+        "لوحة القيادة", "ملخص السلامة", "احصائيات عامة", "ساعات العمل الآمنة", "أيام بدون إصابات", "مؤشرات الاداء", "داشبورد", "لوحه القياده", "لوحة القياده"
     ],
     "GET_MONTHLY_KPIS": [
         "monthly kpis", "trir", "ltifr", "lost days", "monthly safety trend", "kpi trend",
-        "مؤشرات شهرية", "معدل الحوادث", "ساعات العمل الشهرية", "ترير", "تقرير شهري", "مؤشرات الامتثال"
+        "مؤشرات شهرية", "معدل الحوادث", "ساعات العمل الشهرية", "ترير", "تقرير شهري", "مؤشرات الامتثال", "مؤشرات السلامة العامة"
     ],
     "GET_SAFETY_SCORES": [
         "safety scores", "zone compliance", "zone safety rank", "zone scores",
@@ -291,7 +291,7 @@ HSE_INTENTS_KEYWORDS = {
     # ── Incidents & Observations
     "CREATE_INCIDENT": [
         "create incident", "report incident", "log incident", "new accident", "near miss", "injury", "spill",
-        "بلاغ حادث", "تسجيل حادث", "اصابة عمل", "إصابة عمل", "حادث وشيك", "تسريب", "انسكاب", "حريق", "حادث جديد", "ابلاغ عن حادث"
+        "بلاغ حادث", "تسجيل حادث", "اصابة عمل", "إصابة عمل", "حادث وشيك", "تسريب", "انسكاب", "حادث حريق", "حادث جديد", "ابلاغ عن حادث"
     ],
     "LOG_SAFETY_OBSERVATION": [
         "log observation", "unsafe act", "unsafe condition", "positive safety observation", "observation",
@@ -321,7 +321,7 @@ HSE_INTENTS_KEYWORDS = {
     ],
     "LIST_PERMITS": [
         "list permits", "active permits", "show ptw", "open work permits", "permits list",
-        "قائمة التصاريح", "تصاريح العمل النشطة", "سجل التصاريح", "عرض تصاريح العمل", "سجل تصاريح"
+        "قائمة التصاريح", "تصاريح العمل النشطة", "سجل التصاريح", "عرض تصاريح العمل", "سجل تصاريح", "تصاريح العمل"
     ],
     "GET_PERMIT_DETAILS": [
         "permit details", "ptw gas test", "permit approvals", "ptw checklist",
@@ -338,8 +338,8 @@ HSE_INTENTS_KEYWORDS = {
         "جدولة فحص", "تفتيش دوري", "معاينة ميدانية", "جدولة جولة سلامة", "تفتيش جديد", "جدول تفتيش"
     ],
     "LIST_INSPECTIONS": [
-        "list inspections", "inspection history", "audit results", "safety walks", "inspections list",
-        "قائمة التفتيش", "سجل الجولات", "نتائج التفتيش", "سجل المعاينات", "جولات السلامة"
+        "list inspections", "inspection history", "audit results", "safety walks", "inspections list", "inspections",
+        "قائمة التفتيش", "سجل الجولات", "نتائج التفتيش", "سجل المعاينات", "جولات السلامة", "جولات التفتيش", "ملاحظات الفحص", "الفحص المفتوحة", "جولات", "تفتيش"
     ],
     "CREATE_INSPECTION_FINDING": [
         "log finding", "inspection finding", "non-conformance", "audit finding", "finding",
@@ -356,8 +356,8 @@ HSE_INTENTS_KEYWORDS = {
         "اجراء تصحيحي", "إجراء تصحيحي", "اجراء وقائي", "إجراء وقائي", "تسجيل خطة عمل", "انشاء capa", "انشئ capa"
     ],
     "LIST_CAPAS": [
-        "list capas", "overdue capas", "open corrective actions", "all capas", "capas list",
-        "الاجراءات التصحيحية المتأخرة", "قائمة capa", "سجل الاجراءات الوقائية", "خطط العمل", "الاجراءات التصحيحية"
+        "list capas", "overdue capas", "open corrective actions", "all capas", "capas list", "capa", "capas",
+        "الاجراءات التصحيحية المتأخرة", "قائمة capa", "سجل الاجراءات الوقائية", "خطط العمل", "الاجراءات التصحيحية", "إجراءات capa", "اجراءات capa", "كابا", "المتأخرة", "متأخرة"
     ],
     "UPDATE_CAPA": [
         "update capa", "complete capa", "close corrective action", "verify capa",
@@ -386,7 +386,7 @@ HSE_INTENTS_KEYWORDS = {
     ],
     "LIST_JSAS": [
         "list jsa", "show jsas", "jsa catalog", "task analysis", "jsas list",
-        "قائمة jsa", "سجل تحليل المهام", "نماذج jsa", "تحليلات السلامة", "سجل jsa"
+        "قائمة jsa", "سجل تحليل المهام", "نماذج jsa", "تحليلات السلامة", "سجل jsa", "وثائق تحليل سلامة المهام"
     ],
     "UPDATE_JSA": [
         "update jsa", "approve jsa", "modify task controls",
@@ -404,7 +404,7 @@ HSE_INTENTS_KEYWORDS = {
     ],
     "LIST_CERTIFICATES": [
         "list certificates", "show certificates", "training schedule", "matrix", "overdue training", "certificates list",
-        "سجل الشهادات", "قائمة الشهادات", "جدول التدريبات", "مصفوفة الكفاءة", "عرض الشهادات", "تدريب منتهي", "شهادات"
+        "سجل الشهادات", "قائمة الشهادات", "جدول التدريبات", "مصفوفة الكفاءة", "عرض الشهادات", "تدريب منتهي", "شهادات", "الشهادات التدريبية"
     ],
     "CREATE_TRAINING_COURSE": [
         "create course", "add training course", "new course program", "course",
@@ -422,7 +422,7 @@ HSE_INTENTS_KEYWORDS = {
     ],
     "LIST_PPE": [
         "list ppe", "ppe inventory", "ppe stock", "ppe threshold", "ppe matrix", "ppe list",
-        "مخزون المهمات", "رصيد مهمات الوقاية", "مهمات اوشكت على النفاد", "مصفوفة المهمات", "مهمات الوقاية"
+        "مخزون المهمات", "رصيد مهمات الوقاية", "مهمات اوشكت على النفاد", "مصفوفة المهمات", "مهمات الوقاية", "حالة مخزون مهمات الوقاية"
     ],
     "UPDATE_PPE_STOCK": [
         "update ppe stock", "restock ppe", "add ppe inventory",
@@ -439,8 +439,8 @@ HSE_INTENTS_KEYWORDS = {
         "اضافة طفاية", "إضافة طفاية حريق", "تركيب خرطوم اطفاء", "محطة غسيل عيون", "اضافة اصل سلامة", "طفاية جديدة"
     ],
     "LIST_FIRE_EQUIPMENT": [
-        "list fire equipment", "expired extinguishers", "fire assets", "eyewash stations", "fire equipment",
-        "معدات الحريق", "طفايات منتهية", "صمامات الحريق", "محطات غسيل العيون", "أجهزة الصدمات", "طفايات الحريق"
+        "list fire equipment", "expired extinguishers", "fire assets", "eyewash stations", "fire equipment", "fire extinguishers",
+        "معدات الحريق", "طفايات منتهية", "صمامات الحريق", "محطات غسيل العيون", "أجهزة الصدمات", "طفايات الحريق", "مطافئ الحريق", "معدات ومطافئ الحريق", "مطافئ", "طفايات"
     ],
 
     # ── HazMat & Chemicals
@@ -460,17 +460,17 @@ HSE_INTENTS_KEYWORDS = {
     ],
     "LIST_MEDICAL_EXAMS": [
         "list medical exams", "occupational exposure", "noise levels", "dust monitoring", "wearables", "health exams",
-        "الفحوصات الطبية", "الصحة المهنية", "قياسات الضوضاء", "التعرض المهني", "الاجهزة الذكية", "سجل الفحوصات الطبية"
+        "الفحوصات الطبية", "الصحة المهنية", "قياسات الضوضاء", "التعرض المهني", "الاجهزة الذكية", "سجل الفحوصات الطبية", "الفحوصات الطبية الدورية"
     ],
 
     # ── AI Vision & IoT
     "ADD_IOT_SENSOR": [
-        "add iot sensor", "register sensor", "install sensor", "voc sensor", "sensor", "sensors", "voc", "iot sensor",
-        "اضافة حساس", "إضافة مستشعر", "أضف مستشعر", "اضف مستشعر", "أضف حساس", "اضف حساس", "حساس غازات", "حساس غاز", "مستشعر غاز", "مستشعر", "حساس", "حساس ضوضاء", "حساس جديد"
+        "add iot sensor", "register sensor", "install sensor", "voc sensor", "new sensor",
+        "اضافة حساس", "إضافة مستشعر", "أضف مستشعر", "اضف مستشعر", "أضف حساس", "اضف حساس", "حساس جديد"
     ],
     "LIST_AI_IOT": [
-        "iot sensors", "sensor alerts", "ai cameras", "ai events", "vision detections", "ppe violation",
-        "حساسات iot", "قراءات الحساسات", "كاميرات الذكاء الاصطناعي", "مخالفات الكاميرا", "كشف عدم ارتداء الخوذة", "انذارات الحساسات"
+        "iot sensors", "sensor alerts", "ai cameras", "ai events", "vision detections", "ppe violation", "sensors", "iot",
+        "حساسات iot", "قراءات الحساسات", "كاميرات الذكاء الاصطناعي", "مخالفات الكاميرا", "كشف عدم ارتداء الخوذة", "انذارات الحساسات", "مستشعرات الغازات", "مستشعرات", "تنبيهات الكاميرات"
     ],
 
     # ── Security & RAG Knowledge
@@ -697,8 +697,10 @@ def get_recommended_tools_for_prompt(text: str, all_tools: list[dict]) -> list[d
     if "search_hse_knowledge" in tool_map and tool_map["search_hse_knowledge"] not in selected:
         selected.append(tool_map["search_hse_knowledge"])
 
-    if not parsed.is_crud_mutation or any(k in parsed.normalized_prompt for k in ["select", "query", "استعلام", "تقرير", "احصائيات", "كم", "ما هي", "قائمة", "list", "show", "get"]):
-        if "run_read_only_query" in tool_map and tool_map["run_read_only_query"] not in selected:
-            selected.append(tool_map["run_read_only_query"])
+    if not selected:
+        fallback_names = ["get_dashboard_summary", "list_incidents", "list_permits", "list_inspections", "search_hse_knowledge", "run_read_only_query"]
+        for fn in fallback_names:
+            if fn in tool_map and tool_map[fn] not in selected:
+                selected.append(tool_map[fn])
 
-    return selected or all_tools
+    return selected

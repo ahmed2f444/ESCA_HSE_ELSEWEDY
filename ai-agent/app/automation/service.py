@@ -109,19 +109,27 @@ def _parse_non_negative_integers(
 ) -> tuple[int, ...]:
     rule_id = str(rule.get("rule_id") or "").strip()
     raw_threshold = rule.get("threshold_value")
-    raw_value = "" if raw_threshold is None else str(raw_threshold)
-
-    try:
-        values = tuple(
-            int(piece.strip())
-            for piece in raw_value.split(",")
-            if piece.strip()
-        )
-    except ValueError as exc:
-        raise AutomationConfigurationError(
-            f"{rule_id} threshold_value "
-            "must contain integers"
-        ) from exc
+    
+    if isinstance(raw_threshold, (list, tuple, set)):
+        try:
+            values = tuple(int(v) for v in raw_threshold)
+        except (ValueError, TypeError) as exc:
+            raise AutomationConfigurationError(
+                f"{rule_id} threshold_value must contain integers"
+            ) from exc
+    else:
+        raw_value = "" if raw_threshold is None else str(raw_threshold)
+        try:
+            values = tuple(
+                int(piece.strip())
+                for piece in raw_value.split(",")
+                if piece.strip()
+            )
+        except ValueError as exc:
+            raise AutomationConfigurationError(
+                f"{rule_id} threshold_value "
+                "must contain integers"
+            ) from exc
 
     if not values:
         raise AutomationConfigurationError(

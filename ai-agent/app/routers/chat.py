@@ -4,18 +4,21 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import AskRequest, AskResponse
 from app.agent import run_agent_loop
+from app.tools.rbac import normalize_role
 
 router = APIRouter(tags=["Chat & Agent"])
 
 SUGGESTIONS = [
     "ما هي الحوادث المفتوحة حالياً وما درجة خطورتها؟",
     "اعرض تصاريح العمل النشطة والمنتهية في الموقع",
+    "ما هي اشتراطات الدخول للأماكن المغلقة وفحص الغازات حسب OSHA؟",
+    "انشئ بلاغ حادث جديد: انسكاب زيت هيدروليكي في منطقة الإنتاج",
+    "اعتمد تصريح العمل ePTW رقم 1",
+    "ما هي القواعد الذهبية للسلامة (ESCA Golden Rules)؟",
     "ما هي إجراءات CAPA المتأخرة عن موعدها؟",
-    "كم عدد الفحوصات الطبية المكتملة ونتائجها؟",
-    "ما هو وضع مخزون مهمات الوقاية الشخصية (PPE)؟",
-    "اعرض أعلى المخاطر المسجلة في سجل المخاطر",
-    "ما هي الشهادات التدريبية المنتهية أو القريبة من الانتهاء؟",
-    "ما هي مؤشرات السلامة لشهر يوليو 2026 (TRIR و LTIFR)؟",
+    "صرف مهمة وقاية شخصية (PPE) للموظف",
+    "احسب مؤشرات TRIR و LTIFR لشهر يوليو 2026",
+    "ما هي مطافئ الحريق التي تحتاج فحص دوري أو إعادة تعبئة؟",
 ]
 
 
@@ -23,9 +26,10 @@ SUGGESTIONS = [
 @router.post("/api/ask", response_model=AskResponse)
 def ask_agent(req: AskRequest, db: Session = Depends(get_db)):
     """
-    Main conversational agent endpoint. Receives user questions, executes tool calling against MySQL,
-    and returns answer with full execution traces.
+    Main conversational agent endpoint. Receives user questions, enforces RBAC on tools,
+    executes live RAG & CRUD against Railway MySQL, and returns verified answer with traces.
     """
+    role = normalize_role(req.user_role)
     try:
         response = run_agent_loop(
             question=req.question,
@@ -33,25 +37,30 @@ def ask_agent(req: AskRequest, db: Session = Depends(get_db)):
             session_id=req.session_id,
             model_mode=req.model_mode or "auto",
             client_history=req.history,
+            user_role=role,
+            user_id=req.admin_user_id or "AI_USER",
         )
+        response.user_role = role
         return response
     except RuntimeError as exc:
         error_msg = (
             f"⚠️ All LLM providers are currently unavailable: {exc}. "
-            "This is usually caused by a rate limit or token quota. Please try a shorter question or try again shortly."
+            "Please check network connection or switch model mode."
         )
         return AskResponse(
             session_id=req.session_id or f"err-{uuid.uuid4().hex[:8]}",
             answer=error_msg,
             tool_calls=[],
             model_used=None,
+            user_role=role,
         )
     except Exception as exc:
         return AskResponse(
             session_id=req.session_id or f"err-{uuid.uuid4().hex[:8]}",
-            answer=f"⚠️ Unexpected server error: {exc}",
+            answer=f"⚠️ Server error: {exc}",
             tool_calls=[],
             model_used=None,
+            user_role=role,
         )
 
 

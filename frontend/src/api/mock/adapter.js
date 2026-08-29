@@ -29,6 +29,27 @@ function fail(status, message, config) {
   return err
 }
 
+let dynamicPermits = [...(db.permits || [])]
+let dynamicInspectionSchedule = [...(db.inspectionSchedule || [])]
+let dynamicInspectionFindings = [...(db.inspectionFindings || [])]
+let dynamicTrainingSchedule = [...(db.trainingSchedule || [
+  { id: 'TRN-001', certId: 1, employee: 'محمود عبد الله', dept: 'خط الإنتاج A', course: 'السلامة العامة (General Induction)', provider: 'ESCA HSE Academy', issueDate: '2025-01-15', expiryDate: '2026-12-15', evidenceRef: 'CERT-2026-0001', status: 'سارية ومعتمدة', statusTone: 'ok' },
+  { id: 'TRN-002', certId: 2, employee: 'هبة فؤاد', dept: 'خط الإنتاج B', course: 'العمل الساخن (Hot Work)', provider: 'Elsewedy Technical Training Center', issueDate: '2025-03-01', expiryDate: '2027-01-04', evidenceRef: 'CERT-2026-0002', status: 'سارية ومعتمدة', statusTone: 'ok' },
+  { id: 'TRN-003', certId: 3, employee: 'أحمد سامي', dept: 'ورشة الصيانة الميكانيكية', course: 'القفل وتطبيق بطاقة LOTO', provider: 'External Certified Provider', issueDate: '2025-04-15', expiryDate: '2027-01-24', evidenceRef: 'CERT-2026-0003', status: 'سارية ومعتمدة', statusTone: 'ok' },
+  { id: 'TRN-004', certId: 4, employee: 'كريم رشاد', dept: 'المخازن والخام', course: 'العمل على ارتفاع (Working at Height)', provider: 'ESCA HSE Academy', issueDate: '2025-05-30', expiryDate: '2027-02-13', evidenceRef: 'CERT-2026-0004', status: 'مجدولة للتجديد', statusTone: 'wn' },
+])]
+let dynamicTrainingExpiring = [...(db.trainingExpiring || [])]
+let dynamicHealthSchedule = [...(db.healthSchedule || [
+  { id: 'HEX-001', employee: 'محمود عبد الله', protocol: 'فحص قياس السمع (Audiometry)', scheduledDate: '2026-08-28', completedDate: '2026-08-28', fitness: 'لائق طبياً', fitnessTone: 'ok', restrictions: 'لا توجد قيود', doctor: 'د. حازم القاضي', nextDueDate: '2027-02-28', status: 'مكتمل', statusTone: 'ok' },
+  { id: 'HEX-002', employee: 'هبة فؤاد', protocol: 'فحص وظائف التنفس والرئة (Spirometry)', scheduledDate: '2026-08-29', completedDate: null, fitness: 'قيد الانتظار', fitnessTone: 'wn', restrictions: 'تحت التقييم', doctor: 'د. سمر الشافعي', nextDueDate: '2027-02-28', status: 'مجدول', statusTone: 'in' },
+  { id: 'HEX-003', employee: 'أحمد سامي', protocol: 'لياقة الارتفاعات والأماكن المغلقة', scheduledDate: '2026-08-30', completedDate: '2026-08-30', fitness: 'لائق مع قيود', fitnessTone: 'wn', restrictions: 'تجنب العمل على ارتفاعات > 10م', doctor: 'د. حازم القاضي', nextDueDate: '2026-11-30', status: 'مكتمل', statusTone: 'ok' },
+])]
+let dynamicAlerts = [...(db.dashboardAlerts || [
+  { id: 'NTF-001', title: 'انتهاء صلاحية تصريح عمل ePTW', body: 'تصريح العمل الساخن رقم PERM-104 في خط الكابلات A تجاوز موعد انتهائه.', time: 'منذ 10 دقائق', color: 'var(--crit)', to: '/permits', unread: true },
+  { id: 'NTF-002', title: 'تنبيه فحص طفاية حريق دوري', body: 'طفاية حريق CO2 بمبنى الإدارة (FE-012) مستحقة للفحص الهيدروستاتيكي.', time: 'منذ 30 دقيقة', color: 'var(--warn)', to: '/fire-equipment', unread: true },
+  { id: 'NTF-003', title: 'إجراء تصحيحي CAPA متأخر', body: 'إجراء تركيب حاجز حماية على ماكينة الجدل تجاوز الموعد المستهدف.', time: 'منذ ساعتين', color: 'var(--warn)', to: '/incidents', unread: true },
+])]
+
 /* ---------------- route table ---------------- */
 /* [method, path pattern, handler(params, query, body)] */
 
@@ -71,10 +92,94 @@ const routes = [
     zoneCount: db.departments.reduce((n, s) => n + s.zones.reduce((m, z) => m + z.zoneCount, 0), 0),
   })],
 
-  /* dashboard */
+function evaluateCertificateExpirations() {
+  const now = new Date()
+  dynamicTrainingSchedule = dynamicTrainingSchedule.map((item) => {
+    if (item.status && item.status.includes('منتهية')) return item
+
+    const expDate = item.expiryDate || '2099-12-31'
+    let expTime = item.expiryTime || ''
+    if (!expTime && item.evidenceRef && item.evidenceRef.includes('@')) {
+      expTime = item.evidenceRef.split('@')[1].trim()
+    }
+    if (!expTime) expTime = '23:59'
+    const targetDt = new Date(`${expDate}T${expTime.length === 5 ? expTime + ':00' : expTime}`)
+
+    if (!isNaN(targetDt.getTime()) && targetDt <= now) {
+      const updatedItem = {
+        ...item,
+        status: 'منتهية الصلاحية (EXPIRED)',
+        statusTone: 'cr',
+      }
+
+      const alreadyAlerted = dynamicAlerts.some(
+        (a) =>
+          a.type === 'AUTOMATION_CERTIFICATE_EXPIRY' &&
+          a.body &&
+          a.body.includes(item.employee) &&
+          a.body.includes(item.course)
+      )
+      if (!alreadyAlerted) {
+        const alertItem = {
+          id: 'NTF-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+          notificationId: Date.now(),
+          title: `تنبيه أتمتة السلامة: انتهاء صلاحية شهادة ${item.employee}`,
+          body: `انتهت صلاحية شهادة تدريب الموظف ${item.employee} لدورة (${item.course}) في ${item.fullExpiry || expDate} — تم تفعيل تنبيه السلامة الآلي (AUT-002).`,
+          time: 'الآن (مباشر)',
+          color: 'var(--crit)',
+          type: 'AUTOMATION_CERTIFICATE_EXPIRY',
+          to: '/training',
+          unread: true,
+        }
+        dynamicAlerts = [alertItem, ...dynamicAlerts]
+      }
+      return updatedItem
+    }
+    return item
+  })
+}
+
+  /* dashboard & notifications */
   ['get', '/dashboard/summary', () => db.dashboardSummary],
   ['get', '/dashboard/safety-score', () => db.safetyByZone],
-  ['get', '/dashboard/alerts', () => db.dashboardAlerts],
+  ['get', '/dashboard/alerts', () => {
+    evaluateCertificateExpirations()
+    return [...dynamicAlerts]
+  }],
+  ['get', '/notifications', () => {
+    evaluateCertificateExpirations()
+    return [...dynamicAlerts]
+  }],
+  ['get', '/api/v1/notifications', () => {
+    evaluateCertificateExpirations()
+    return [...dynamicAlerts]
+  }],
+  ['post', '/notifications/mark-read', (_p, _q, body) => {
+    const nid = body?.notificationId || body?.id
+    dynamicAlerts = dynamicAlerts.map((a) =>
+      a.id === nid || a.notificationId === nid || String(a.id) === String(nid) ? { ...a, unread: false } : a
+    )
+    return { ok: true, success: true }
+  }],
+  ['post', '/api/v1/notifications/mark-read', (_p, _q, body) => {
+    const nid = body?.notificationId || body?.id
+    dynamicAlerts = dynamicAlerts.map((a) =>
+      a.id === nid || a.notificationId === nid || String(a.id) === String(nid) ? { ...a, unread: false } : a
+    )
+    return { ok: true, success: true }
+  }],
+  ['post', '/notifications/mark-all-read', () => {
+    dynamicAlerts = dynamicAlerts.map((a) => ({ ...a, unread: false }))
+    return { ok: true, success: true }
+  }],
+  ['post', '/api/v1/notifications/mark-all-read', () => {
+    dynamicAlerts = dynamicAlerts.map((a) => ({ ...a, unread: false }))
+    return { ok: true, success: true }
+  }],
+  ['post', '/api/v1/automation/trigger', () => {
+    evaluateCertificateExpirations()
+    return { status: 'triggered', message: 'Automation engine evaluated all rules', alerts: dynamicAlerts }
+  }],
   ['get', '/dashboard/monthly-trend', () => db.monthlyTrend],
   ['get', '/dashboard/pyramid', () => db.pyramid],
 
@@ -153,17 +258,17 @@ const routes = [
     return { id: p.id, status: 'نشط', approvedBy: 'رافع صابر', at: new Date().toISOString() }
   }],
   ['get', '/permits/:id', (p) => {
-    const found = db.permits.find((x) => x.id === p.id)
+    const found = dynamicPermits.find((x) => x.id === p.id)
     if (!found) throw fail(404, `لا يوجد تصريح بالرقم ${p.id}`)
     return found
   }],
   ['get', '/permits', (_p, q) => {
-    let rows = (db.permits || []).map((r) => (approvedPermits.has(r.id) ? { ...r, rawStatus: 'ACTIVE', status: 'نشط', statusTone: 'safe' } : r))
+    let rows = dynamicPermits.map((r) => (approvedPermits.has(r.id) ? { ...r, rawStatus: 'ACTIVE', status: 'نشط', statusTone: 'safe' } : r))
     if (q && q.type && q.type !== 'all') rows = rows.filter((r) => r.type === q.type)
     return rows
   }],
   ['post', '/permits', (_p, _q, body) => {
-    const newId = 'PTW-' + String((db.permits?.length || 0) + 1).padStart(3, '0')
+    const newId = 'PTW-' + String(dynamicPermits.length + 1).padStart(3, '0')
     const item = {
       id: newId,
       type: body.type || 'HOT_WORK',
@@ -185,19 +290,15 @@ const routes = [
       statusTone: 'in',
       flag: 'OK',
     }
-    db.permits = [item, ...(db.permits || [])]
+    dynamicPermits = [item, ...dynamicPermits]
     return item
   }],
   ['post', '/permits/:id/suspend', (p) => {
-    if (db.permits) {
-      db.permits = db.permits.map((x) => (x.id === p.id ? { ...x, rawStatus: 'SUSPENDED', status: 'موقوف', statusTone: 'cr' } : x))
-    }
+    dynamicPermits = dynamicPermits.map((x) => (x.id === p.id ? { ...x, rawStatus: 'SUSPENDED', status: 'موقوف', statusTone: 'cr' } : x))
     return { success: true, id: p.id, status: 'SUSPENDED' }
   }],
   ['post', '/permits/:id/close', (p) => {
-    if (db.permits) {
-      db.permits = db.permits.map((x) => (x.id === p.id ? { ...x, rawStatus: 'CLOSED', status: 'مغلق', statusTone: 'wn' } : x))
-    }
+    dynamicPermits = dynamicPermits.map((x) => (x.id === p.id ? { ...x, rawStatus: 'CLOSED', status: 'مغلق', statusTone: 'wn' } : x))
     return { success: true, id: p.id, status: 'CLOSED' }
   }],
 
@@ -217,7 +318,7 @@ const routes = [
 
   /* operations */
   ['get', '/departments', () => db.departments],
-  ['get', '/inspections/schedule', () => db.inspectionSchedule],
+  ['get', '/inspections/schedule', () => dynamicInspectionSchedule],
   ['post', '/inspections/schedule', (_p, _q, body) => {
     const item = {
       type: body.type || 'تفتيش السلامة العام',
@@ -229,10 +330,10 @@ const routes = [
       tone: 'in',
       score: null,
     }
-    db.inspectionSchedule = [item, ...(db.inspectionSchedule || [])]
+    dynamicInspectionSchedule = [item, ...dynamicInspectionSchedule]
     return item
   }],
-  ['get', '/inspections/findings', () => db.inspectionFindings],
+  ['get', '/inspections/findings', () => dynamicInspectionFindings],
   ['get', '/inspections/stats', () => ({ ...db.inspectionStats, field: db.fieldInspector })],
   ['get', '/inspections/templates', () => db.inspectionTemplates],
   ['post', '/inspections/walk', (_p, _q, body) => {
@@ -246,51 +347,96 @@ const routes = [
       tone: 'ok',
       score: body.score || 95,
     }
-    db.inspectionSchedule = [item, ...(db.inspectionSchedule || [])]
+    dynamicInspectionSchedule = [item, ...dynamicInspectionSchedule]
     if (body.findings && body.findings.length > 0) {
-      db.inspectionFindings = [...body.findings, ...(db.inspectionFindings || [])]
+      dynamicInspectionFindings = [...body.findings, ...dynamicInspectionFindings]
     }
     return { success: true, item }
   }],
   ['post', '/inspections/findings/:id/status', (p, _q, body) => {
     const fid = parseInt(p.id, 10)
     const state = body.state || body.status || 'مغلق'
-    if (db.inspectionFindings) {
-      db.inspectionFindings = db.inspectionFindings.map((f) =>
-        f.id === fid ? { ...f, state } : f
-      )
-    }
+    dynamicInspectionFindings = dynamicInspectionFindings.map((f) =>
+      f.id === fid ? { ...f, state } : f
+    )
     return { success: true, id: fid, state }
   }],
   ['get', '/training/programs', () => db.trainingPrograms],
-  ['get', '/training/expiring', () => db.trainingExpiring],
+  ['get', '/training/expiring', () => {
+    evaluateCertificateExpirations()
+    const now = new Date()
+    return dynamicTrainingExpiring.map((e) => {
+      const expDate = e.expires || e.expiryDate || '2099-12-31'
+      const expTime = e.expiryTime || (e.evidenceRef && e.evidenceRef.includes('@') ? e.evidenceRef.split('@')[1] : '23:59')
+      const targetDt = new Date(`${expDate}T${expTime.length === 5 ? expTime + ':00' : expTime}`)
+      const isExp = e.status === 'منتهية' || (!isNaN(targetDt.getTime()) && targetDt <= now)
+      return {
+        ...e,
+        expiryTime: expTime,
+        status: isExp ? 'منتهية' : 'تنتهي قريباً',
+        tone: isExp ? 'cr' : 'wn',
+      }
+    })
+  }],
   ['get', '/training/stats', () => db.trainingStats],
   ['get', '/training/schedule', () => {
-    return (db.trainingSchedule || [
-      { id: 'TRN-001', certId: 1, employee: 'محمود عبد الله', dept: 'خط الإنتاج A', course: 'السلامة العامة (General Induction)', provider: 'ESCA HSE Academy', issueDate: '2025-01-15', expiryDate: '2026-12-15', evidenceRef: 'CERT-2026-0001', status: 'سارية ومعتمدة', statusTone: 'ok' },
-      { id: 'TRN-002', certId: 2, employee: 'هبة فؤاد', dept: 'خط الإنتاج B', course: 'العمل الساخن (Hot Work)', provider: 'Elsewedy Technical Training Center', issueDate: '2025-03-01', expiryDate: '2027-01-04', evidenceRef: 'CERT-2026-0002', status: 'سارية ومعتمدة', statusTone: 'ok' },
-      { id: 'TRN-003', certId: 3, employee: 'أحمد سامي', dept: 'ورشة الصيانة الميكانيكية', course: 'القفل وتطبيق بطاقة LOTO', provider: 'External Certified Provider', issueDate: '2025-04-15', expiryDate: '2027-01-24', evidenceRef: 'CERT-2026-0003', status: 'سارية ومعتمدة', statusTone: 'ok' },
-      { id: 'TRN-004', certId: 4, employee: 'كريم رشاد', dept: 'المخازن والخام', course: 'العمل على ارتفاع (Working at Height)', provider: 'ESCA HSE Academy', issueDate: '2025-05-30', expiryDate: '2027-02-13', evidenceRef: 'CERT-2026-0004', status: 'مجدولة للتجديد', statusTone: 'wn' },
-    ])
+    evaluateCertificateExpirations()
+    return [...dynamicTrainingSchedule]
   }],
   ['post', '/training/register', (_p, _q, body) => {
-    const newId = 'TRN-' + String((db.trainingSchedule?.length || 4) + 1).padStart(3, '0')
+    const newId = 'TRN-' + String(dynamicTrainingSchedule.length + 1).padStart(3, '0')
+    const expDate = body.expiryDate || new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10)
+    const expTime = body.expiryTime || '23:59'
+    const targetDt = new Date(`${expDate}T${expTime.length === 5 ? expTime + ':00' : expTime}`)
+    const isExpired = !isNaN(targetDt.getTime()) && targetDt <= new Date()
+
     const item = {
       id: newId,
-      certId: (db.trainingSchedule?.length || 4) + 1,
+      certId: dynamicTrainingSchedule.length + 1,
       employee: body.employeeName || 'محمود عبد الله',
       dept: body.dept || 'قطاع الإنتاج والتصنيع',
       course: body.courseName || 'السلامة العامة',
       provider: body.provider || 'ESCA HSE Academy',
       issueDate: body.issueDate || new Date().toISOString().slice(0, 10),
-      expiryDate: body.expiryDate || new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
-      evidenceRef: body.evidenceRef || ('CERT-' + Math.floor(Math.random() * 9000 + 1000)),
-      status: 'سارية ومعتمدة',
-      statusTone: 'ok',
+      expiryDate: expDate,
+      expiryTime: expTime,
+      fullExpiry: `${expDate} ${expTime}`,
+      evidenceRef: body.evidenceRef || ('CERT-' + Math.floor(Math.random() * 9000 + 1000) + '@' + expTime),
+      status: isExpired ? 'منتهية الصلاحية (EXPIRED)' : 'سارية ومعتمدة',
+      statusTone: isExpired ? 'cr' : 'ok',
+      liveNotificationTriggered: isExpired,
     }
-    if (!db.trainingSchedule) db.trainingSchedule = []
-    db.trainingSchedule = [item, ...db.trainingSchedule]
-    return item
+    dynamicTrainingSchedule = [item, ...dynamicTrainingSchedule]
+
+    const expItem = {
+      id: dynamicTrainingExpiring.length + 1,
+      employee: body.employeeName || 'محمود عبد الله',
+      employeeNo: 'EMP-' + String(body.employeeId || 1).padStart(3, '0'),
+      dept: body.dept || 'قطاع الإنتاج والتصنيع',
+      certificate: body.courseName || 'السلامة العامة',
+      expires: expDate,
+      expiryTime: expTime,
+      status: isExpired ? 'منتهية' : 'تنتهي قريباً',
+      tone: isExpired ? 'cr' : 'wn',
+    }
+    dynamicTrainingExpiring = [expItem, ...dynamicTrainingExpiring]
+
+    const alertItem = {
+      id: 'NTF-' + Date.now(),
+      notificationId: Date.now(),
+      title: isExpired ? `تنبيه أتمتة السلامة: انتهاء صلاحية شهادة ${item.employee}` : `توثيق واعتماد شهادة تدريبية: ${item.employee}`,
+      body: isExpired
+        ? `انتهت صلاحية شهادة تدريب الموظف ${item.employee} لدورة (${item.course}) في ${item.fullExpiry} — تم تفعيل تنبيه السلامة الآلي (AUT-002).`
+        : `تم توثيق واعتماد شهادة تدريب (${item.course}) للموظف ${item.employee} بنجاح في مصفوفة الكفاءة وتحديث سجلات السلامة.`,
+      time: 'الآن (مباشر)',
+      color: isExpired ? 'var(--crit)' : 'var(--safe)',
+      type: isExpired ? 'AUTOMATION_CERTIFICATE_EXPIRY' : 'TRAINING',
+      to: '/training',
+      unread: true,
+    }
+    dynamicAlerts = [alertItem, ...dynamicAlerts]
+
+    return { ...item, notification: alertItem }
   }],
   ['get', '/hazmat/chemicals', () => db.chemicals],
   ['get', '/hazmat/stats', () => db.hazmatStats],
@@ -298,15 +444,9 @@ const routes = [
   ['get', '/occupational-health/exams', () => db.healthExams],
   ['get', '/occupational-health/stats', () => db.healthStats],
   ['get', '/occupational-health/exposure', () => db.exposureMonitoring],
-  ['get', '/occupational-health/schedule', () => {
-    return (db.healthSchedule || [
-      { id: 'HEX-001', employee: 'محمود عبد الله', protocol: 'فحص قياس السمع (Audiometry)', scheduledDate: '2026-08-28', completedDate: '2026-08-28', fitness: 'لائق طبياً', fitnessTone: 'ok', restrictions: 'لا توجد قيود', doctor: 'د. حازم القاضي', nextDueDate: '2027-02-28', status: 'مكتمل', statusTone: 'ok' },
-      { id: 'HEX-002', employee: 'هبة فؤاد', protocol: 'فحص وظائف التنفس والرئة (Spirometry)', scheduledDate: '2026-08-29', completedDate: null, fitness: 'قيد الانتظار', fitnessTone: 'wn', restrictions: 'تحت التقييم', doctor: 'د. سمر الشافعي', nextDueDate: '2027-02-28', status: 'مجدول', statusTone: 'in' },
-      { id: 'HEX-003', employee: 'أحمد سامي', protocol: 'لياقة الارتفاعات والأماكن المغلقة', scheduledDate: '2026-08-30', completedDate: '2026-08-30', fitness: 'لائق مع قيود', fitnessTone: 'wn', restrictions: 'تجنب العمل على ارتفاعات > 10م', doctor: 'د. حازم القاضي', nextDueDate: '2026-11-30', status: 'مكتمل', statusTone: 'ok' },
-    ])
-  }],
+  ['get', '/occupational-health/schedule', () => dynamicHealthSchedule],
   ['post', '/occupational-health/exams', (_p, _q, body) => {
-    const newId = 'HEX-' + String((db.healthSchedule?.length || 3) + 1).padStart(3, '0')
+    const newId = 'HEX-' + String(dynamicHealthSchedule.length + 1).padStart(3, '0')
     const item = {
       id: newId,
       employee: body.employeeName || 'محمود عبد الله',
@@ -321,8 +461,7 @@ const routes = [
       status: 'مكتمل',
       statusTone: 'ok',
     }
-    if (!db.healthSchedule) db.healthSchedule = []
-    db.healthSchedule = [item, ...db.healthSchedule]
+    dynamicHealthSchedule = [item, ...dynamicHealthSchedule]
     return item
   }],
 

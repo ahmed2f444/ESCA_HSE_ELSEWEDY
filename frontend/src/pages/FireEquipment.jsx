@@ -18,7 +18,7 @@ import {
 import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { fire as fireApi } from '../api/endpoints.js'
-import { useApi, useCan, useToast } from '../hooks.jsx'
+import { getLocalDateString, useApi, useCan, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
 
 const STATE = {
@@ -75,8 +75,8 @@ export default function FireEquipment() {
     zoneId: 'ZONE-A',
     locationDetail: '',
     capacity: '6 kg',
-    installationDate: new Date().toISOString().slice(0, 10),
-    expiryDate: new Date(Date.now() + 5 * 365 * 86400000).toISOString().slice(0, 10),
+    installationDate: getLocalDateString(new Date()),
+    expiryDate: getLocalDateString(new Date(Date.now() + 5 * 365 * 86400000)),
     status: 'ACTIVE',
     vendor: 'Safety Egypt',
     qrCode: '',
@@ -150,7 +150,7 @@ export default function FireEquipment() {
   // --- Record Inspection Form State & Validation ---
   const [inspForm, setInspForm] = useState({
     equipmentId: '',
-    inspectionDate: new Date().toISOString().slice(0, 10),
+    inspectionDate: getLocalDateString(new Date()),
     inspectorName: 'م. أحمد فتحي (مفتش سلامة)',
     status: 'PASSED',
     notes: 'مؤشر الضغط في النطاق الأخضر، سلامة صمام الأمان والختم الرصاصي',
@@ -217,7 +217,7 @@ export default function FireEquipment() {
     const isReplace = item.action?.includes('استبدال') || item.issue?.includes('منتهية') || item.issue?.includes('معيبة')
     const actionType = isReplace ? 'REPLACE' : 'REFILL'
     const futureYears = isReplace ? 5 : 2
-    const nextExp = new Date(Date.now() + futureYears * 365 * 86400000).toISOString().slice(0, 10)
+    const nextExp = getLocalDateString(new Date(Date.now() + futureYears * 365 * 86400000))
 
     setServiceForm({
       actionType,
@@ -309,7 +309,7 @@ export default function FireEquipment() {
               onClick={() => {
                 setInspForm({
                   equipmentId: unitList[0]?.code || '',
-                  inspectionDate: new Date().toISOString().slice(0, 10),
+                  inspectionDate: getLocalDateString(new Date()),
                   inspectorName: 'م. أحمد فتحي (مفتش سلامة)',
                   status: 'PASSED',
                   notes: 'مؤشر الضغط في النطاق الأخضر، سلامة صمام الأمان والختم الرصاصي',
@@ -468,7 +468,7 @@ export default function FireEquipment() {
                           onClick={() => {
                             setInspForm({
                               equipmentId: r.code,
-                              inspectionDate: new Date().toISOString().slice(0, 10),
+                              inspectionDate: getLocalDateString(new Date()),
                               inspectorName: 'م. أحمد فتحي (مفتش سلامة)',
                               status: 'PASSED',
                               notes: 'إعادة فحص واختبار ميداني — مطابقة وجاهزة للخدمة',
@@ -828,7 +828,7 @@ export default function FireEquipment() {
                   onChange={(e) => {
                     const type = e.target.value
                     const futureYears = type === 'REPLACE' ? 5 : type === 'HYDRO' ? 3 : 2
-                    const nextExp = new Date(Date.now() + futureYears * 365 * 86400000).toISOString().slice(0, 10)
+                    const nextExp = getLocalDateString(new Date(Date.now() + futureYears * 365 * 86400000))
                     setServiceForm({
                       ...serviceForm,
                       actionType: type,

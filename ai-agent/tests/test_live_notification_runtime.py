@@ -8,6 +8,7 @@ import pytest
 
 from app.automation.dispatcher import (
     AutomationDispatchError,
+    DatabaseEventDispatcher,
     DryRunEventDispatcher,
     SpringEventDispatcher,
     create_event_dispatcher,
@@ -37,7 +38,7 @@ def test_dry_run_requires_both_live_gates_to_be_off() -> None:
 
 @pytest.mark.parametrize(
     ("mode", "live_enabled"),
-    [("dry_run", True), ("spring", False)],
+    [("dry_run", True), ("spring", False), ("database", False)],
 )
 def test_contradictory_live_settings_fail_closed(
     mode: str,
@@ -60,6 +61,17 @@ def test_live_settings_create_spring_dispatcher_without_network() -> None:
         )
     )
     assert isinstance(dispatcher, SpringEventDispatcher)
+    dispatcher.close()
+
+
+def test_live_settings_create_database_dispatcher() -> None:
+    dispatcher = create_event_dispatcher(
+        configured_settings(
+            automation_delivery_mode="database",
+            automation_live_enabled=True,
+        )
+    )
+    assert isinstance(dispatcher, DatabaseEventDispatcher)
     dispatcher.close()
 
 
@@ -110,3 +122,33 @@ def test_runtime_plans_spring_events_for_spring_dispatcher() -> None:
         assert events[0]["entity_id"] == "PTW-LIVE-001"
     finally:
         controller.close()
+
+
+def test_live_notifications_api_endpoint() -> None:
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.get("/api/v1/notifications?limit=10")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    if data:
+        item = data[0]
+        assert "id" in item
+        assert "title" in item
+        assert "unread" in item
+        assert "to" in item
+
+
+def test_automation_trigger_api_endpoint() -> None:
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.post("/api/v1/automation/trigger")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "triggered"
+    assert "summary" in data
+

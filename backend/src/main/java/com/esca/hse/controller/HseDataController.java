@@ -127,14 +127,264 @@ public class HseDataController {
         );
     }
 
-    @GetMapping("/dashboard/alerts")
+    private void checkCertificateExpirations() {
+        if (jdbc == null) return;
+        try {
+            // AUT-001: Overdue Permits
+            try {
+                String permitSql = "SELECT p.permit_id, p.work_description, p.expiry_at FROM permits p " +
+                        "LEFT JOIN permit_statuses st ON st.permit_status_id = p.status_id " +
+                        "WHERE (UPPER(st.name) = 'ACTIVE' OR p.status_id = 3) AND p.expiry_at <= NOW()";
+                List<Map<String, Object>> overduePermits = jdbc.queryForList(permitSql, Collections.emptyMap());
+                for (Map<String, Object> perm : overduePermits) {
+                    int pid = ((Number) perm.get("permit_id")).intValue();
+                    Integer count = jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM notifications WHERE type = 'AUTOMATION_PERMIT_OVERDUE' AND entity_id = :eid",
+                            Map.of("eid", String.valueOf(pid)), Integer.class);
+                    if (count == null || count == 0) {
+                        String title = "تنبيه أتمتة السلامة: تصريح عمل متأخر #" + pid;
+                        String msg = "تجاوز تصريح العمل #" + pid + " موعد انتهائه المحدد ويحتاج إلى إغلاق أو تمديد فوري (AUT-001).";
+                        String idem = "AUT-PERM-EXP-" + pid;
+                        MapSqlParameterSource nParams = new MapSqlParameterSource()
+                                .addValue("type", "AUTOMATION_PERMIT_OVERDUE")
+                                .addValue("sev", 3)
+                                .addValue("eType", "PERMIT")
+                                .addValue("eId", String.valueOf(pid))
+                                .addValue("recType", 1)
+                                .addValue("recId", "ROLE-003")
+                                .addValue("title", title)
+                                .addValue("msg", msg)
+                                .addValue("stat", 1)
+                                .addValue("idem", idem)
+                                .addValue("source", "esca-hse-automation-service");
+                        jdbc.update("INSERT INTO notifications (type, severity_id, entity_type, entity_id, recipient_type_id, recipient_id, title, message, status_id, idempotency_key, source_service) " +
+                                "VALUES (:type, :sev, :eType, :eId, :recType, :recId, :title, :msg, :stat, :idem, :source)", nParams);
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // AUT-002: Expired Certificates
+            String findSql = "SELECT c.certificate_id, c.employee_id, e.display_name AS employee_name, " +
+                    "c.course_id, COALESCE(tc.name_ar, tc.name_en, 'دورة تدريبية') AS course_name, c.expiry_date, c.evidence_ref " +
+                    "FROM certificates c " +
+                    "LEFT JOIN employees e ON e.employee_id = c.employee_id " +
+                    "LEFT JOIN training_courses tc ON tc.course_id = c.course_id " +
+                    "WHERE c.expiry_date <= CURRENT_DATE AND c.status_id = 1";
+            List<Map<String, Object>> expiredCerts = jdbc.queryForList(findSql, Collections.emptyMap());
+            for (Map<String, Object> cert : expiredCerts) {
+                String exp = String.valueOf(cert.get("expiry_date"));
+                String evidence = String.valueOf(cert.getOrDefault("evidence_ref", ""));
+
+                // If expiry_date is today, check if specific time was supplied in evidence_ref (@HH:mm)
+                String todayStr = LocalDate.now().toString();
+                if (exp.startsWith(todayStr)) {
+                    if (evidence.contains("@")) {
+                        try {
+                            String timePart = evidence.substring(evidence.indexOf("@") + 1).trim();
+                            String[] parts = timePart.split(":");
+                            int h = Integer.parseInt(parts[0].trim());
+                            int m = Integer.parseInt(parts[1].trim());
+                            LocalDateTime targetTime = LocalDate.now().atTime(h, m);
+                            if (LocalDateTime.now().isBefore(targetTime)) {
+                                // Not yet reached expiration minute
+                                continue;
+                            }
+                        } catch (Exception ignored) {}
+                    } else {
+                        // Without explicit time, certificate remains valid through end of today
+                        continue;
+                    }
+                }
+
+                int cid = ((Number) cert.get("certificate_id")).intValue();
+                String emp = cert.get("employee_name") != null ? String.valueOf(cert.get("employee_name")) : "موظف";
+                String crs = cert.get("course_name") != null ? String.valueOf(cert.get("course_name")) : "دورة تدريبية";
+
+                jdbc.update("UPDATE certificates SET status_id = 2, automation_flag = 1 WHERE certificate_id = :cid", Map.of("cid", cid));
+
+                Integer count = jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM notifications WHERE type = 'AUTOMATION_CERTIFICATE_EXPIRY' AND entity_id = :eid",
+                        Map.of("eid", String.valueOf(cid)),
+                        Integer.class
+                );
+                if (count == null || count == 0) {
+                    String title = "تنبيه أتمتة السلامة: انتهاء صلاحية شهادة " + emp;
+                    String msg = "انتهت صلاحية شهادة تدريب الموظف " + emp + " لدورة (" + crs + ") في " + exp + " — تم تفعيل تنبيه السلامة الآلي (AUT-002) وتحديث مصفوفة الكفاءة لمنع إسناد الأعمال الخطرة.";
+                    String idem = "AUT-CERT-EXP-" + cid;
+
+                    MapSqlParameterSource nParams = new MapSqlParameterSource()
+                            .addValue("type", "AUTOMATION_CERTIFICATE_EXPIRY")
+                            .addValue("sev", 3)
+                            .addValue("eType", "TRAINING")
+                            .addValue("eId", String.valueOf(cid))
+                            .addValue("recType", 1)
+                            .addValue("recId", "ROLE-003")
+                            .addValue("title", title)
+                            .addValue("msg", msg)
+                            .addValue("stat", 1)
+                            .addValue("idem", idem)
+                            .addValue("source", "esca-hse-automation-service");
+
+                    jdbc.update("INSERT INTO notifications (type, severity_id, entity_type, entity_id, recipient_type_id, recipient_id, title, message, status_id, idempotency_key, source_service) " +
+                            "VALUES (:type, :sev, :eType, :eId, :recType, :recId, :title, :msg, :stat, :idem, :source)", nParams);
+                }
+            }
+
+            // AUT-003: Overdue CAPAs
+            try {
+                String capaSql = "SELECT c.capa_id, c.title, c.due_date FROM capa c " +
+                        "LEFT JOIN capa_statuses st ON st.capa_status_id = c.status_id " +
+                        "WHERE (UPPER(st.name) IN ('OPEN', 'IN_PROGRESS') OR c.status_id IN (1, 2)) AND c.due_date < CURRENT_DATE";
+                List<Map<String, Object>> overdueCapas = jdbc.queryForList(capaSql, Collections.emptyMap());
+                for (Map<String, Object> cp : overdueCapas) {
+                    int capaId = ((Number) cp.get("capa_id")).intValue();
+                    Integer count = jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM notifications WHERE type = 'AUTOMATION_CAPA_OVERDUE' AND entity_id = :eid",
+                            Map.of("eid", String.valueOf(capaId)), Integer.class);
+                    if (count == null || count == 0) {
+                        String title = "تنبيه أتمتة السلامة: تصعيد إجراء تصحيحي متأخر #" + capaId;
+                        String msg = "الإجراء التصحيحي #" + capaId + " تجاوز موعد استحقاقه المحدد في " + cp.get("due_date") + " ويحتاج إلى تصعيد (AUT-003).";
+                        String idem = "AUT-CAPA-EXP-" + capaId;
+                        MapSqlParameterSource nParams = new MapSqlParameterSource()
+                                .addValue("type", "AUTOMATION_CAPA_OVERDUE")
+                                .addValue("sev", 3)
+                                .addValue("eType", "CAPA")
+                                .addValue("eId", String.valueOf(capaId))
+                                .addValue("recType", 1)
+                                .addValue("recId", "ROLE-003")
+                                .addValue("title", title)
+                                .addValue("msg", msg)
+                                .addValue("stat", 1)
+                                .addValue("idem", idem)
+                                .addValue("source", "esca-hse-automation-service");
+                        jdbc.update("INSERT INTO notifications (type, severity_id, entity_type, entity_id, recipient_type_id, recipient_id, title, message, status_id, idempotency_key, source_service) " +
+                                "VALUES (:type, :sev, :eType, :eId, :recType, :recId, :title, :msg, :stat, :idem, :source)", nParams);
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            // AUT-004: Stale High Risks
+            try {
+                String riskSql = "SELECT r.risk_id, r.hazard, r.inherent_score FROM risk_register r " +
+                        "LEFT JOIN risk_register_statuses st ON st.risk_register_status_id = r.status_id " +
+                        "WHERE (UPPER(st.name) = 'ACTIVE' OR r.status_id = 1) AND r.inherent_score >= 15 " +
+                        "AND (r.last_reviewed_at IS NULL OR r.last_reviewed_at <= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY))";
+                List<Map<String, Object>> staleRisks = jdbc.queryForList(riskSql, Collections.emptyMap());
+                for (Map<String, Object> rk : staleRisks) {
+                    int rid = ((Number) rk.get("risk_id")).intValue();
+                    Integer count = jdbc.queryForObject(
+                            "SELECT COUNT(*) FROM notifications WHERE type = 'AUTOMATION_RISK_REVIEW' AND entity_id = :eid",
+                            Map.of("eid", String.valueOf(rid)), Integer.class);
+                    if (count == null || count == 0) {
+                        String title = "تنبيه أتمتة السلامة: مراجعة سجل مخاطر مرتفع #" + rid;
+                        String msg = "سجل الخطر #" + rid + " ذو درجة خطورة عالية وتجاوز دورة المراجعة الدورية (AUT-004).";
+                        String idem = "AUT-RISK-EXP-" + rid;
+                        MapSqlParameterSource nParams = new MapSqlParameterSource()
+                                .addValue("type", "AUTOMATION_RISK_REVIEW")
+                                .addValue("sev", 3)
+                                .addValue("eType", "RISK")
+                                .addValue("eId", String.valueOf(rid))
+                                .addValue("recType", 1)
+                                .addValue("recId", "ROLE-003")
+                                .addValue("title", title)
+                                .addValue("msg", msg)
+                                .addValue("stat", 1)
+                                .addValue("idem", idem)
+                                .addValue("source", "esca-hse-automation-service");
+                        jdbc.update("INSERT INTO notifications (type, severity_id, entity_type, entity_id, recipient_type_id, recipient_id, title, message, status_id, idempotency_key, source_service) " +
+                                "VALUES (:type, :sev, :eType, :eId, :recType, :recId, :title, :msg, :stat, :idem, :source)", nParams);
+                    }
+                }
+            } catch (Exception ignored) {}
+
+        } catch (Exception ignored) {}
+    }
+
+    @GetMapping({"/dashboard/alerts", "/api/v1/notifications", "/notifications"})
     public List<Map<String, Object>> dashboardAlerts() {
+        if (jdbc != null) {
+            try {
+                checkCertificateExpirations();
+                String sql = "SELECT notification_id, type, severity_id, entity_type, entity_id, title, message, status_id, created_at " +
+                             "FROM notifications ORDER BY notification_id DESC LIMIT 30";
+                List<Map<String, Object>> rows = jdbc.queryForList(sql, Collections.emptyMap());
+                if (!rows.isEmpty()) {
+                    List<Map<String, Object>> list = new ArrayList<>();
+                    for (Map<String, Object> r : rows) {
+                        String type = String.valueOf(r.getOrDefault("type", r.getOrDefault("entity_type", "GENERAL")));
+                        int sev = r.get("severity_id") instanceof Number ? ((Number) r.get("severity_id")).intValue() : 1;
+                        String color = sev >= 3 ? "#E0483C" : (sev == 2 ? "#F09030" : "#38B87C");
+                        int statusId = r.get("status_id") instanceof Number ? ((Number) r.get("status_id")).intValue() : 1;
+
+                        String to = "/dashboard";
+                        if ("TRAINING".equalsIgnoreCase(type) || "AUTOMATION_CERTIFICATE_EXPIRY".equalsIgnoreCase(type)) to = "/training";
+                        else if ("PERMIT".equalsIgnoreCase(type) || "AUTOMATION_PERMIT_OVERDUE".equalsIgnoreCase(type)) to = "/permits";
+                        else if ("FIRE_EQUIPMENT".equalsIgnoreCase(type)) to = "/fire-equipment";
+                        else if ("INCIDENT".equalsIgnoreCase(type) || "CAPA".equalsIgnoreCase(type) || "AUTOMATION_CAPA_OVERDUE".equalsIgnoreCase(type)) to = "/incidents";
+                        else if ("HEALTH".equalsIgnoreCase(type) || "HEALTH_EXAM".equalsIgnoreCase(type)) to = "/occupational-health";
+                        else if ("INSPECTION".equalsIgnoreCase(type)) to = "/inspections";
+                        else if ("RISK".equalsIgnoreCase(type) || "AUTOMATION_RISK_REVIEW".equalsIgnoreCase(type)) to = "/risk";
+                        else if ("CHEMICAL".equalsIgnoreCase(type)) to = "/hazmat";
+
+                        Object createdAt = r.get("created_at");
+                        String timeStr = createdAt != null ? String.valueOf(createdAt) : "الآن";
+
+                        list.add(map(
+                                "id", "NTF-" + r.get("notification_id"),
+                                "notificationId", r.get("notification_id"),
+                                "title", r.getOrDefault("title", "تنبيه سلامة"),
+                                "body", r.getOrDefault("message", ""),
+                                "type", type,
+                                "severityId", sev,
+                                "color", color,
+                                "unread", statusId == 1,
+                                "time", timeStr,
+                                "to", to
+                        ));
+                    }
+                    return list;
+                }
+            } catch (Exception ignored) {
+            }
+        }
         return List.of(
-                map("time", "منذ 15 دقيقة", "color", "#E0483C", "title", "تصريح عمل ساخن شارف على الانتهاء", "body", "تصريح PTW-003 في منطقة العزل CCV ينتهي خلال أقل من ساعتين", "to", "/permits"),
-                map("time", "منذ 40 دقيقة", "color", "#E0483C", "title", "إجراء تصحيحي متأخر", "body", "CAPA-004 لصيانة صمام الضغط تجاوز تاريخ الاستحقاق", "to", "/incidents"),
-                map("time", "منذ ساعة", "color", "#F09030", "title", "شهادات تدريب منتهية", "body", "3 فنيين في قسم الصيانة بحاجة لتجديد تدريب الأماكن المغلقة", "to", "/training"),
-                map("time", "منذ ساعتين", "color", "#38B87C", "title", "فحص دوري لمعدات الإطفاء", "body", "تم اكتمال جولة التفتيش الأسبوعية لمطافئ الحريق بالمنطقة A بنجاح", "to", "/fire-equipment")
+                map("id", "NTF-001", "time", "الآن", "color", "#38B87C", "title", "تنبيه النظام", "body", "لا توجد تنبيهات جديدة مسجلة حالياً.", "to", "/dashboard", "unread", false)
         );
+    }
+
+    @PostMapping({"/notifications/mark-all-read", "/api/v1/notifications/mark-all-read"})
+    public Map<String, Object> markAllNotificationsRead() {
+        if (jdbc != null) {
+            try {
+                jdbc.update("UPDATE notifications SET status_id = 2 WHERE status_id = 1", Collections.emptyMap());
+                return map("success", true, "message", "All notifications marked as read");
+            } catch (Exception e) {
+                return map("success", false, "error", e.getMessage());
+            }
+        }
+        return map("success", true);
+    }
+
+    @PostMapping({"/notifications/mark-read", "/api/v1/notifications/mark-read"})
+    public Map<String, Object> markNotificationRead(@RequestBody Map<String, Object> body) {
+        if (jdbc != null) {
+            try {
+                Object idVal = body.getOrDefault("notificationId", body.get("id"));
+                if (idVal != null) {
+                    String s = String.valueOf(idVal).replace("NTF-", "").trim();
+                    try {
+                        int nid = Integer.parseInt(s);
+                        jdbc.update("UPDATE notifications SET status_id = 2 WHERE notification_id = :nid", Map.of("nid", nid));
+                    } catch (NumberFormatException e) {
+                        jdbc.update("UPDATE notifications SET status_id = 2 WHERE notification_id = :nid", Map.of("nid", s));
+                    }
+                }
+                return map("success", true, "message", "Notification marked as read");
+            } catch (Exception e) {
+                return map("success", false, "error", e.getMessage());
+            }
+        }
+        return map("success", true);
     }
 
     @GetMapping("/dashboard/monthly-trend")
@@ -1843,12 +2093,25 @@ public class HseDataController {
                     Object expObj = r.get("expiry_date");
                     String expires = expObj != null ? String.valueOf(expObj) : "2026-09-30";
 
+                    String evidence = String.valueOf(r.getOrDefault("evidence_ref", "CERT-" + cid));
+                    String expiryTime = "23:59";
+                    if (evidence.contains("@")) {
+                        expiryTime = evidence.substring(evidence.indexOf("@") + 1).trim();
+                    }
+
                     Number sidNum = (Number) r.get("status_id");
                     int sid = sidNum != null ? sidNum.intValue() : 1;
 
                     LocalDate expDate = expObj != null ? LocalDate.parse(String.valueOf(expObj)) : LocalDate.now().plusDays(10);
-                    boolean isExpired = sid == 2 || expDate.isBefore(LocalDate.now());
+                    LocalDateTime targetDt = expDate.atTime(23, 59);
+                    try {
+                        if (expiryTime.contains(":")) {
+                            String[] parts = expiryTime.split(":");
+                            targetDt = expDate.atTime(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+                        }
+                    } catch (Exception ignored) {}
 
+                    boolean isExpired = sid == 2 || !targetDt.isAfter(LocalDateTime.now());
                     String status = isExpired ? "منتهية" : "تنتهي قريباً";
                     String tone = isExpired ? "cr" : "wn";
 
@@ -1859,6 +2122,7 @@ public class HseDataController {
                             "dept", dept,
                             "certificate", cert,
                             "expires", expires,
+                            "expiryTime", expiryTime,
                             "status", status,
                             "tone", tone
                     ));
@@ -1884,7 +2148,7 @@ public class HseDataController {
                     "LEFT JOIN employees e ON c.employee_id = e.employee_id " +
                     "LEFT JOIN zones z ON e.zone_id = z.zone_id " +
                     "LEFT JOIN training_courses tc ON c.course_id = tc.course_id " +
-                    "ORDER BY c.certificate_id DESC LIMIT 50";
+                    "ORDER BY c.certificate_id DESC LIMIT 250";
             List<Map<String, Object>> rows = jdbc.queryForList(sql, Map.of());
             if (!rows.isEmpty()) {
                 List<Map<String, Object>> list = new ArrayList<>();
@@ -1898,6 +2162,10 @@ public class HseDataController {
                     String issue = String.valueOf(r.getOrDefault("issue_date", LocalDate.now().toString()));
                     String expiry = String.valueOf(r.getOrDefault("expiry_date", LocalDate.now().plusYears(1).toString()));
                     String evidence = String.valueOf(r.getOrDefault("evidence_ref", "CERT-" + cid));
+                    String expiryTime = "23:59";
+                    if (evidence.contains("@")) {
+                        expiryTime = evidence.substring(evidence.indexOf("@") + 1).trim();
+                    }
 
                     Number sidNum = (Number) r.get("status_id");
                     int sid = sidNum != null ? sidNum.intValue() : 1;
@@ -1913,6 +2181,8 @@ public class HseDataController {
                             "provider", provider,
                             "issueDate", issue,
                             "expiryDate", expiry,
+                            "expiryTime", expiryTime,
+                            "fullExpiry", expiry + " " + expiryTime,
                             "evidenceRef", evidence,
                             "status", status,
                             "statusTone", tone
@@ -1943,6 +2213,7 @@ public class HseDataController {
 
         String issueDateStr = String.valueOf(body.getOrDefault("issueDate", LocalDate.now().toString()));
         String expiryDateStr = String.valueOf(body.getOrDefault("expiryDate", LocalDate.now().plusYears(1).toString()));
+        String expiryTimeStr = String.valueOf(body.getOrDefault("expiryTime", "23:59"));
         String provider = String.valueOf(body.getOrDefault("provider", "ESCA HSE Academy"));
         String evidenceRef = String.valueOf(body.getOrDefault("evidenceRef", "CERT-" + (System.currentTimeMillis() % 10000)));
 
@@ -1953,18 +2224,35 @@ public class HseDataController {
             if (!expiryDateStr.isBlank()) expiryDate = LocalDate.parse(expiryDateStr);
         } catch (Exception ignored) {}
 
-        int certId = 10;
+        // Evaluate exact expiration timestamp against current local plant time
+        boolean isExpired = false;
         try {
+            int hour = 23, minute = 59;
+            if (expiryTimeStr.contains(":")) {
+                String[] parts = expiryTimeStr.split(":");
+                hour = Integer.parseInt(parts[0].trim());
+                minute = Integer.parseInt(parts[1].trim());
+            }
+            LocalDateTime targetDateTime = expiryDate.atTime(hour, minute);
+            isExpired = !targetDateTime.isAfter(LocalDateTime.now());
+        } catch (Exception ignored) {}
+
+        int statusId = isExpired ? 2 : 1; // 2 = EXPIRED, 1 = VALID
+        int autoFlag = isExpired ? 1 : 0;
+        int certId = 10;
+
+        try {
+            String finalEvidence = evidenceRef + (expiryTimeStr.contains(":") ? ("@" + expiryTimeStr) : "");
             MapSqlParameterSource params = new MapSqlParameterSource()
                     .addValue("empId", empId)
                     .addValue("courseId", courseId)
                     .addValue("issueDate", issueDate)
                     .addValue("expiryDate", expiryDate)
-                    .addValue("statusId", 1) // VALID
-                    .addValue("evidence", evidenceRef)
+                    .addValue("statusId", statusId)
+                    .addValue("evidence", finalEvidence)
                     .addValue("managerId", 1)
-                    .addValue("daysToExpiry", 365.0)
-                    .addValue("autoFlag", 0);
+                    .addValue("daysToExpiry", isExpired ? 0.0 : 365.0)
+                    .addValue("autoFlag", autoFlag);
 
             GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
             jdbc.update("INSERT INTO certificates (employee_id, course_id, issue_date, expiry_date, status_id, evidence_ref, manager_id, days_to_expiry, automation_flag) " +
@@ -1972,6 +2260,29 @@ public class HseDataController {
 
             Number k = keyHolder.getKey();
             if (k != null) certId = k.intValue();
+
+            // Insert live alert into Railway notifications table (status_id = 1: UNREAD)
+            String notifTitle = isExpired ? ("تنبيه أتمتة السلامة: انتهاء صلاحية شهادة " + empName) : ("توثيق واعتماد شهادة تدريبية: " + empName);
+            String notifMsg = isExpired
+                    ? ("انتهت صلاحية شهادة تدريب الموظف " + empName + " في " + expiryDateStr + " " + expiryTimeStr + " — تم تفعيل تنبيه السلامة الآلي (AUT-002).")
+                    : ("تم توثيق واعتماد شهادة تدريب الموظف " + empName + " في مصفوفة الكفاءة التدريبية بنجاح — الصلاحية حتى " + expiryDateStr + ".");
+            String idemKey = "AUT-CERT-" + certId + "-" + System.currentTimeMillis();
+
+            MapSqlParameterSource nParams = new MapSqlParameterSource()
+                    .addValue("type", isExpired ? "AUTOMATION_CERTIFICATE_EXPIRY" : "TRAINING")
+                    .addValue("sev", isExpired ? 3 : 1)
+                    .addValue("eType", "TRAINING")
+                    .addValue("eId", String.valueOf(certId))
+                    .addValue("recType", 1)
+                    .addValue("recId", "ROLE-003")
+                    .addValue("title", notifTitle)
+                    .addValue("msg", notifMsg)
+                    .addValue("stat", 1)
+                    .addValue("idem", idemKey)
+                    .addValue("source", "esca-hse-automation-service");
+
+            jdbc.update("INSERT INTO notifications (type, severity_id, entity_type, entity_id, recipient_type_id, recipient_id, title, message, status_id, idempotency_key, source_service) " +
+                    "VALUES (:type, :sev, :eType, :eId, :recType, :recId, :title, :msg, :stat, :idem, :source)", nParams);
         } catch (Exception ignored) {}
 
         return ResponseEntity.status(HttpStatus.CREATED).body(map(
@@ -1981,10 +2292,13 @@ public class HseDataController {
                 "courseId", courseId,
                 "issueDate", issueDateStr,
                 "expiryDate", expiryDateStr,
+                "expiryTime", expiryTimeStr,
+                "fullExpiry", expiryDateStr + " " + expiryTimeStr,
                 "provider", provider,
                 "evidenceRef", evidenceRef,
-                "status", "سارية ومعتمدة",
-                "statusTone", "ok",
+                "status", isExpired ? "منتهية الصلاحية (EXPIRED)" : "سارية ومعتمدة",
+                "statusTone", isExpired ? "cr" : "ok",
+                "liveNotificationTriggered", true,
                 "success", true
         ));
     }

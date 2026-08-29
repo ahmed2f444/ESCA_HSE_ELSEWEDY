@@ -20,7 +20,7 @@ import {
 import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { inspections as inspApi, fire as fireApi } from '../api/endpoints.js'
-import { useApi, useToast } from '../hooks.jsx'
+import { getLocalDateString, useApi, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
 
 const FIELD_TYPES = [
@@ -200,7 +200,7 @@ export default function Inspections() {
     zone: 'خطوط العزل CCV',
     frequency: 'أسبوعي',
     owner: 'م. مصطفى (مدير السلامة)',
-    next: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+    next: getLocalDateString(new Date(Date.now() + 86400000)),
     template: 'ISO 45001 — تدقيق السلامة والصحة المهنية',
     notes: '',
   })
@@ -304,7 +304,7 @@ export default function Inspections() {
       zone: walkForm.zone,
       frequency: 'أسبوعي',
       owner: walkForm.inspector,
-      next: new Date().toISOString().slice(0, 10),
+      next: getLocalDateString(new Date()),
       status: 'مكتمل',
       tone: 'ok',
       score: calculatedScore,

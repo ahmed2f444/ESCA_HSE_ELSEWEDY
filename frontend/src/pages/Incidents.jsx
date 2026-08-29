@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Async,
   BarRow,
@@ -51,6 +51,21 @@ export default function Incidents() {
   const list = useApi(() => incApi.list({ status: filter, q: search }), [filter, search])
   const causes = useApi(() => incApi.rootCauses(), [])
   const capa = useApi(() => capaApi.list(), [])
+
+  useEffect(() => {
+    const handleReload = () => {
+      stats.reload?.()
+      list.reload?.()
+      causes.reload?.()
+      capa.reload?.()
+    }
+    window.addEventListener('hse:data-changed', handleReload)
+    window.addEventListener('hse:notifications-changed', handleReload)
+    return () => {
+      window.removeEventListener('hse:data-changed', handleReload)
+      window.removeEventListener('hse:notifications-changed', handleReload)
+    }
+  }, [])
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Async,
   Btn,
@@ -18,7 +18,7 @@ import {
 import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { training as trainingApi } from '../api/endpoints.js'
-import { useApi, useToast } from '../hooks.jsx'
+import { getLocalDateString, useApi, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
 
 const EMPLOYEES = [
@@ -60,17 +60,47 @@ export default function Training() {
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [registerOpen, setRegisterOpen] = useState(false)
   const [selectedCert, setSelectedCert] = useState(null)
+  const [isRenewal, setIsRenewal] = useState(false)
 
-  // Register Training Form
+  // Register Training Form - local timezone calibrated
   const [form, setForm] = useState({
     employeeId: 1,
     courseId: 1,
-    issueDate: new Date().toISOString().slice(0, 10),
-    expiryDate: new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
+    issueDate: getLocalDateString(new Date()),
+    expiryDate: getLocalDateString(new Date(Date.now() + 365 * 86400000)),
+    expiryTime: new Date().toTimeString().slice(0, 5),
     provider: 'ESCA HSE Academy',
     evidenceRef: 'CERT-' + Math.floor(1000 + Math.random() * 9000),
   })
   const [submitting, setSubmitting] = useState(false)
+
+  const handleStartRenewal = (cert) => {
+    if (!cert) return
+    const empName = cert.employee || ''
+    const foundEmp = EMPLOYEES.find((e) => empName.includes(e.name) || e.name.includes(empName))
+    const courseName = cert.course || ''
+    const foundCourse = COURSES.find((c) => courseName.includes(c.name.split('(')[0].trim()) || c.name.includes(courseName))
+    
+    const courseObj = foundCourse || COURSES[0]
+    const months = courseObj?.validityMonths || 12
+    const nextExp = getLocalDateString(new Date(Date.now() + months * 30 * 86400000))
+    const todayStr = getLocalDateString(new Date())
+
+    setForm({
+      employeeId: foundEmp?.id || 1,
+      courseId: courseObj?.id || 1,
+      issueDate: todayStr,
+      expiryDate: nextExp,
+      expiryTime: '23:59',
+      provider: cert.provider || courseObj?.provider || 'ESCA HSE Academy',
+      evidenceRef: 'CERT-REN-' + (cert.certId || Math.floor(1000 + Math.random() * 9000)),
+    })
+
+    setIsRenewal(true)
+    setSelectedCert(null)
+    setScheduleOpen(false)
+    setRegisterOpen(true)
+  }
 
   // Schedule Filter State
   const [scheduleSearch, setScheduleSearch] = useState('')
@@ -84,10 +114,29 @@ export default function Training() {
     schedule.reload?.()
   }
 
+  useEffect(() => {
+    const handleReload = () => reloadAll()
+    window.addEventListener('hse:certificate-expired', handleReload)
+    window.addEventListener('hse:notifications-changed', handleReload)
+    window.addEventListener('hse:data-changed', handleReload)
+    return () => {
+      window.removeEventListener('hse:certificate-expired', handleReload)
+      window.removeEventListener('hse:notifications-changed', handleReload)
+      window.removeEventListener('hse:data-changed', handleReload)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (scheduleOpen) {
+      schedule.reload?.()
+      stats.reload?.()
+    }
+  }, [scheduleOpen])
+
   const handleCourseChange = (cid) => {
     const course = COURSES.find((c) => c.id === Number(cid))
     const months = course?.validityMonths || 12
-    const exp = new Date(Date.now() + months * 30 * 86400000).toISOString().slice(0, 10)
+    const exp = getLocalDateString(new Date(Date.now() + months * 30 * 86400000))
     setForm({
       ...form,
       courseId: Number(cid),
@@ -103,7 +152,10 @@ export default function Training() {
       const selectedEmp = EMPLOYEES.find((emp) => emp.id === Number(form.employeeId))
       const selectedCourse = COURSES.find((c) => c.id === Number(form.courseId))
 
-      await trainingApi.register({
+      const targetDt = new Date(`${form.expiryDate}T${form.expiryTime?.length === 5 ? form.expiryTime + ':00' : (form.expiryTime || '23:59:59')}`)
+      const isExpiredNow = !isNaN(targetDt.getTime()) && targetDt <= new Date()
+
+      const res = await trainingApi.register({
         employeeId: Number(form.employeeId),
         employeeName: selectedEmp?.name,
         dept: selectedEmp?.dept,
@@ -112,10 +164,35 @@ export default function Training() {
         provider: form.provider,
         issueDate: form.issueDate,
         expiryDate: form.expiryDate,
+        expiryTime: form.expiryTime,
         evidenceRef: form.evidenceRef || ('CERT-' + Math.floor(1000 + Math.random() * 9000)),
       })
 
-      toast('تم توثيق واعتماد الشهادة التدريبية بنجاح في مصفوفة الكفاءة', 'ok')
+      const courseCleanName = selectedCourse?.name.split('(')[0].trim() || 'دورة تدريبية'
+      const notifObj = res?.notification || {
+        id: (isExpiredNow ? 'NTF-EXPIRY-' : 'NTF-CREATE-') + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        notificationId: Date.now(),
+        title: isExpiredNow
+          ? `تنبيه أتمتة السلامة: انتهاء صلاحية شهادة ${selectedEmp?.name}`
+          : `توثيق واعتماد شهادة تدريبية: ${selectedEmp?.name}`,
+        body: isExpiredNow
+          ? `انتهت صلاحية شهادة تدريب الموظف ${selectedEmp?.name} لدورة (${courseCleanName}) في ${form.expiryDate} ${form.expiryTime} — تم إطلاق تنبيه السلامة الآلي (AUT-002).`
+          : `تم توثيق واعتماد شهادة تدريب (${courseCleanName}) للموظف ${selectedEmp?.name} بنجاح في مصفوفة الكفاءة وتحديث سجلات السلامة.`,
+        time: 'الآن (مباشر)',
+        color: isExpiredNow ? 'var(--crit)' : 'var(--safe)',
+        type: isExpiredNow ? 'AUTOMATION_CERTIFICATE_EXPIRY' : 'TRAINING',
+        to: '/training',
+        unread: true,
+      }
+
+      window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+      window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+
+      if (isExpiredNow || (res?.status && res.status.includes('منتهية')) || res?.liveNotificationTriggered === true) {
+        toast(`🚨 تنبيه فوري: انتهت صلاحية شهادة ${selectedEmp?.name} في التوقيت المحدد (${form.expiryTime}) وتم إطلاق إشعار السلامة الآلي (AUT-002)!`, 'wn')
+      } else {
+        toast('تم توثيق واعتماد الشهادة التدريبية بنجاح في مصفوفة الكفاءة', 'ok')
+      }
       setRegisterOpen(false)
       reloadAll()
     } catch (err) {
@@ -215,20 +292,32 @@ export default function Training() {
           <Async state={expiring} rows={10}>
             {(rows) => (
               <Table head={['الموظف', 'الرقم', 'القسم', 'الشهادة', 'تنتهي', 'الحالة']} clickable={false}>
-                {rows.map((e, idx) => (
-                  <tr key={e.id || idx}>
-                    <td className="text-xs font-medium text-txt-1">{e.employee}</td>
-                    <td className="mono text-2xs text-txt-3">{e.employeeNo}</td>
-                    <td className="text-2xs text-txt-2">{e.dept}</td>
-                    <td className="text-xs text-txt-1">{e.certificate}</td>
-                    <td className="mono text-2xs font-semibold" style={{ color: e.tone === 'cr' ? tc.crit() : tc.warn() }}>
-                      {e.expires}
-                    </td>
-                    <td>
-                      <Pill tone={e.tone}>{e.status}</Pill>
-                    </td>
-                  </tr>
-                ))}
+                {rows.map((e, idx) => {
+                  const expDate = e.expires || e.expiryDate || '2099-12-31'
+                  let expTime = e.expiryTime || ''
+                  if (!expTime && e.evidenceRef && e.evidenceRef.includes('@')) {
+                    expTime = e.evidenceRef.split('@')[1].trim()
+                  }
+                  const targetDt = new Date(`${expDate}T${expTime.length === 5 ? expTime + ':00' : (expTime || '23:59:59')}`)
+                  const isExp = e.status === 'منتهية' || (!isNaN(targetDt.getTime()) && targetDt <= new Date())
+                  const displayStatus = isExp ? 'منتهية' : 'تنتهي قريباً'
+                  const displayTone = isExp ? 'cr' : 'wn'
+
+                  return (
+                    <tr key={e.id || idx}>
+                      <td className="text-xs font-medium text-txt-1">{e.employee}</td>
+                      <td className="mono text-2xs text-txt-3">{e.employeeNo}</td>
+                      <td className="text-2xs text-txt-2">{e.dept}</td>
+                      <td className="text-xs text-txt-1">{e.certificate}</td>
+                      <td className="mono text-2xs font-semibold" style={{ color: displayTone === 'cr' ? tc.crit() : tc.warn() }}>
+                        {e.expires} {expTime && expTime !== '23:59' ? `(${expTime})` : ''}
+                      </td>
+                      <td>
+                        <Pill tone={displayTone}>{displayStatus}</Pill>
+                      </td>
+                    </tr>
+                  )
+                })}
               </Table>
             )}
           </Async>
@@ -250,7 +339,11 @@ export default function Training() {
       <Modal
         open={registerOpen}
         onClose={() => setRegisterOpen(false)}
-        title="توثيق وتسجيل دورة تدريبية (Register Training / Certification)"
+        title={
+          isRenewal
+            ? 'تجديد وتمديد الشهادة التدريبية (Renew Certification)'
+            : 'توثيق وتسجيل دورة تدريبية (Register Training / Certification)'
+        }
         width={680}
         footer={
           <div className="flex items-center justify-between w-full">
@@ -260,7 +353,7 @@ export default function Training() {
                 إلغاء
               </Btn>
               <Btn variant="pri" icon="check" onClick={handleRegisterTraining} disabled={submitting}>
-                {submitting ? 'جاري الحفظ...' : 'توثيق واعتماد الشهادة'}
+                {submitting ? 'جاري الحفظ...' : isRenewal ? 'تجديد واعتماد الشهادة' : 'توثيق واعتماد الشهادة'}
               </Btn>
             </div>
           </div>
@@ -297,7 +390,7 @@ export default function Training() {
             </Field>
           </Grid>
 
-          <Grid cols={2}>
+          <Grid cols={3}>
             <Field label="تاريخ اجتياز التدريب *">
               <input
                 type="date"
@@ -307,12 +400,21 @@ export default function Training() {
               />
             </Field>
 
-            <Field label="تاريخ انتهاء صلاحية الشهادة *">
+            <Field label="تاريخ انتهاء الصلاحية *">
               <input
                 type="date"
                 className="field text-xs"
                 value={form.expiryDate}
                 onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+              />
+            </Field>
+
+            <Field label="توقيت الانتهاء (Time) *">
+              <input
+                type="time"
+                className="field text-xs font-mono"
+                value={form.expiryTime}
+                onChange={(e) => setForm({ ...form, expiryTime: e.target.value })}
               />
             </Field>
           </Grid>
@@ -346,7 +448,7 @@ export default function Training() {
         open={scheduleOpen}
         onClose={() => setScheduleOpen(false)}
         title="سجل وجدول التدريبات ومصفوفة الكفاءة (Training Schedule & Matrix)"
-        width={920}
+        width={960}
         footer={
           <div className="flex items-center justify-between w-full">
             <span className="text-xs text-txt-3">إجمالي الشهادات المعتمدة: {filteredSchedule.length} شهادة</span>
@@ -405,9 +507,9 @@ export default function Training() {
             </select>
           </div>
 
-          {/* Schedule Table */}
+              {/* Schedule Table */}
           <div className="max-h-96 overflow-y-auto border border-line rounded-lg">
-            <Table head={['رقم السجل', 'الموظف', 'القسم/المنطقة', 'الدورة التدريبية', 'تاريخ الإصدار', 'الانتهاء', 'الحالة', 'تفاصيل']}>
+            <Table head={['رقم السجل', 'الموظف', 'القسم/المنطقة', 'الدورة التدريبية', 'تاريخ الإصدار', 'تاريخ ووقت الانتهاء', 'الحالة', 'تفاصيل']}>
               {filteredSchedule.map((row) => (
                 <tr key={row.id} className="hover:bg-steel/50 transition-colors">
                   <td className="font-mono text-xs text-txt-1 font-bold">{row.id}</td>
@@ -415,21 +517,34 @@ export default function Training() {
                   <td className="text-2xs text-txt-2">{row.dept}</td>
                   <td className="text-xs text-txt-1 font-medium">{row.course}</td>
                   <td className="font-mono text-2xs">{row.issueDate}</td>
-                  <td className="font-mono text-2xs">{row.expiryDate}</td>
+                  <td className="font-mono text-2xs font-semibold">
+                    {row.fullExpiry || (row.expiryTime ? `${row.expiryDate} ${row.expiryTime}` : row.expiryDate)}
+                  </td>
                   <td>
                     <Pill tone={row.statusTone}>{row.status}</Pill>
                   </td>
-                  <td>
-                    <Btn
-                      size="xs"
-                      variant="ghost"
-                      onClick={() => {
-                        setScheduleOpen(false)
-                        setSelectedCert(row)
-                      }}
-                    >
-                      معاينة ↗
-                    </Btn>
+                  <td className="whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Btn
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => {
+                          setScheduleOpen(false)
+                          setSelectedCert(row)
+                        }}
+                      >
+                        معاينة ↗
+                      </Btn>
+                      <Btn
+                        size="xs"
+                        variant={row.status?.includes('منتهية') ? 'pri' : 'ghost'}
+                        icon="refresh"
+                        onClick={() => handleStartRenewal(row)}
+                        title="تجديد هذه الشهادة"
+                      >
+                        تجديد
+                      </Btn>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -450,9 +565,19 @@ export default function Training() {
           footer={
             <div className="flex items-center justify-between w-full">
               <span className="text-xs text-txt-3">سجل تدريبي موثق ومعتمد</span>
-              <Btn variant="ghost" onClick={() => setSelectedCert(null)}>
-                إغلاق
-              </Btn>
+              <div className="flex items-center gap-2">
+                <Btn
+                  variant="pri"
+                  size="sm"
+                  icon="refresh"
+                  onClick={() => handleStartRenewal(selectedCert)}
+                >
+                  تجديد الشهادة التدريبية (Renew)
+                </Btn>
+                <Btn variant="ghost" size="sm" onClick={() => setSelectedCert(null)}>
+                  إغلاق
+                </Btn>
+              </div>
             </div>
           }
         >
@@ -470,7 +595,10 @@ export default function Training() {
             <StatLine label="الجهة المعتمدة المنفذة" value={selectedCert.provider || 'ESCA HSE Academy'} />
             <StatLine label="رقم مرجع الشهادة" value={selectedCert.evidenceRef || 'CERT-N/A'} />
             <StatLine label="تاريخ اجتياز البرنامج" value={selectedCert.issueDate} />
-            <StatLine label="تاريخ انتهاء الصلاحية" value={selectedCert.expiryDate} />
+            <StatLine
+              label="تاريخ وتوقيت انتهاء الصلاحية"
+              value={selectedCert.fullExpiry || (selectedCert.expiryTime ? `${selectedCert.expiryDate} ${selectedCert.expiryTime}` : selectedCert.expiryDate)}
+            />
           </div>
         </Modal>
       )}

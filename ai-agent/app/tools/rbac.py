@@ -1,0 +1,514 @@
+"""
+Role-Based Access Control (RBAC) engine for ESCA HSE AI Agent Tools.
+
+Ensures that users only have access to authorized agent capabilities
+(Read, RAG, Create, Update, Delete, DML) based on their assigned system role.
+"""
+from typing import Optional
+
+
+# Role Name Constants & Aliases
+ROLE_ADMIN = "ADMIN"
+ROLE_HSE_MANAGER = "HSE_MANAGER"
+ROLE_HSE_OFFICER = "HSE_OFFICER"
+ROLE_OPERATIONS_MANAGER = "OPERATIONS_MANAGER"
+ROLE_DEPT_MANAGER = "DEPARTMENT_MANAGER"
+ROLE_PRODUCTION_SUPERVISOR = "PRODUCTION_SUPERVISOR"
+ROLE_MAINTENANCE_ENGINEER = "MAINTENANCE_ENGINEER"
+ROLE_ELECTRICAL_ENGINEER = "ELECTRICAL_ENGINEER"
+ROLE_QUALITY_ENGINEER = "QUALITY_ENGINEER"
+ROLE_WAREHOUSE_SUPERVISOR = "WAREHOUSE_SUPERVISOR"
+ROLE_TRAINING_COORDINATOR = "TRAINING_COORDINATOR"
+ROLE_WORKER = "WORKER"
+ROLE_AUDITOR = "AUDITOR"
+
+
+# Permission scopes for each tool
+TOOL_RBAC_PERMISSIONS: dict[str, set[str]] = {
+    # ── 1. Universal RAG & Search Tools (All Authenticated Roles) ─────────────
+    "search_hse_knowledge": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_TRAINING_COORDINATOR, ROLE_WORKER, ROLE_AUDITOR,
+    },
+    "search_database_entities": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "run_read_only_query": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_AUDITOR,
+    },
+    "get_db_schema": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_AUDITOR,
+    },
+
+    # ── 2. Master Data & Organization Module ──────────────────────────────────
+    "list_departments": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "list_zones": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_TRAINING_COORDINATOR, ROLE_WORKER, ROLE_AUDITOR,
+    },
+    "list_employees": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_TRAINING_COORDINATOR,
+        ROLE_AUDITOR,
+    },
+    "get_employee_info": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "create_employee": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_TRAINING_COORDINATOR,
+    },
+    "update_employee": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_TRAINING_COORDINATOR,
+    },
+
+    # ── 3. Dashboard, Executive Safety KPIs & Audit Trail ───────────────────────
+    "get_dashboard_summary": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_QUALITY_ENGINEER, ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "get_monthly_kpis": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_QUALITY_ENGINEER, ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "get_safety_scores": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "list_audit_logs": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_AUDITOR,
+    },
+
+    # ── 4. Incidents & Safety Observations Module ──────────────────────────────
+    "create_incident": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_WORKER,
+    },
+    "log_safety_observation": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_WORKER,
+    },
+    "list_incidents": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "get_incident_details": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_AUDITOR,
+    },
+    "get_incident_rca": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_AUDITOR,
+    },
+    "update_incident_status": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+    },
+    "update_incident": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER,
+    },
+
+    # ── 5. Electronic Permits to Work (ePTW) & SIMOPS Module ───────────────────
+    "create_permit": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER,
+    },
+    "list_permits": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "get_permit_details": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_AUDITOR,
+    },
+    "update_permit_status": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_OPERATIONS_MANAGER, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_DEPT_MANAGER, ROLE_HSE_OFFICER,
+    },
+    "check_simops_conflicts": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_AUDITOR,
+    },
+
+    # ── 6. Inspections & Safety Audits Module ─────────────────────────────────
+    "schedule_safety_inspection": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_QUALITY_ENGINEER, ROLE_TRAINING_COORDINATOR,
+    },
+    "list_inspections": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_QUALITY_ENGINEER,
+        ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "update_inspection_status": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_QUALITY_ENGINEER,
+    },
+    "create_inspection_finding": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_QUALITY_ENGINEER,
+    },
+    "list_inspection_findings": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_QUALITY_ENGINEER, ROLE_AUDITOR,
+    },
+    "list_inspection_templates": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_AUDITOR,
+    },
+
+    # ── 7. CAPA Actions Module ────────────────────────────────────────────────
+    "create_capa": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR,
+    },
+    "list_capas": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_QUALITY_ENGINEER, ROLE_AUDITOR,
+    },
+    "list_overdue_capas": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_QUALITY_ENGINEER, ROLE_AUDITOR,
+    },
+    "get_capa_details": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "update_capa_status": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR,
+    },
+
+    # ── 8. Risk Register (HIRA) Module ────────────────────────────────────────
+    "create_risk_assessment": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_QUALITY_ENGINEER,
+    },
+    "list_risk_register": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_QUALITY_ENGINEER,
+        ROLE_AUDITOR,
+    },
+    "get_risk_matrix": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_AUDITOR,
+    },
+    "update_risk_assessment": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_QUALITY_ENGINEER,
+    },
+
+    # ── 9. Job Safety Analysis (JSA) Module ────────────────────────────────────
+    "create_jsa": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+    },
+    "list_jsas": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_AUDITOR,
+    },
+    "get_jsa_details": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_AUDITOR,
+    },
+    "update_jsa": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER,
+    },
+
+    # ── 10. Training & Certifications Module ───────────────────────────────────
+    "create_training_course": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_TRAINING_COORDINATOR,
+    },
+    "create_certificate": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_TRAINING_COORDINATOR,
+        ROLE_OPERATIONS_MANAGER,
+    },
+    "list_certificates": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "list_training_courses": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_TRAINING_COORDINATOR, ROLE_WORKER, ROLE_AUDITOR,
+    },
+    "get_overdue_training": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_TRAINING_COORDINATOR, ROLE_AUDITOR,
+    },
+    "update_certificate_status": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_TRAINING_COORDINATOR,
+        ROLE_OPERATIONS_MANAGER,
+    },
+    "update_certificate": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_TRAINING_COORDINATOR,
+        ROLE_OPERATIONS_MANAGER,
+    },
+    "update_training_course": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_TRAINING_COORDINATOR,
+    },
+
+    # ── 11. PPE Management Module ─────────────────────────────────────────────
+    "add_ppe_item": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_WAREHOUSE_SUPERVISOR,
+    },
+    "list_ppe_inventory": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_ELECTRICAL_ENGINEER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_WORKER, ROLE_AUDITOR,
+    },
+    "get_ppe_stock_status": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_WAREHOUSE_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "list_ppe_matrix": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_AUDITOR,
+    },
+    "update_ppe_matrix": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_WAREHOUSE_SUPERVISOR,
+    },
+    "update_ppe_stock": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_WAREHOUSE_SUPERVISOR, ROLE_OPERATIONS_MANAGER,
+    },
+    "create_ppe_transaction": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_OPERATIONS_MANAGER,
+    },
+    "list_ppe_transactions": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_AUDITOR,
+    },
+
+    # ── 12. Fire Safety & Fixed Assets Module ──────────────────────────────────
+    "add_fire_equipment": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_MAINTENANCE_ENGINEER,
+    },
+    "add_fixed_safety_asset": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_MAINTENANCE_ENGINEER,
+    },
+    "list_fire_equipment": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_MAINTENANCE_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_AUDITOR,
+    },
+    "get_expired_fire_equipment": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_MAINTENANCE_ENGINEER, ROLE_AUDITOR,
+    },
+    "log_fire_inspection": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_MAINTENANCE_ENGINEER,
+        ROLE_OPERATIONS_MANAGER,
+    },
+    "list_fire_inspections": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_MAINTENANCE_ENGINEER, ROLE_AUDITOR,
+    },
+    "list_fixed_safety_assets": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_MAINTENANCE_ENGINEER, ROLE_AUDITOR,
+    },
+    "update_fire_equipment": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_MAINTENANCE_ENGINEER,
+    },
+    "update_fixed_safety_asset": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_MAINTENANCE_ENGINEER,
+    },
+
+    # ── 13. HazMat & Chemicals Management Module ──────────────────────────────
+    "add_chemical": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_QUALITY_ENGINEER,
+        ROLE_WAREHOUSE_SUPERVISOR,
+    },
+    "list_chemicals": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+        ROLE_AUDITOR,
+    },
+    "get_chemical_compatibility": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_QUALITY_ENGINEER,
+        ROLE_WAREHOUSE_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "update_chemical_stock": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+    },
+    "update_chemical": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_QUALITY_ENGINEER, ROLE_WAREHOUSE_SUPERVISOR,
+    },
+
+    # ── 14. Occupational Health & Hygiene Module ──────────────────────────────
+    "record_medical_exam": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER,
+    },
+    "schedule_medical_exam": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER,
+    },
+    "list_medical_exams": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_AUDITOR,
+    },
+    "update_medical_exam": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER,
+    },
+    "list_occupational_exposures": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER, ROLE_AUDITOR,
+    },
+    "list_wearable_devices": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_PRODUCTION_SUPERVISOR, ROLE_AUDITOR,
+    },
+
+    # ── 15. AI Vision & IoT Monitoring Module ─────────────────────────────────
+    "add_iot_sensor": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_MAINTENANCE_ENGINEER, ROLE_ELECTRICAL_ENGINEER,
+    },
+    "list_iot_sensors": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_MAINTENANCE_ENGINEER, ROLE_ELECTRICAL_ENGINEER, ROLE_AUDITOR,
+    },
+    "get_recent_sensor_alerts": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_MAINTENANCE_ENGINEER, ROLE_ELECTRICAL_ENGINEER, ROLE_AUDITOR,
+    },
+    "update_iot_sensor": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_MAINTENANCE_ENGINEER, ROLE_ELECTRICAL_ENGINEER,
+    },
+    "list_cameras": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_PRODUCTION_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "get_recent_ai_events": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_PRODUCTION_SUPERVISOR, ROLE_AUDITOR,
+    },
+    "log_ai_event": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER,
+    },
+
+    # ── 16. Security & Integrations ───────────────────────────────────────────
+    "list_security_roles": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_AUDITOR,
+    },
+    "list_integrations": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_AUDITOR,
+    },
+
+    # ── 17. Superuser CRUD Delete & Direct DML ────────────────────────────────
+    "delete_record": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER,
+    },
+    "cancel_entity": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER, ROLE_HSE_OFFICER, ROLE_OPERATIONS_MANAGER,
+        ROLE_DEPT_MANAGER,
+    },
+    "execute_database_dml": {
+        ROLE_ADMIN, ROLE_HSE_MANAGER,
+    },
+}
+
+
+def normalize_role(raw_role: Optional[str]) -> str:
+    """Normalizes role strings, IDs, usernames, or designations to canonical role constants."""
+    if not raw_role or not str(raw_role).strip():
+        return ROLE_HSE_MANAGER  # Default permissive role for system requests
+
+    clean = str(raw_role).strip().upper().replace(" ", "_").replace("-", "_").replace(".", "_")
+
+    mapping = {
+        "1": ROLE_HSE_MANAGER,
+        "2": ROLE_HSE_OFFICER,
+        "3": ROLE_PRODUCTION_SUPERVISOR,
+        "4": ROLE_MAINTENANCE_ENGINEER,
+        "5": ROLE_ELECTRICAL_ENGINEER,
+        "6": ROLE_QUALITY_ENGINEER,
+        "7": ROLE_WAREHOUSE_SUPERVISOR,
+        "8": ROLE_OPERATIONS_MANAGER,
+        "9": ROLE_TRAINING_COORDINATOR,
+        "10": ROLE_ADMIN,
+        "ADMIN": ROLE_ADMIN,
+        "ADMINISTRATOR": ROLE_ADMIN,
+        "SYSTEM_ADMINISTRATOR": ROLE_ADMIN,
+        "MOSTAFA": ROLE_HSE_MANAGER,
+        "HSE_MANAGER": ROLE_HSE_MANAGER,
+        "HSE_OFFICER": ROLE_HSE_OFFICER,
+        "OPERATIONS_MANAGER": ROLE_OPERATIONS_MANAGER,
+        "DEPARTMENT_MANAGER": ROLE_DEPT_MANAGER,
+        "DEPT_MANAGER": ROLE_DEPT_MANAGER,
+        "PRODUCTION_SUPERVISOR": ROLE_PRODUCTION_SUPERVISOR,
+        "MAINTENANCE_ENGINEER": ROLE_MAINTENANCE_ENGINEER,
+        "ELECTRICAL_ENGINEER": ROLE_ELECTRICAL_ENGINEER,
+        "QUALITY_ENGINEER": ROLE_QUALITY_ENGINEER,
+        "WAREHOUSE_SUPERVISOR": ROLE_WAREHOUSE_SUPERVISOR,
+        "TRAINING_COORDINATOR": ROLE_TRAINING_COORDINATOR,
+        "WORKER": ROLE_WORKER,
+        "OPERATOR": ROLE_WORKER,
+        "PLANT_USER": ROLE_WORKER,
+        "AUDITOR": ROLE_AUDITOR,
+    }
+
+    return mapping.get(clean, ROLE_HSE_MANAGER)
+
+
+def check_tool_access(role_name: str, tool_name: str) -> tuple[bool, str]:
+    """
+    Validates whether `role_name` is authorized to invoke `tool_name`.
+    Returns `(is_authorized, reason)`.
+    """
+    normalized = normalize_role(role_name)
+
+    if tool_name not in TOOL_RBAC_PERMISSIONS:
+        # Unknown tool or unlisted tool: allow if ADMIN/HSE_MANAGER
+        if normalized in {ROLE_ADMIN, ROLE_HSE_MANAGER}:
+            return True, "Authorized (Administrative Fallback)"
+        return False, f"Unauthorized: Tool '{tool_name}' is not accessible."
+
+    allowed_roles = TOOL_RBAC_PERMISSIONS[tool_name]
+    if normalized in allowed_roles:
+        return True, f"Authorized for role '{normalized}'."
+
+    return False, f"Access Denied (RBAC): Role '{normalized}' lacks permission to execute '{tool_name}'."
+
+
+def filter_tools_for_role(tools: list[dict], role_name: str) -> list[dict]:
+    """Filters a tool definitions list to only include tools permitted for the given role."""
+    normalized = normalize_role(role_name)
+    permitted_tools = []
+    for tool_def in tools:
+        fname = tool_def.get("function", {}).get("name", "")
+        if not fname:
+            continue
+        allowed_roles = TOOL_RBAC_PERMISSIONS.get(fname, {ROLE_ADMIN, ROLE_HSE_MANAGER})
+        if normalized in allowed_roles:
+            permitted_tools.append(tool_def)
+    return permitted_tools

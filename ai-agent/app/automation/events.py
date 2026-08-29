@@ -18,7 +18,8 @@ from typing import Any
 EVENT_SCHEMA_VERSION = "1.0"
 DRY_RUN_MODE = "dry_run"
 SPRING_MODE = "spring"
-SUPPORTED_DELIVERY_MODES = frozenset({DRY_RUN_MODE, SPRING_MODE})
+DATABASE_MODE = "database"
+SUPPORTED_DELIVERY_MODES = frozenset({DRY_RUN_MODE, SPRING_MODE, DATABASE_MODE})
 
 PERMIT_RULE_ID = "AUT-001"
 CERTIFICATE_RULE_ID = "AUT-002"
@@ -342,6 +343,9 @@ def build_automation_events(
             field_name="expiry_date",
         )
 
+        bracket = alert_code.lower().replace("certificate_", "")
+        occurrence_marker = f"{expiry_date}|bracket={bracket}|date={business_date}"
+
         events.append(
             _build_event(
                 rule_id=CERTIFICATE_RULE_ID,
@@ -349,7 +353,7 @@ def build_automation_events(
                 entity_id=entity_id,
                 alert_code=alert_code,
                 action="CREATE_TRAINING_REMINDER",
-                occurrence_marker=expiry_date,
+                occurrence_marker=occurrence_marker,
                 evaluated_at_utc=evaluated_at_utc,
                 business_date=business_date,
                 payload=_small_payload(

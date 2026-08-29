@@ -21,11 +21,34 @@ export const masterData = {
   summary: () => get('/master-data/summary'),
 }
 
+/* ---- Live Notifications & Alerts connected directly to Railway DB ---- */
+export const notifications = {
+  list: (params) =>
+    agent
+      .get('/api/v1/notifications', { params })
+      .then((r) => r.data)
+      .catch(() => get('/dashboard/alerts')),
+  markRead: (notificationId) =>
+    agent
+      .post('/api/v1/notifications/mark-read', { notificationId })
+      .then((r) => r.data)
+      .catch(() => post('/notifications/mark-read', { notificationId })),
+  markAllRead: () =>
+    agent
+      .post('/api/v1/notifications/mark-all-read')
+      .then((r) => r.data)
+      .catch(() => post('/notifications/mark-all-read', {})),
+}
+
 /* ---- Member 3 aggregation view ---- */
 export const dashboard = {
   summary: () => get('/dashboard/summary'),
   safetyByZone: () => get('/dashboard/safety-score'),
-  alerts: () => get('/dashboard/alerts'),
+  alerts: () =>
+    agent
+      .get('/api/v1/notifications')
+      .then((r) => r.data)
+      .catch(() => get('/dashboard/alerts')),
   monthlyTrend: () => get('/dashboard/monthly-trend'),
   pyramid: () => get('/dashboard/pyramid'),
 }
@@ -175,8 +198,8 @@ export const iot = {
 }
 
 export const assistant = {
-  /** Q&A endpoint on the FastAPI service — read-only by design. */
-  ask: (question, history, model_mode = 'auto') =>
-    agent.post('/ask', { question, history, model_mode }).then((r) => r.data),
+  /** Conversational RAG & CRUD endpoint on the FastAPI service with RBAC enforcement. */
+  ask: (question, history, model_mode = 'auto', user_role = 'HSE_MANAGER', admin_user_id = 'USR-DEV') =>
+    agent.post('/ask', { question, history, model_mode, user_role, admin_user_id }).then((r) => r.data),
   suggestions: () => agent.get('/suggestions').then((r) => r.data),
 }

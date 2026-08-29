@@ -37,7 +37,6 @@ OPTION 1: 1-CLICK LAUNCHER (RECOMMENDED)
 Simply double-click or run:
     .\start-all.bat
 or in PowerShell:
-    .\Start-All.ps1
 
 This automatically opens 3 separate windows:
   1. Backend Service (Spring Boot on Port 8080)

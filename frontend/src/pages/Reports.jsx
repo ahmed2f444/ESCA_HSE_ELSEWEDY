@@ -21,7 +21,7 @@ import Icon from '../components/Icon.jsx'
 import ExcelJS from 'exceljs'
 import { PlantHeatmap, TrirTrend } from '../components/charts.jsx'
 import { reports as reportsApi } from '../api/endpoints.js'
-import { useApi, useToast } from '../hooks.jsx'
+import { getLocalDateString, useApi, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
 
 const READY_REPORTS = [
@@ -337,7 +337,7 @@ export default function Reports() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `ESCA_HSE_Executive_Report_${new Date().toISOString().slice(0, 10)}.xlsx`
+      link.download = `ESCA_HSE_Executive_Report_${getLocalDateString(new Date())}.xlsx`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

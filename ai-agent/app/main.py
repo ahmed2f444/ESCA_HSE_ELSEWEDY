@@ -154,3 +154,181 @@ def detect_automation_candidates(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Automation detection error: {exc}"
         ) from exc
+
+
+@app.post("/api/v1/automation/trigger", tags=["Automation"])
+def trigger_automation_run(
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Manually trigger all active automation detection rules and persist live alerts."""
+    try:
+        from app.automation.service import run_detection
+        from app.automation.events import build_automation_events
+        from app.automation.dispatcher import create_event_dispatcher
+        from app.config import get_settings
+
+        settings = get_settings()
+        report = run_detection(db)
+        dispatcher = create_event_dispatcher(settings)
+        events = build_automation_events(report, delivery_mode=dispatcher.mode)
+        dispatch_result = dispatcher.dispatch(events)
+        dispatcher.close()
+
+        return {
+            "status": "triggered",
+            "message": "Automation engine successfully evaluated all active HSE rules and dispatched alerts.",
+            "mode": dispatcher.mode,
+            "planned_count": dispatch_result.planned_count,
+            "delivered_count": dispatch_result.delivered_count,
+            "summary": report.get("summary", {}),
+            "action_summary": dispatch_result.as_dict(),
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Automation trigger error: {exc}"
+        ) from exc
+
+
+def evaluate_and_sync_all_automations(db: Session):
+    """Evaluates all active HSE automation rules (AUT-001 to AUT-004) and generates live notifications."""
+    try:
+        from app.automation.service import run_detection
+        from app.automation.events import build_automation_events
+        from app.automation.dispatcher import DatabaseEventDispatcher
+
+        report = run_detection(db)
+        dispatcher = DatabaseEventDispatcher(session_factory=lambda: db)
+        events = build_automation_events(report, delivery_mode="database")
+        dispatcher.dispatch(events)
+    except Exception as exc:
+        logger.warning("evaluate_and_sync_all_automations error=%s", exc)
+
+
+def check_and_apply_certificate_expiries(db: Session):
+    """Backward-compatible wrapper for certificate expirations."""
+    evaluate_and_sync_all_automations(db)
+
+
+@app.get("/api/v1/notifications", tags=["Notifications"])
+def get_live_notifications(
+    db: Annotated[Session, Depends(get_db)],
+    limit: int = 30,
+    unread_only: bool = False,
+):
+    """Fetch real-time notifications directly from the Railway MySQL database."""
+    try:
+        try:
+            query_str = """
+                SELECT 
+                    notification_id,
+                    type,
+                    entity_type,
+                    entity_id,
+                    title,
+                    message,
+                    status_id,
+                    created_at
+                FROM notifications
+            """
+            if unread_only:
+                query_str += " WHERE status_id = 1"
+            query_str += " ORDER BY created_at DESC, notification_id DESC LIMIT :limit"
+            rows = db.execute(text(query_str), {"limit": limit}).fetchall()
+        except Exception:
+            db.rollback()
+            query_str = """
+                SELECT 
+                    notification_id,
+                    type,
+                    entity_type,
+                    entity_id,
+                    title,
+                    message,
+                    status,
+                    created_at
+                FROM notifications
+            """
+            if unread_only:
+                query_str += " WHERE UPPER(COALESCE(status, 'UNREAD')) = 'UNREAD'"
+            query_str += " ORDER BY created_at DESC, notification_id DESC LIMIT :limit"
+            rows = db.execute(text(query_str), {"limit": limit}).fetchall()
+
+        route_map = {
+            "AUTOMATION_PERMIT_OVERDUE": "/permits",
+            "AUTOMATION_CERTIFICATE_EXPIRY": "/training",
+            "AUTOMATION_CAPA_OVERDUE": "/incidents",
+            "AUTOMATION_RISK_REVIEW": "/risk",
+            "PERMIT": "/permits",
+            "CERTIFICATE": "/training",
+            "TRAINING": "/training",
+            "CAPA": "/incidents",
+            "RISK": "/risk",
+            "INCIDENT": "/incidents",
+            "FIRE_EQUIPMENT": "/fire-equipment",
+            "HEALTH": "/occupational-health",
+            "HEALTH_EXAM": "/occupational-health",
+            "INSPECTION": "/inspections",
+            "CHEMICAL": "/hazmat",
+            "AI_EVENT": "/ai-iot",
+        }
+
+        results = []
+        for r in rows:
+            m = dict(r._mapping)
+            ntype = m.get("type") or m.get("entity_type") or "GENERAL"
+            sev = m.get("severity_id") if m.get("severity_id") is not None else 3
+            color = "var(--safe)" if (sev == 1 or ntype == "TRAINING") else ("var(--crit)" if sev >= 3 else "var(--warn)")
+
+            cat = m.get("created_at")
+            time_str = cat.strftime("%Y-%m-%d %H:%M") if hasattr(cat, "strftime") else "الآن"
+            is_unread = (m.get("status_id") == 1) or (str(m.get("status", "")).upper() == "UNREAD")
+
+            raw_id = m.get("notification_id")
+            str_id = str(raw_id) if raw_id is not None else ""
+            display_id = str_id if str_id.startswith("NTF-") else f"NTF-{str_id}"
+
+            results.append({
+                "id": display_id,
+                "notificationId": raw_id,
+                "title": m.get("title") or "تنبيه سلامة",
+                "body": m.get("message") or "",
+                "type": ntype,
+                "severityId": sev,
+                "color": color,
+                "unread": is_unread,
+                "time": time_str,
+                "createdAt": str(cat),
+                "to": route_map.get(ntype, "/dashboard"),
+            })
+        return results
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Notifications fetch error: {exc}",
+        ) from exc
+
+
+@app.post("/api/v1/notifications/mark-read", tags=["Notifications"])
+def mark_notification_read(
+    payload: dict,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Mark a specific notification as read (status_id = 2) in Railway database."""
+    nid = payload.get("notificationId") or payload.get("id")
+    if nid and str(nid).startswith("NTF-"):
+        nid = int(str(nid).replace("NTF-", ""))
+    if nid:
+        db.execute(text("UPDATE notifications SET status_id = 2 WHERE notification_id = :nid"), {"nid": nid})
+        db.commit()
+    return {"success": True, "notificationId": nid}
+
+
+@app.post("/api/v1/notifications/mark-all-read", tags=["Notifications"])
+def mark_all_notifications_read(
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Mark all unread notifications as read (status_id = 2) in Railway database."""
+    db.execute(text("UPDATE notifications SET status_id = 2 WHERE status_id = 1"))
+    db.commit()
+    return {"success": True, "message": "All notifications marked as read"}

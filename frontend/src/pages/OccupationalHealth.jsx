@@ -17,7 +17,7 @@ import {
 import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { health as healthApi } from '../api/endpoints.js'
-import { useApi, useCan, useToast } from '../hooks.jsx'
+import { getLocalDateString, useApi, useCan, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
 
 const EMPLOYEES = [
@@ -57,8 +57,8 @@ export default function OccupationalHealth() {
   const [form, setForm] = useState({
     employeeName: EMPLOYEES[0],
     protocolId: 1,
-    scheduledDate: new Date().toISOString().slice(0, 10),
-    nextDueDate: new Date(Date.now() + 180 * 86400000).toISOString().slice(0, 10),
+    scheduledDate: getLocalDateString(new Date()),
+    nextDueDate: getLocalDateString(new Date(Date.now() + 180 * 86400000)),
     fitnessResultId: 1,
     restrictions: 'لائق طبياً لممارسة مهام العمل دون قيود',
     doctor: 'د. حازم القاضي (استشاري طب الصناعات)',

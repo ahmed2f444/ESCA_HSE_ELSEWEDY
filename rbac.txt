@@ -1,0 +1,134 @@
+====================================================================================================
+ESCA HSE MANAGEMENT SYSTEM — ROLE-BASED ACCESS CONTROL (RBAC) & ARCHITECTURE GUIDE
+====================================================================================================
+
+This document explains the Role-Based Access Control (RBAC) architecture across all layers of the 
+ESCA HSE Platform (Frontend UI, Spring Boot Backend, Python AI Agent, and MySQL Database), 
+as well as the purpose and operation of the configuration and documentation `.txt` files in the repository.
+
+====================================================================================================
+1. REPOSITORY `.txt` FILES DIRECTORY & PURPOSE
+====================================================================================================
+
+The root of the repository contains specialized `.txt` files designed for human operators, developers, 
+and system administrators:
+
+1. `rbac.txt` (This File):
+   - Comprehensive reference of the 10+ factory roles, permission matrices, and security gates.
+   - Explains how RBAC is enforced consistently across Frontend, Backend, and AI Agent layers.
+
+2. `users.txt`:
+   - Lists verified live system accounts residing in the Railway MySQL `users` table.
+   - Provides usernames, passwords, DB IDs, and assigned roles for fast testing and login.
+   - Login URL: http://localhost:5180/login
+
+3. `HOW_TO_RUN.txt`:
+   - Step-by-step startup instructions for all 3 tiers:
+     * Frontend: React 18 + Vite (Port 5180)
+     * Backend: Java 21 + Spring Boot (Port 8080)
+     * AI Agent: FastAPI + Groq / Ollama / MySQL (Port 8000)
+   - Database connection parameters and troubleshooting tips.
+
+4. `AI_AGENT_NEW_PC_SETUP.txt`:
+   - Environment setup guide for running the Python AI agent on a fresh machine (Python venv, 
+     requirements, Groq API keys, and local Ollama models).
+
+====================================================================================================
+2. THREE-TIER RBAC ENFORCEMENT ARCHITECTURE
+====================================================================================================
+
+The ESCA HSE platform enforces RBAC across three independent, synchronized layers:
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 1. FRONTEND LAYER (`frontend/src/permissions.js`)                       │
+  │    - Filters UI navigation links, dashboards, and action buttons.      │
+  │    - Displays role badges, competency gates, and access hints.          │
+  └──────────────────────────────────┬─────────────────────────────────────┘
+                                     │ (HTTP Bearer JWT / User Context)
+                                     ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 2. BACKEND LAYER (`backend/.../RbacAuthorizationFilter.java`)          │
+  │    - Intercepts all REST API endpoints (`/api/v1/*`).                   │
+  │    - Evaluates HTTP verbs against `RbacPolicy.java` (CRUD + Scopes).   │
+  │    - Blocks unauthorized API mutations with HTTP 403 Forbidden.         │
+  └──────────────────────────────────┬─────────────────────────────────────┘
+                                     │ (Authenticated User Role)
+                                     ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 3. AI AGENT LAYER (`ai-agent/app/tools/rbac.py`)                       │
+  │    - Filters function-calling tools before sending definitions to LLM. │
+  │    - Pre-execution check prevents unauthorized tool execution.         │
+  │    - Returns structured `RBAC Access Denied` errors if unauthorized.   │
+  └────────────────────────────────────────────────────────────────────────┘
+
+====================================================================================================
+3. SYSTEM ROLES & PERMISSION MATRIX
+====================================================================================================
+
+The system defines 10 core factory roles (mapped in MySQL `roles` table):
+
+| Role Code                 | Arabic Title                  | Scope  | Incidents | Permits | Inspect | Risks | Train | Health | Admin | Sign-Off |
+|:--------------------------|:------------------------------|:-------|:----------|:--------|:--------|:------|:------|:-------|:------|:---------|
+| `HSE_MANAGER`             | مدير السلامة والصحة المهنية   | SITE   | CRUD      | CRUD    | CRUD    | CRUD  | CRUD  | CRUD   | RW    | YES      |
+| `HSE_OFFICER`             | مسؤول سلامة ميداني            | ZONE   | CRU       | CRU     | CRUD    | CRU   | R     | R      | NONE  | NO       |
+| `PRODUCTION_SUPERVISOR`   | مشرف إنتاج / وردية            | ZONE   | CR        | CR      | R       | R     | R     | NONE   | NONE  | NO       |
+| `MAINTENANCE_ENGINEER`    | مهندس صيانة ومرافق            | ZONE   | CR        | CR      | R       | CR    | R     | NONE   | NONE  | NO       |
+| `ELECTRICAL_ENGINEER`     | مهندس كهرباء وتحكم            | ZONE   | CR        | CR      | R       | R     | R     | NONE   | NONE  | NO       |
+| `QUALITY_ENGINEER`        | مهندس جودة واختبارات          | ZONE   | CR        | R       | CRUD    | R     | R     | NONE   | NONE  | NO       |
+| `WAREHOUSE_SUPERVISOR`    | مشرف مخازن ومهمات             | ZONE   | CR        | R       | R       | R     | R     | NONE   | NONE  | NO       |
+| `OPERATIONS_MANAGER`      | مدير العمليات والتشغيل        | SITE   | R         | CRUD    | R       | R     | R     | R      | NONE  | YES      |
+| `TRAINING_COORDINATOR`    | منسق التدريب والتطوير         | SITE   | R         | R       | R       | R     | CRUD  | R      | NONE  | NO       |
+| `SYSTEM_ADMINISTRATOR`    | مدير النظام التقني            | GLOBAL | R         | R       | R       | R     | CRUD  | R      | CRUD  | YES      |
+| `WORKER`                  | فني / عامل تشغيل              | SELF   | CR        | R       | NONE    | NONE  | R     | NONE   | NONE  | NO       |
+| `AUDITOR`                 | مدقق سلامة وجودة خارجي        | SITE   | R         | R       | R       | R     | R     | R      | NONE  | NO       |
+
+Key:
+- CRUD = Create, Read, Update, Delete
+- CRU  = Create, Read, Update (No Delete)
+- CR   = Create, Read
+- R    = Read-Only
+- NONE = No Access
+- Sign-Off = Authorized to give final approval on high-risk permits (ePTW) & CAPA closures.
+
+====================================================================================================
+4. AI AGENT RBAC TOOL ACCESS MAPPING (`ai-agent/app/tools/rbac.py`)
+====================================================================================================
+
+When a user interacts with the ESCA HSE AI Assistant, the agent dynamically verifies tool permissions 
+against `TOOL_RBAC_PERMISSIONS`:
+
+1. Universal RAG & Knowledge Tools (All Authenticated Roles):
+   - `search_hse_knowledge`: Access OSHA, ISO 45001, and Elsewedy 10 Safety Golden Rules.
+   - `search_database_entities`: Safe cross-entity database lookup.
+   - `get_monthly_kpis`: High-level safety metrics (TRIR, LTIFR).
+
+2. Read-Only Entity Lists (Role Filtered):
+   - `list_incidents`, `list_permits`, `list_overdue_capas`, `list_inspections`, `list_certificates`,
+     `list_training_courses`, `list_ppe_inventory`, `list_fire_equipment`, `list_chemicals`.
+
+3. Mutation & CRUD Action Tools (Strictly Gated):
+   - `update_certificate_status` / `create_certificate`:
+     * Authorized Roles: `ADMIN`, `HSE_MANAGER`, `TRAINING_COORDINATOR`.
+   - `update_permit_status` (Approve/Reject ePTW):
+     * Authorized Roles: `ADMIN`, `HSE_MANAGER`, `OPERATIONS_MANAGER`.
+   - `create_incident` / `log_safety_observation`:
+     * Authorized Roles: All field roles (`HSE_MANAGER`, `HSE_OFFICER`, `SUPERVISOR`, `ENGINEER`, `WORKER`).
+   - `create_ppe_transaction` (Issue PPE):
+     * Authorized Roles: `ADMIN`, `HSE_MANAGER`, `HSE_OFFICER`, `WAREHOUSE_SUPERVISOR`.
+   - `delete_record` / `cancel_entity` / `execute_database_dml`:
+     * Authorized Roles: `ADMIN`, `HSE_MANAGER` (Full audit logging enforced).
+
+====================================================================================================
+5. AUTOMATED AUDIT TRAIL & LOGGING
+====================================================================================================
+
+Every state-modifying action (via REST API or AI Agent) automatically writes an entry to the 
+MySQL `audit_logs` table containing:
+- `user_id` / `employee_id`
+- `action_type` (e.g. `UPDATE_CERTIFICATE_STATUS`, `APPROVE_PERMIT`, `CREATE_INCIDENT`)
+- `entity_type` and `entity_id`
+- Timestamp and before/after metadata payload
+
+====================================================================================================
+END OF RBAC GUIDE
+====================================================================================================

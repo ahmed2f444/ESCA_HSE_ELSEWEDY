@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from './Icon.jsx'
 import MarkdownRenderer from './MarkdownRenderer.jsx'
@@ -23,7 +23,7 @@ export default function AgentDock() {
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const bodyRef = useRef(null)
-  const inputRef = useRef(null)
+  const textareaRef = useRef(null)
 
   useEffect(() => {
     if (!open || suggestions.length) return
@@ -32,18 +32,48 @@ export default function AgentDock() {
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 150)
+      setTimeout(() => textareaRef.current?.focus(), 150)
     }
   }, [open])
 
+  // Dedicated container-only scroll to bottom
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTo({
+        top: bodyRef.current.scrollHeight,
+        behavior,
+      })
+    }
+  }, [])
+
   useEffect(() => {
-    bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, busy])
+    const raf = requestAnimationFrame(() => {
+      scrollToBottom('smooth')
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [messages, busy, scrollToBottom])
+
+  // Auto-expanding textarea height calculation
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    const minHeight = 38
+    const maxHeight = 120
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)
+    textarea.style.height = `${nextHeight}px`
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden'
+  }, [draft])
 
   async function send(question) {
     const q = (question ?? draft).trim()
     if (!q || busy) return
     setDraft('')
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '38px'
+      textareaRef.current.style.overflowY = 'hidden'
+    }
+
     const timeNow = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
     setMessages((m) => [...m, { role: 'user', text: q, timestamp: timeNow }])
     setBusy(true)
@@ -70,6 +100,47 @@ export default function AgentDock() {
         .trim()
       const cleanAnswer = cleanText || 'تم استخراج البيانات من قاعدة البيانات بنجاح.'
 
+      // Check if any certificate, permit, incident, or safety action was executed by AI agent
+      const toolCalls = res.tool_calls || res.tools || []
+      if (toolCalls.length > 0) {
+        // Trigger live re-fetch for notifications and database state
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+      }
+
+      const certCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_certificate' ||
+          t.name === 'create_certificate' ||
+          t.name === 'create_training_certificate' ||
+          t.tool === 'create_certificate'
+      )
+      if (certCall) {
+        const args = certCall.args || certCall.arguments || {}
+        const result = certCall.result || certCall.output || {}
+        const empName = args.employee_name || result.employee || result.employee_name || 'موظف'
+        const courseName = args.course_name || result.course || result.course_name || 'دورة تدريبية'
+        const isExp = result.status === 'EXPIRED' || result.is_expired || result.live_notification_triggered
+
+        const notifObj = {
+          id: 'NTF-' + (result.notification_id || Date.now()),
+          notificationId: result.notification_id || Date.now(),
+          title: isExp
+            ? `تنبيه أتمتة السلامة: انتهاء صلاحية شهادة ${empName}`
+            : `توثيق واعتماد شهادة تدريبية: ${empName}`,
+          body: isExp
+            ? `انتهت صلاحية شهادة تدريب الموظف ${empName} لدورة (${courseName}) — تم إطلاق تنبيه السلامة الآلي (AUT-002).`
+            : `تم توثيق واعتماد شهادة تدريب (${courseName}) للموظف ${empName} بنجاح في مصفوفة الكفاءة وتحديث سجلات السلامة.`,
+          time: 'الآن (مباشر)',
+          color: isExp ? 'var(--crit)' : 'var(--safe)',
+          type: isExp ? 'AUTOMATION_CERTIFICATE_EXPIRY' : 'TRAINING',
+          to: '/training',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
       setMessages((m) => [
         ...m,
         {
@@ -92,6 +163,17 @@ export default function AgentDock() {
       ])
     } finally {
       setBusy(false)
+      setTimeout(() => textareaRef.current?.focus(), 50)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.nativeEvent?.isComposing) return
+      e.preventDefault()
+      if (!busy && draft.trim()) {
+        send()
+      }
     }
   }
 
@@ -117,7 +199,7 @@ export default function AgentDock() {
       {/* Floating Chat Modal */}
       {open && (
         <section
-          className="fixed bottom-6 end-6 z-[800] w-[min(460px,calc(100vw-2rem))] bg-steel-2 border border-line rounded-2xl flex flex-col overflow-hidden shadow-2xl animate-pop"
+          className="fixed bottom-6 end-6 z-[800] w-[min(480px,calc(100vw-2rem))] bg-steel-2 border border-line rounded-2xl flex flex-col overflow-hidden shadow-2xl animate-pop"
           style={{
             height: 'min(640px, calc(100vh - 5rem))',
           }}
@@ -132,10 +214,10 @@ export default function AgentDock() {
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs sm:text-[13px] font-bold text-txt">المساعد الذكي للسلامة</h3>
                   <span className="px-1.5 py-0.5 rounded text-[9.5px] font-mono bg-safe/15 text-safe border border-safe/30">
-                    LIVE DB
+                    ONLINE
                   </span>
                 </div>
-                <p className="text-[10px] text-txt-3 font-mono">135 Tables Live Grounding</p>
+                <p className="text-[10px] text-txt-3 font-mono">ESCA Safety Assistant</p>
               </div>
             </div>
 
@@ -273,31 +355,35 @@ export default function AgentDock() {
             </div>
           )}
 
-          {/* Input Footer */}
-          <form
-            className="border-t border-line p-3 bg-steel-3/80 flex items-center gap-2"
-            onSubmit={(e) => {
-              e.preventDefault()
-              send()
-            }}
-          >
-            <input
-              ref={inputRef}
-              className="field flex-1 text-xs py-2 px-3 bg-steel-2 border-line focus:border-hi"
-              placeholder="اكتب سؤالك للوكيل الذكي…"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              disabled={busy}
-            />
-            <button
-              type="submit"
-              className="btn btn-pri px-3.5 py-2 rounded-lg shrink-0"
-              disabled={busy || !draft.trim()}
-              aria-label="إرسال"
-            >
-              <Icon name="send" size={14} />
-            </button>
-          </form>
+          {/* Input Footer with Auto-Expanding Textarea */}
+          <div className="border-t border-line p-3 bg-steel-3/80">
+            <div className="flex items-end gap-2 bg-steel-2 border border-line focus-within:border-hi/70 rounded-xl p-1.5 transition-all">
+              <textarea
+                ref={textareaRef}
+                className="flex-1 bg-transparent text-xs text-txt placeholder:text-txt-3 focus:outline-none resize-none px-2 py-1 leading-relaxed max-h-[120px]"
+                style={{ minHeight: '38px' }}
+                placeholder="اكتب سؤالك للوكيل الذكي… (Shift+Enter لسطر جديد)"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={busy}
+                rows={1}
+              />
+              <button
+                type="button"
+                onClick={() => send()}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+                  draft.trim() && !busy
+                    ? 'bg-hi text-white hover:bg-hi2 active:scale-95 shadow-sm'
+                    : 'bg-steel-3 text-txt-3 opacity-60 cursor-not-allowed'
+                }`}
+                disabled={busy || !draft.trim()}
+                aria-label="إرسال"
+              >
+                <Icon name="send" size={14} />
+              </button>
+            </div>
+          </div>
         </section>
       )}
     </>

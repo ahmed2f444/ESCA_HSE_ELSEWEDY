@@ -376,6 +376,27 @@ def _calendar_date(value: Any, *, field_name: str) -> str:
     return text_value
 
 
+def _calendar_date_or_utc_timestamp(value: Any, *, field_name: str) -> str:
+    text_value = _required_text(value, field_name=field_name)
+    try:
+        datetime.strptime(text_value, "%Y-%m-%d")
+        return text_value
+    except ValueError:
+        pass
+
+    try:
+        parsed = datetime.fromisoformat(text_value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None or parsed.utcoffset() != timezone.utc.utcoffset(parsed):
+            raise SpringEventValidationError(
+                f"Automation event timestamp must be UTC: {field_name}"
+            )
+        return text_value
+    except (ValueError, TypeError):
+        raise SpringEventValidationError(
+            f"Automation event date/timestamp is invalid: {field_name}"
+        ) from None
+
+
 def _validate_payload_value(value: Any, *, field_name: str) -> None:
     if value is None or isinstance(value, bool):
         return
@@ -572,15 +593,17 @@ def _prepare_action(event: Mapping[str, Any]) -> dict[str, Any]:
             payload.get("expiry_date"), field_name="expiry_date"
         )
     elif rule_id == "AUT-003":
-        _calendar_date(payload.get("due_date"), field_name="due_date")
+        _calendar_date_or_utc_timestamp(
+            payload.get("due_date"), field_name="due_date"
+        )
     elif rule_id == "AUT-004":
         if payload.get("last_reviewed_at") is not None:
-            _calendar_date(
+            _calendar_date_or_utc_timestamp(
                 payload.get("last_reviewed_at"),
                 field_name="last_reviewed_at",
             )
         if payload.get("next_review_date") is not None:
-            _calendar_date(
+            _calendar_date_or_utc_timestamp(
                 payload.get("next_review_date"),
                 field_name="next_review_date",
             )

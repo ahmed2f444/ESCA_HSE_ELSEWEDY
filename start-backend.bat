@@ -10,6 +10,7 @@ if exist "%ROOT_DIR%tools\maven\bin\mvn.cmd" (
 ) else if exist "mvnw.cmd" (
     call mvnw.cmd spring-boot:run
 ) else (
-    mvn spring-boot:run
+    call mvn spring-boot:run
 )
 pause
+

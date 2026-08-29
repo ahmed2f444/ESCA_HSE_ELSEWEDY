@@ -4,6 +4,15 @@ import { tokenStore } from './api/client.js'
 import { permissionsFor } from './permissions.js'
 import Icon from './components/Icon.jsx'
 
+/** Formats a date to YYYY-MM-DD using local client timezone, avoiding UTC day-shifting. */
+export function getLocalDateString(d = new Date()) {
+  const dateObj = typeof d === 'number' ? new Date(d) : d
+  const year = dateObj.getFullYear()
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const day = String(dateObj.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 /* ------------------------------------------------------------------ *
  * Data fetching
  * ------------------------------------------------------------------ */

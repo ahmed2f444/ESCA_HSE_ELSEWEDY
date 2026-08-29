@@ -1,3 +1,4 @@
+import json
 from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -23,33 +24,72 @@ def get_active_automation_rules(
     session: Session,
 ) -> list[dict[str, Any]]:
     """Return the active automation rules owned by Member 4."""
-    raw_rules = _fetch_all(
-        session,
-        """
-        SELECT
-            rule_id,
-            entity_type,
-            schedule_cron,
-            timezone,
-            threshold_value
-        FROM automation_rules
-        WHERE active_flag = 1
-          AND entity_type IN (
-              'PERMIT',
-              'CERTIFICATE',
-              'CAPA',
-              'RISK'
-          )
-        ORDER BY rule_id
-        """,
-        {},
-    )
+    try:
+        raw_rules = _fetch_all(
+            session,
+            """
+            SELECT
+                rule_id,
+                rule_name,
+                entity_type,
+                schedule_cron,
+                timezone,
+                threshold_value
+            FROM automation_rules
+            WHERE (active_flag = 1 OR active_flag IS TRUE)
+              AND entity_type IN (
+                  'PERMIT',
+                  'CERTIFICATE',
+                  'CAPA',
+                  'RISK'
+              )
+            ORDER BY rule_id
+            """,
+            {},
+        )
+    except Exception:
+        raw_rules = _fetch_all(
+            session,
+            """
+            SELECT
+                rule_id,
+                rule_name,
+                entity_type,
+                schedule_cron,
+                conditions_json,
+                active
+            FROM automation_rules
+            WHERE (active = 1 OR active IS TRUE OR active IS NULL)
+              AND entity_type IN (
+                  'PERMIT',
+                  'CERTIFICATE',
+                  'CAPA',
+                  'RISK'
+              )
+            ORDER BY rule_id
+            """,
+            {},
+        )
+
     mapping = {
         "PERMIT": "AUT-001",
         "CERTIFICATE": "AUT-002",
         "CAPA": "AUT-003",
         "RISK": "AUT-004",
     }
+    default_thresholds = {
+        "AUT-001": "24",
+        "AUT-002": "30,14,7,0",
+        "AUT-003": "1,3,7",
+        "AUT-004": "30",
+    }
+    default_crons = {
+        "AUT-001": "*/5 * * * *",
+        "AUT-002": "0 8 * * *",
+        "AUT-003": "0 9 * * *",
+        "AUT-004": "0 7 * * 1",
+    }
+
     normalized = []
     for r in raw_rules:
         rule_copy = dict(r)
@@ -58,7 +98,34 @@ def get_active_automation_rules(
             rule_copy["rule_id"] = mapping[entity]
         elif not isinstance(rule_copy.get("rule_id"), str):
             rule_copy["rule_id"] = f"AUT-{int(rule_copy['rule_id']):03d}"
+
+        rule_id = rule_copy["rule_id"]
+
+        if not rule_copy.get("threshold_value"):
+            cond_raw = rule_copy.get("conditions_json")
+            if cond_raw:
+                try:
+                    cond = json.loads(cond_raw) if isinstance(cond_raw, str) else cond_raw
+                    if "days" in cond and isinstance(cond["days"], list):
+                        rule_copy["threshold_value"] = ",".join(str(d) for d in cond["days"])
+                    elif "review_age_days" in cond:
+                        rule_copy["threshold_value"] = str(cond["review_age_days"])
+                    elif "grace_minutes" in cond:
+                        rule_copy["threshold_value"] = str(cond["grace_minutes"])
+                except Exception:
+                    pass
+
+        if not rule_copy.get("threshold_value"):
+            rule_copy["threshold_value"] = default_thresholds.get(rule_id, "0")
+
+        if not rule_copy.get("timezone"):
+            rule_copy["timezone"] = "Africa/Cairo"
+
+        if not rule_copy.get("schedule_cron"):
+            rule_copy["schedule_cron"] = default_crons.get(rule_id, "0 0 * * *")
+
         normalized.append(rule_copy)
+
     return normalized
 
 
@@ -66,7 +133,7 @@ def find_overdue_permits(
     session: Session,
     as_of_utc: datetime,
 ) -> list[dict[str, Any]]:
-    """Find ACTIVE permits whose UTC expiry time has passed."""
+    """Find ACTIVE or APPROVED permits whose UTC expiry time has passed."""
     if as_of_utc.tzinfo is not None:
         raise ValueError("as_of_utc must be a naive UTC datetime")
 
@@ -92,7 +159,10 @@ def find_overdue_permits(
         LEFT JOIN permit_statuses AS st ON st.permit_status_id = p.status_id
         LEFT JOIN permit_risk_levels AS rl ON rl.permit_risk_level_id = p.risk_level_id
         LEFT JOIN zones AS z ON z.zone_id = p.zone_id
-        WHERE (UPPER(st.name) = 'ACTIVE' OR p.status_id = 2)
+        WHERE (
+            UPPER(st.name) IN ('ACTIVE', 'APPROVED')
+            OR p.status_id IN (2, 3)
+        )
           AND p.expiry_at <= :as_of_utc
         ORDER BY
             p.expiry_at,
@@ -131,7 +201,7 @@ def _certificate_alert_code(
         return "CERTIFICATE_EXPIRED"
 
     if days_to_expiry == 0 and 0 in thresholds:
-        return "CERTIFICATE_EXPIRES_TODAY"
+        return "CERTIFICATE_DUE_0_DAYS"
 
     for threshold in thresholds:
         if threshold > 0 and days_to_expiry <= threshold:
@@ -160,15 +230,20 @@ def find_certificate_alerts(
             c.course_id,
             c.expiry_date,
             COALESCE(st.name, 'VALID') AS status,
-            c.manager_id,
+            COALESCE(c.manager_id, e.manager_id) AS manager_id,
             DATEDIFF(
-                c.expiry_date,
+                DATE(c.expiry_date),
                 :as_of_date
             ) AS days_to_expiry
         FROM certificates AS c
         LEFT JOIN certificate_statuses AS st ON st.certificate_status_id = c.status_id
-        WHERE (UPPER(st.name) IN ('VALID', 'EXPIRED', 'RENEWAL_BOOKED') OR c.status_id IS NOT NULL)
-          AND c.expiry_date <= :expiry_limit
+        LEFT JOIN employees AS e ON e.employee_id = c.employee_id
+        WHERE c.expiry_date IS NOT NULL
+          AND (
+              UPPER(st.name) IN ('VALID', 'EXPIRED', 'RENEWAL_BOOKED', 'ACTIVE')
+              OR c.status_id IS NOT NULL
+          )
+          AND DATE(c.expiry_date) <= :expiry_limit
         ORDER BY
             c.expiry_date,
             c.certificate_id
@@ -210,14 +285,18 @@ def find_overdue_capa(
             COALESCE(st.name, 'OPEN') AS status,
             DATEDIFF(
                 :as_of_date,
-                c.due_date
+                DATE(c.due_date)
             ) AS days_overdue,
             'CAPA_OVERDUE' AS alert_code
         FROM capa AS c
         LEFT JOIN capa_statuses AS st ON st.capa_status_id = c.status_id
         LEFT JOIN capa_priorities AS pr ON pr.capa_priority_id = c.priority_id
-        WHERE (UPPER(st.name) IN ('OPEN', 'IN_PROGRESS') OR c.status_id IN (1, 2))
-          AND c.due_date < :as_of_date
+        WHERE c.due_date IS NOT NULL
+          AND (
+              UPPER(st.name) IN ('OPEN', 'IN_PROGRESS')
+              OR c.status_id IN (1, 2)
+          )
+          AND DATE(c.due_date) < :as_of_date
         ORDER BY
             c.due_date,
             c.capa_id
@@ -259,7 +338,7 @@ def find_stale_high_risks(
             r.next_review_date,
             DATEDIFF(
                 :as_of_date,
-                COALESCE(r.last_reviewed_at, r.next_review_date)
+                DATE(COALESCE(r.last_reviewed_at, r.next_review_date, :review_cutoff))
             ) AS days_since_review,
             CASE
                 WHEN r.last_reviewed_at IS NULL
@@ -269,11 +348,14 @@ def find_stale_high_risks(
         FROM risk_register AS r
         LEFT JOIN risk_register_statuses AS st ON st.risk_register_status_id = r.status_id
         LEFT JOIN zones AS z ON z.zone_id = r.zone_id
-        WHERE (UPPER(st.name) = 'ACTIVE' OR r.status_id = 1)
+        WHERE (
+            UPPER(st.name) IN ('ACTIVE', 'OPEN')
+            OR r.status_id = 1
+        )
           AND r.inherent_score >= :minimum_score
           AND (
               r.last_reviewed_at IS NULL
-              OR r.last_reviewed_at <= :review_cutoff
+              OR DATE(r.last_reviewed_at) <= :review_cutoff
           )
         ORDER BY
             r.inherent_score DESC,

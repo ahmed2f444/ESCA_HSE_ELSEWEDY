@@ -90,3 +90,8 @@ tmp/
 temp/
 scratch/
 local_data/
+
+# AI Agent IDE Customizations & Skills
+.agent/
+.agents/
+

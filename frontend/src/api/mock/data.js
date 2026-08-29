@@ -1050,11 +1050,14 @@ export const dashboardAlerts = seed.notifications
   .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
   .slice(0, 6)
   .map((n) => ({
+    id: n.notification_id || ('NTF-' + Math.random().toString(36).slice(2, 6)),
+    notificationId: n.notification_id,
     time: String(n.created_at).replace('T', ' ').slice(5, 16),
     color: NOTIF_COLOR[n.severity] || '#4A9DD8',
-    title: n.entity_id || t(n.type),
+    title: n.title || n.entity_id || t(n.type) || 'تنبيه سلامة',
     body: n.message || n.title,
     to: NOTIF_ROUTE[n.entity_type] || '/',
+    unread: n.status !== 'READ',
   }))
 
 /* ------------------------------------------------------------------ */

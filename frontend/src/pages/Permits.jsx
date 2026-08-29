@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Async,
   Btn,
@@ -18,7 +18,7 @@ import {
 import Icon from '../components/Icon.jsx'
 import Modal from '../components/Modal.jsx'
 import { permits as permitApi } from '../api/endpoints.js'
-import { useApi, useCan, useToast } from '../hooks.jsx'
+import { getLocalDateString, useApi, useCan, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
 
 /** Permit-type codes come from the sheets; the icon and tone are ours. */
@@ -75,6 +75,16 @@ export default function Permits() {
     simops.reload?.()
   }
 
+  useEffect(() => {
+    const handleReload = () => reloadAll()
+    window.addEventListener('hse:data-changed', handleReload)
+    window.addEventListener('hse:notifications-changed', handleReload)
+    return () => {
+      window.removeEventListener('hse:data-changed', handleReload)
+      window.removeEventListener('hse:notifications-changed', handleReload)
+    }
+  }, [])
+
   // Combined permits list
   const displayPermits = useMemo(() => {
     const serverRows = Array.isArray(list.data) ? list.data : []
@@ -91,7 +101,7 @@ export default function Permits() {
     riskLevel: 'HIGH',
     from: '08:30',
     to: '16:30',
-    date: new Date().toISOString().slice(0, 10),
+    date: getLocalDateString(new Date()),
     jsa: 'JSA-001',
     gasTestRequired: false,
     o2: '20.9',
@@ -178,7 +188,7 @@ export default function Permits() {
         riskLevel: 'HIGH',
         from: '08:30',
         to: '16:30',
-        date: new Date().toISOString().slice(0, 10),
+        date: getLocalDateString(new Date()),
         jsa: 'JSA-001',
         gasTestRequired: false,
         o2: '20.9',

@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     spring_max_attempts: int = 3
     spring_token_refresh_leeway_seconds: int = 30
 
-    automation_delivery_mode: Literal["dry_run", "spring"] = "dry_run"
+    automation_delivery_mode: Literal["dry_run", "spring", "database"] = "dry_run"
     automation_live_enabled: bool = False
     enable_scheduler: bool = True
 

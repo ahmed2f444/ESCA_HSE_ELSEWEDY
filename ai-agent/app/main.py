@@ -12,6 +12,13 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import engine, get_db
 from app.routers import chat
+from app.security import (
+    SecurityHeadersMiddleware,
+    RequestSizeLimitMiddleware,
+    RateLimitMiddleware,
+    mask_safe_error,
+    scrub_secrets_from_text,
+)
 
 logger = logging.getLogger("esca_agent")
 scheduler = None
@@ -74,12 +81,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Enable CORS for frontend integration
+# 1. Rate Limiting Middleware (DDoS & Brute Force Protection)
+app.add_middleware(
+    RateLimitMiddleware,
+    enabled=settings.security_rate_limit_enabled,
+)
+
+# 2. Request Body Size Limit Middleware (Memory Exhaustion Protection)
+app.add_middleware(
+    RequestSizeLimitMiddleware,
+    max_body_bytes=settings.max_request_body_bytes,
+)
+
+# 3. Security Headers Middleware (CSP, HSTS, X-Frame-Options, X-Content-Type-Options)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 4. Strict CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_allowed_origins if settings.cors_allowed_origins else ["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

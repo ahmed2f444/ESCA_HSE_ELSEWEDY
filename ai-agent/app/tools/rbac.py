@@ -625,7 +625,7 @@ TOOL_RBAC_PERMISSIONS: dict[str, set[str]] = {
 def normalize_role(raw_role: Optional[str]) -> str:
     """Normalizes role strings, IDs, usernames, or designations to canonical role constants."""
     if not raw_role or not str(raw_role).strip():
-        return ROLE_HSE_MANAGER  # Default permissive role for system requests
+        return ROLE_HSE_MANAGER  # Default for internal system requests
 
     clean = str(raw_role).strip().upper().replace(" ", "_").replace("-", "_").replace(".", "_")
 
@@ -661,7 +661,8 @@ def normalize_role(raw_role: Optional[str]) -> str:
         "AUDITOR": ROLE_AUDITOR,
     }
 
-    return mapping.get(clean, ROLE_HSE_MANAGER)
+    # Least privilege fallback for unrecognized roles
+    return mapping.get(clean, ROLE_WORKER)
 
 
 def check_tool_access(role_name: str, tool_name: str) -> tuple[bool, str]:

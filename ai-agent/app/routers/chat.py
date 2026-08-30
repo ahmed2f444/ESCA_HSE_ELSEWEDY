@@ -1,3 +1,4 @@
+import logging
 import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -5,7 +6,9 @@ from app.database import get_db
 from app.schemas import AskRequest, AskResponse
 from app.agent import run_agent_loop
 from app.tools.rbac import normalize_role
+from app.security import scrub_secrets_from_text, mask_safe_error
 
+logger = logging.getLogger("esca_chat")
 router = APIRouter(tags=["Chat & Agent"])
 
 SUGGESTIONS = [
@@ -31,13 +34,15 @@ def ask_agent(req: AskRequest, db: Session = Depends(get_db)):
     """
     Main conversational agent endpoint. Receives user questions, enforces RBAC on tools,
     executes live RAG & CRUD against Railway MySQL, and returns verified answer with traces.
+    Protected by Prompt Guard, Rate Limiting, and Secret Credential Sanitization.
     """
     role = normalize_role(req.user_role)
+    session_id = req.session_id or f"sess-{uuid.uuid4().hex[:8]}"
     try:
         response = run_agent_loop(
             question=req.question,
             db=db,
-            session_id=req.session_id,
+            session_id=session_id,
             model_mode=req.model_mode or "auto",
             client_history=req.history,
             user_role=role,
@@ -46,21 +51,25 @@ def ask_agent(req: AskRequest, db: Session = Depends(get_db)):
         response.user_role = role
         return response
     except RuntimeError as exc:
+        safe_msg = scrub_secrets_from_text(str(exc))
+        logger.error("agent_runtime_error error=%s", safe_msg)
         error_msg = (
-            f"⚠️ All LLM providers are currently unavailable: {exc}. "
+            f"⚠️ All LLM providers are currently unavailable: {safe_msg}. "
             "Please check network connection or switch model mode."
         )
         return AskResponse(
-            session_id=req.session_id or f"err-{uuid.uuid4().hex[:8]}",
+            session_id=session_id,
             answer=error_msg,
             tool_calls=[],
             model_used=None,
             user_role=role,
         )
     except Exception as exc:
+        safe_msg = mask_safe_error(exc)
+        logger.error("agent_unhandled_error error=%s", safe_msg)
         return AskResponse(
-            session_id=req.session_id or f"err-{uuid.uuid4().hex[:8]}",
-            answer=f"⚠️ Server error: {exc}",
+            session_id=session_id,
+            answer=f"⚠️ {safe_msg}",
             tool_calls=[],
             model_used=None,
             user_role=role,

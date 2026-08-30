@@ -19,6 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.tools.knowledge_base import search_hse_knowledge
+from app.security import sanitize_data_payload, scrub_secrets_from_text
 
 
 # ── Value Normalization Helper ────────────────────────────────────────────────
@@ -598,42 +599,113 @@ def search_database_entities(db: Session, query: str, entity_type: Optional[str]
     return {"results": results[:limit], "count": len(results[:limit]), "query": clean_q, "source": "mysql"}
 
 
+# ── SQL Security Rule Constants ──────────────────────────────────────────────
+_BLOCKED_SQL_KEYWORDS = [
+    # Mutations / DDL / Admin
+    r"\bINSERT\b", r"\bUPDATE\b", r"\bDELETE\b", r"\bDROP\b", r"\bALTER\b",
+    r"\bTRUNCATE\b", r"\bCREATE\b", r"\bGRANT\b", r"\bREVOKE\b", r"\bRENAME\b",
+    r"\bREPLACE\b", r"\bEXEC\b", r"\bEXECUTE\b", r"\bCALL\b", r"\bLOCK\b",
+    r"\bUNLOCK\b", r"\bSET\b", r"\bFLUSH\b", r"\bSHUTDOWN\b",
+    # File & OS injection
+    r"\bINTO\s+OUTFILE\b", r"\bINTO\s+DUMPFILE\b", r"\bLOAD_FILE\b", r"\bLOAD\s+DATA\b",
+    # DoS & Sleep functions
+    r"\bSLEEP\s*\(", r"\bBENCHMARK\s*\(", r"\bGET_LOCK\s*\(", r"\bRELEASE_LOCK\s*\(",
+    r"\bWAITFOR\b", r"\bpg_sleep\b",
+    # Server variables & User introspection
+    r"@@version", r"@@basedir", r"@@datadir", r"\bUSER\s*\(", r"\bCURRENT_USER\s*\(",
+    r"\bSESSION_USER\s*\(", r"\bSYSTEM_USER\s*\(", r"\bSCHEMA\s*\(", r"\bDATABASE\s*\(",
+    # Sensitive Auth & System Schemas
+    r"\bINFORMATION_SCHEMA\b", r"\bPERFORMANCE_SCHEMA\b", r"\bMYSQL\.", r"\bSYS\.",
+    r"\bUSERS\b", r"\bAPP_USERS\b", r"\bADMIN_USERS\b", r"\bUSER_PASSWORDS\b",
+    r"\bAUTH_TOKENS\b", r"\bAPI_KEYS\b",
+    # Sensitive Column Access
+    r"\bPASSWORD\b", r"\bPASSWORD_HASH\b", r"\bHASHED_PASSWORD\b", r"\bSALT\b",
+    r"\bSECRET\b", r"\bSECRET_KEY\b", r"\bPRIVATE_KEY\b", r"\bAUTH_TOKEN\b",
+]
+
+_BLOCKED_SCHEMA_TABLES = {
+    "users", "app_users", "admin_users", "user_passwords", "passwords",
+    "auth_tokens", "api_keys", "secrets", "user_credentials"
+}
+
+
 def run_read_only_query(db: Session, sql_query: str, **kwargs) -> dict:
-    """Executes a validated read-only SQL query on the live Railway MySQL database."""
-    clean_sql = sql_query.strip().rstrip(";")
+    """
+    Executes a securely validated read-only SQL query on the live Railway MySQL database.
+    Guarantees protection against SQL injection, DDoS sleep functions, multi-statements,
+    and sensitive user credential / auth table extraction.
+    """
+    if not sql_query or not isinstance(sql_query, str):
+        return {"error": "Invalid SQL query provided."}
+
+    raw_query = sql_query.strip()
+    
+    # 1. Block multiple statements / semicolon tricks
+    # Strip any single trailing semicolon
+    clean_sql = raw_query.rstrip(";").strip()
+    if ";" in clean_sql:
+        return {"error": "Multi-statement SQL queries are strictly prohibited for security reasons."}
+
+    # 2. Block comment injection patterns (-- or /* */ or #)
+    if re.search(r"(--|/\*|\*/|#)", clean_sql):
+        return {"error": "SQL comments are not permitted in dynamic queries."}
+
+    # 3. Enforce strict single SELECT statement start
     if not re.match(r"^SELECT\b", clean_sql, re.IGNORECASE):
         return {"error": "Only read-only SELECT queries are permitted via this tool."}
 
-    forbidden = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"]
-    for kw in forbidden:
-        if re.search(rf"\b{kw}\b", clean_sql, re.IGNORECASE):
-            return {"error": f"Forbidden mutation keyword '{kw}' is blocked in read-only mode."}
+    # 4. Check against comprehensive blocked keywords, functions, and schemas
+    for pattern in _BLOCKED_SQL_KEYWORDS:
+        if re.search(pattern, clean_sql, re.IGNORECASE):
+            return {"error": "Query rejected by security guardrail: forbidden keyword, function, or sensitive table."}
+
+    # 5. Enforce safety limit if none is specified
+    if not re.search(r"\bLIMIT\s+\d+\b", clean_sql, re.IGNORECASE):
+        clean_sql = f"{clean_sql} LIMIT 50"
 
     try:
         rows = _query_rows(db, clean_sql)
+        # Deep scrub any potential sensitive data from returned rows
+        sanitized_rows = sanitize_data_payload(rows)
         return {
-            "returned_count": len(rows),
-            "rows": rows[:50],
-            "total_count": len(rows),
+            "returned_count": len(sanitized_rows),
+            "rows": sanitized_rows[:50],
+            "total_count": len(sanitized_rows),
             "source": "mysql"
         }
     except Exception as exc:
-        return {"error": f"SQL Execution Error: {str(exc)}"}
+        safe_msg = scrub_secrets_from_text(str(exc))
+        return {"error": f"SQL Execution Error: {safe_msg}"}
 
 
 def get_db_schema(db: Session, table_name: Optional[str] = None, **kwargs) -> dict:
-    """Inspects database tables or specific column definitions."""
+    """
+    Inspects database tables or specific column definitions with strict table name validation.
+    Prevents schema disclosure of internal authentication and system tables.
+    """
     try:
         if table_name:
-            t_clean = table_name.strip().replace("`", "").replace(";", "")
+            t_clean = str(table_name).strip().replace("`", "").replace(";", "")
+            # Strict alphanumeric + underscore validation
+            if not re.match(r"^[a-zA-Z0-9_]{1,64}$", t_clean):
+                return {"error": "Invalid table name format. Table names must be alphanumeric and underscore only."}
+
+            if t_clean.lower() in _BLOCKED_SCHEMA_TABLES or t_clean.lower().startswith(("mysql", "information_schema", "sys", "performance_schema")):
+                return {"error": "Access to system and authentication schemas is restricted."}
+
             rows = _query_rows(db, f"DESCRIBE `{t_clean}`")
-            return {"table": t_clean, "columns": rows, "source": "mysql"}
+            sanitized_rows = sanitize_data_payload(rows)
+            return {"table": t_clean, "columns": sanitized_rows, "source": "mysql"}
         else:
             rows = _query_rows(db, "SHOW TABLES")
-            table_list = [list(r.values())[0] for r in rows]
+            table_list = [
+                list(r.values())[0] for r in rows
+                if list(r.values())[0].lower() not in _BLOCKED_SCHEMA_TABLES
+            ]
             return {"tables": table_list, "count": len(table_list), "source": "mysql"}
     except Exception as exc:
-        return {"error": f"Schema Inspection Error: {str(exc)}"}
+        safe_msg = scrub_secrets_from_text(str(exc))
+        return {"error": f"Schema Inspection Error: {safe_msg}"}
 
 
 # ── 2. Master Data & Organization Handlers ────────────────────────────────────

@@ -51,6 +51,23 @@ class Settings(BaseSettings):
     automation_live_enabled: bool = False
     enable_scheduler: bool = True
 
+    # Security & DDoS Protection Settings
+    security_rate_limit_enabled: bool = True
+    rate_limit_global_per_minute: int = 60
+    rate_limit_ask_per_minute: int = 20
+    max_request_body_bytes: int = 65536
+    prompt_guard_enabled: bool = True
+    cors_allowed_origins: list[str] = [
+        "http://localhost:5180",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:5180",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+    ]
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8-sig",

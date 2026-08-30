@@ -1,14 +1,51 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AskRequest(BaseModel):
-    question: str
-    admin_user_id: Optional[str] = "USR-DEV"
-    user_role: Optional[str] = "HSE_MANAGER"
-    session_id: Optional[str] = None
-    model_mode: Optional[str] = "auto"
-    history: Optional[list[dict]] = None
+    question: str = Field(
+        ...,
+        min_length=1,
+        max_length=2000,
+        description="User question or instruction (max 2000 characters)"
+    )
+    admin_user_id: Optional[str] = Field(
+        default="USR-DEV",
+        max_length=64,
+        pattern=r"^[a-zA-Z0-9_\-\.]+$",
+        description="Actor or user ID"
+    )
+    user_role: Optional[str] = Field(
+        default="HSE_MANAGER",
+        max_length=64,
+        pattern=r"^[a-zA-Z0-9_\-\.]+$",
+        description="User RBAC role"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        pattern=r"^[a-zA-Z0-9_\-\.]+$",
+        description="Session identifier"
+    )
+    model_mode: Optional[str] = Field(
+        default="auto",
+        max_length=32,
+        description="Model execution mode (auto, groq, local)"
+    )
+    history: Optional[list[dict]] = Field(
+        default=None,
+        max_length=10,
+        description="Recent message history (max 10 items)"
+    )
+
+    @field_validator("history")
+    @classmethod
+    def validate_history_size(cls, v: Optional[list[dict]]) -> Optional[list[dict]]:
+        if v is not None:
+            total_chars = sum(len(str(item.get("content") or item.get("text") or "")) for item in v if isinstance(item, dict))
+            if total_chars > 10000:
+                raise ValueError("Total conversation history length exceeds 10,000 characters limit.")
+        return v
 
 
 class ToolCallTrace(BaseModel):

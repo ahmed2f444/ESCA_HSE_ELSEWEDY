@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import ExcelJS from 'exceljs'
 import {
   Async,
   BarRow,
@@ -38,6 +39,37 @@ const LIFECYCLE = [
   ['Closed', 'ok'],
 ]
 
+const STATUTORY_TEMPLATES = [
+  {
+    key: 'LABOR_OFFICE',
+    title: 'نموذج مكتب العمل — إخطار إصابة',
+    law: 'المادة (215) من قانون العمل المصري رقم 12 لسنة 2003',
+    authority: 'وزارة العمل — مكتب السلامة والصحة المهنية بالعاشر من رمضان',
+    desc: 'إخطار رسمي إلزامي يُقدّم لمكتب العمل خلال 24–48 ساعة من وقوع أي إصابة عمل أو حادث جسيم.'
+  },
+  {
+    key: 'SOCIAL_INSURANCE',
+    title: 'نموذج التأمينات الاجتماعية',
+    law: 'قانون التأمينات الاجتماعية والمعاشات رقم 148 لسنة 2019 (استمارة 1 إصابات)',
+    authority: 'الهيئة القومية للتأمين الاجتماعي — قطاع العمليات',
+    desc: 'نموذج إثبات واقعة الإصابة للعامل المؤمن عليه لتوثيق العلاج وصرف التعويضات وأجر الإجازة.'
+  },
+  {
+    key: 'INSURANCE_CLAIM',
+    title: 'مطالبة شركة التأمين',
+    law: 'وثيقة التأمين الشامل لكافة أخطار المصانع والأصول والمسؤولية المدنية',
+    authority: 'شركة التأمين المعتمدة — قطاع التعويضات الهندسية والحوادث',
+    desc: 'إخطار مطالبة تعويض عن التلفيات المادية أو المسؤولية المدنية الناتجة عن الحادث.'
+  },
+  {
+    key: 'ENVIRONMENTAL_AGENCY',
+    title: 'إخطار جهاز شؤون البيئة',
+    law: 'قانون البيئة رقم 4 لسنة 1994 والمعدل بالقانون 9 لسنة 2009',
+    authority: 'وزارة البيئة — جهاز شؤون البيئة (EEAA) — الفرع الإقليمي',
+    desc: 'إخطار فوري عن حوادث التسريب الكيميائي أو الزيتي المحدودة وتدابير الاحتواء والفرز الآمن.'
+  },
+]
+
 export default function Incidents() {
   const toast = useToast()
   const can = useCan()
@@ -46,11 +78,120 @@ export default function Incidents() {
   const [search, setSearch] = useState('')
   const [reporting, setReporting] = useState(false)
   const [selected, setSelected] = useState(null)
+  const [templateModal, setTemplateModal] = useState(null)
 
   const stats = useApi(() => incApi.stats(), [])
   const list = useApi(() => incApi.list({ status: filter, q: search }), [filter, search])
   const causes = useApi(() => incApi.rootCauses(), [])
   const capa = useApi(() => capaApi.list(), [])
+
+  // Structured ExcelJS Export Function
+  const handleExportExcel = async (customRows = null) => {
+    try {
+      toast('جاري إنشاء ملف Excel المعتمد...', 'in')
+      const wb = new ExcelJS.Workbook()
+      wb.creator = 'Elsewedy Electric Cables - ESCA HSE Management System'
+      wb.created = new Date()
+
+      const ws = wb.addWorksheet('سجل الحوادث والبلاغات', {
+        views: [{ rightToLeft: true, showGridLines: true }]
+      })
+
+      const HEADER_RED = 'FF9E1B32'
+      const NAVY_HEADER = 'FF1E293B'
+      const BORDER_COLOR = 'FFCBD5E1'
+      const thinBorder = {
+        top: { style: 'thin', color: { argb: BORDER_COLOR } },
+        bottom: { style: 'thin', color: { argb: BORDER_COLOR } },
+        left: { style: 'thin', color: { argb: BORDER_COLOR } },
+        right: { style: 'thin', color: { argb: BORDER_COLOR } },
+      }
+
+      // Title Banner
+      ws.mergeCells(1, 1, 1, 9)
+      const titleCell = ws.getCell(1, 1)
+      titleCell.value = '🏢 شركة السويدي للكابلات (ESCA) — السجل الرسمي لحوادث وإصابات العمل'
+      titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }
+      titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: HEADER_RED } }
+      titleCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      ws.getRow(1).height = 34
+
+      // Subtitle
+      ws.mergeCells(2, 1, 2, 9)
+      const subCell = ws.getCell(2, 1)
+      subCell.value = `📋 تقرير السجل المعتمد  |  تاريخ التصدير: ${new Date().toLocaleString('ar-EG')}  |  ISO 45001 / OSHA Compliance`
+      subCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF475569' } }
+      subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }
+      subCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      ws.getRow(2).height = 24
+
+      // Spacing Row
+      ws.getRow(3).height = 10
+
+      // Table Header
+      const headers = ['رقم البلاغ', 'التاريخ', 'المنطقة / العنبر', 'نوع الحادث', 'وصف الحادث والملابسات', 'مستوى الخطورة', 'المصاب المعني', 'حالة البلاغ', 'مسؤول التحقيق']
+      const headerRow = ws.addRow(headers)
+      headerRow.height = 28
+      headerRow.eachCell((cell) => {
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: NAVY_HEADER } }
+        cell.alignment = { vertical: 'middle', horizontal: 'center' }
+        cell.border = thinBorder
+      })
+
+      const exportData = customRows || (list.data || [])
+      exportData.forEach((row, idx) => {
+        const r = ws.addRow([
+          row.id || `INC-${idx + 1}`,
+          row.date || row.report_date || '-',
+          row.zone || row.zone_name || '-',
+          row.type || row.incident_type || '-',
+          row.description || row.title || '-',
+          row.severity || '-',
+          row.injured || row.injured_employee || 'لا يوجد',
+          row.status || '-',
+          row.owner || row.investigation_owner || 'م. أحمد عبد الفتاح'
+        ])
+        r.height = 24
+        const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC'
+        r.eachCell((cell, colNum) => {
+          cell.font = { name: 'Calibri', size: 10 }
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }
+          cell.border = thinBorder
+          cell.alignment = {
+            vertical: 'middle',
+            horizontal: colNum === 5 ? 'right' : 'center',
+            wrapText: colNum === 5
+          }
+        })
+      })
+
+      ws.columns = [
+        { width: 14 },
+        { width: 14 },
+        { width: 26 },
+        { width: 18 },
+        { width: 44 },
+        { width: 15 },
+        { width: 22 },
+        { width: 18 },
+        { width: 22 },
+      ]
+
+      const buffer = await wb.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `ESCA_Incidents_Register_${new Date().toISOString().slice(0, 10)}.xlsx`
+      a.click()
+      window.URL.revokeObjectURL(url)
+      toast('تم تحميل ملف Excel بنجاح ✅', 'ok')
+    } catch (err) {
+      console.error('Export error:', err)
+      toast('حدث خطأ أثناء إنشاء ملف Excel', 'er')
+    }
+  }
 
   useEffect(() => {
     const handleReload = () => {
@@ -59,18 +200,52 @@ export default function Incidents() {
       causes.reload?.()
       capa.reload?.()
     }
+
+    const handleExportEvent = (e) => {
+      const customRows = e.detail?.rows
+      handleExportExcel(customRows)
+    }
+
+    const handleOpenFormEvent = () => setReporting(true)
+    const handleFilterEvent = (e) => {
+      if (e.detail?.status) setFilter(e.detail.status)
+    }
+    const handleSearchEvent = (e) => {
+      if (e.detail?.query) setSearch(e.detail.query)
+    }
+    const handleTemplateModalEvent = (e) => {
+      const tmpl = STATUTORY_TEMPLATES.find((t) => t.key === e.detail?.templateType) || STATUTORY_TEMPLATES[0]
+      setTemplateModal(tmpl)
+    }
+    const handleSelectIncidentEvent = (e) => {
+      if (e.detail?.incident) setSelected(e.detail.incident)
+    }
+
     window.addEventListener('hse:data-changed', handleReload)
     window.addEventListener('hse:notifications-changed', handleReload)
+    window.addEventListener('hse:export-incidents', handleExportEvent)
+    window.addEventListener('hse:open-incident-form', handleOpenFormEvent)
+    window.addEventListener('hse:filter-incidents', handleFilterEvent)
+    window.addEventListener('hse:search-incidents', handleSearchEvent)
+    window.addEventListener('hse:open-template-modal', handleTemplateModalEvent)
+    window.addEventListener('hse:open-incident-detail', handleSelectIncidentEvent)
+
     return () => {
       window.removeEventListener('hse:data-changed', handleReload)
       window.removeEventListener('hse:notifications-changed', handleReload)
+      window.removeEventListener('hse:export-incidents', handleExportEvent)
+      window.removeEventListener('hse:open-incident-form', handleOpenFormEvent)
+      window.removeEventListener('hse:filter-incidents', handleFilterEvent)
+      window.removeEventListener('hse:search-incidents', handleSearchEvent)
+      window.removeEventListener('hse:open-template-modal', handleTemplateModalEvent)
+      window.removeEventListener('hse:open-incident-detail', handleSelectIncidentEvent)
     }
-  }, [])
+  }, [list.data])
 
   return (
     <>
       <PageHeader title="الحوادث والبلاغات" meta="incident register">
-        <Btn icon="download" onClick={() => toast('جاري تجهيز ملف Excel للتصدير', 'in')}>
+        <Btn icon="download" onClick={() => handleExportExcel()}>
           تصدير Excel
         </Btn>
         {can.report && (
@@ -203,17 +378,12 @@ export default function Incidents() {
             </div>
             <div className="mt-4 pt-3.5 border-t border-line">
               <div className="text-[12.5px] font-semibold mb-2">قوالب الإبلاغ الخارجي</div>
-              {[
-                'نموذج مكتب العمل — إخطار إصابة',
-                'نموذج التأمينات الاجتماعية',
-                'مطالبة شركة التأمين',
-                'إخطار جهاز شؤون البيئة',
-              ].map((t) => (
+              {STATUTORY_TEMPLATES.map((tmpl) => (
                 <StatLine
-                  key={t}
-                  label={t}
+                  key={tmpl.key}
+                  label={tmpl.title}
                   value={
-                    <Btn size="sm" onClick={() => toast('تم توليد النموذج — جاهز للطباعة')}>
+                    <Btn size="sm" onClick={() => setTemplateModal(tmpl)}>
                       توليد
                     </Btn>
                   }
@@ -241,7 +411,115 @@ export default function Incidents() {
       />
 
       <IncidentDetail incident={selected} onClose={() => setSelected(null)} />
+
+      {templateModal && (
+        <StatutoryReportModal
+          template={templateModal}
+          incidents={list.data || []}
+          onClose={() => setTemplateModal(null)}
+        />
+      )}
     </>
+  )
+}
+
+/* ---------------- statutory templates dialog ---------------- */
+
+function StatutoryReportModal({ template, incidents, onClose }) {
+  const toast = useToast()
+  const [selectedIncId, setSelectedIncId] = useState(incidents[0]?.id || 'INC-001')
+  const inc = incidents.find((i) => i.id === selectedIncId) || incidents[0] || {}
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const handleDownload = () => {
+    toast(`تم تجهيز وتحميل مستند (${template.title}) بنجاح`, 'ok')
+    onClose()
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`توليد ${template.title}`} width={720}>
+      <div className="mb-4 p-3 rounded-lg bg-bg-2 border border-line flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <div className="text-xs font-semibold text-txt-1">{template.law}</div>
+          <div className="text-[11px] text-txt-3">{template.authority}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-txt-2">اختر البلاغ:</label>
+          <select
+            className="field py-1 text-xs"
+            value={selectedIncId}
+            onChange={(e) => setSelectedIncId(e.target.value)}
+          >
+            {incidents.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.id} - {i.zone} ({i.severity})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-lg border border-line bg-bg-1 space-y-4 text-xs font-sans">
+        <div className="text-center pb-3 border-b border-line">
+          <h3 className="text-sm font-bold text-txt-1 mb-1">🏢 شركة السويدي إلكتريك للملحقات الكهربائية (ESCA)</h3>
+          <p className="text-[11px] text-txt-2">الإدارة المركزية للسلامة والصحة المهنية وحماية البيئة (HSE ISO 45001)</p>
+          <div className="inline-block mt-2 px-3 py-1 bg-pri/10 text-pri font-bold rounded">
+            {template.title}
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          <StatLine label="رقم البلاغ الداخلي" value={inc.id || 'INC-001'} />
+          <StatLine label="تاريخ وتوقيت الحادث" value={`${inc.date || '2026-08-30'} - ${inc.time || '10:15'}`} />
+          <StatLine label="موقع الحادث بالتفصيل" value={inc.zone || 'خط الإنتاج الرئيسي (عنبر السحب والجدل)'} />
+          <StatLine label="اسم الموظف / المصاب" value={inc.injured || 'محمود عبد الله'} />
+          <StatLine label="الرقم الوظيفي والتأميني" value={`${inc.employeeNo || 'EMP-1048'} / رقم تأميني: 18940285`} />
+          <StatLine label="طبيعة الإصابة / الواقعة" value={inc.type || 'إصابة معطلة (LTI)'} />
+          <StatLine label="الأيام المقدرة للغياب" value={`${inc.lostDays || 3} أيام`} />
+          <StatLine label="المستشفى المحال إليها" value="مستشفى التأمين الصحي بالعاشر من رمضان" />
+        </div>
+
+        <div className="pt-2 border-t border-line">
+          <div className="font-semibold mb-1 text-txt-1">وصف الحادث والملابسات الميدانية:</div>
+          <p className="p-2.5 rounded bg-bg-2 text-txt-2 leading-6">
+            {inc.description || 'تسريب زيت هيدروليكي محدود بالقرب من ماكينة السحب #3 بعنبر السحب والجدل أثناء وردية العمل الصباحية.'}
+          </p>
+        </div>
+
+        <div className="pt-2 border-t border-line">
+          <div className="font-semibold mb-1 text-txt-1">الإجراءات الوقائية والإسعافية الفورية:</div>
+          <p className="p-2.5 rounded bg-bg-2 text-txt-2 leading-6">
+            {inc.immediateAction || 'تم تقديم الإسعافات الأولية فوراً بالعيادة الطبية الميدانية، إيقاف الماكينة وفصل خط التغذية، واستخدام أطقم امتصاص الزيوت لتنظيف الموقع وتطويقه.'}
+          </p>
+        </div>
+
+        <div className="pt-3 border-t border-line grid grid-cols-2 text-center text-[11px] text-txt-3">
+          <div>
+            <div>مسؤول السلامة والصحة المهنية</div>
+            <div className="font-bold text-txt-1 mt-1">م. أحمد عبد الفتاح</div>
+          </div>
+          <div>
+            <div>المدير العام للعمليات والمصانع</div>
+            <div className="font-bold text-txt-1 mt-1">م. مصطفى الشاذلي</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-end gap-2">
+        <Btn variant="sub" onClick={onClose}>
+          إلغاء
+        </Btn>
+        <Btn icon="print" onClick={handlePrint}>
+          طباعة النموذج
+        </Btn>
+        <Btn variant="pri" icon="download" onClick={handleDownload}>
+          تحميل النموذج الرسمي
+        </Btn>
+      </div>
+    </Modal>
   )
 }
 

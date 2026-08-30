@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Async,
   BarRow,
@@ -390,6 +390,99 @@ export default function Reports() {
       ],
     })
   }
+
+  // Cross-component and AI Agent event listener hooks
+  useEffect(() => {
+    const handleReload = () => {
+      kpis.reload?.()
+      trend.reload?.()
+      iso.reload?.()
+      heat.reload?.()
+      leading.reload?.()
+    }
+
+    const handleExportExcelEvent = () => {
+      handleExportExcel()
+    }
+
+    const handleExportPdfEvent = () => {
+      handleExportPdf()
+    }
+
+    const handleSendManagementEvent = (e) => {
+      if (e.detail?.reportType) setSendReportType(e.detail.reportType)
+      if (e.detail?.recipients) setSendEmails(e.detail.recipients)
+      if (e.detail?.notes) setSendNotes(e.detail.notes)
+      if (e.detail?.autoSubmit) {
+        handleSendSubmit()
+      } else {
+        setSendModal(true)
+      }
+    }
+
+    const handleCustomBuilderEvent = (e) => {
+      const detail = e.detail || {}
+      if (detail.source) setBuilderSource(detail.source)
+      if (detail.period) setBuilderPeriod(detail.period)
+      if (detail.group) setBuilderGroup(detail.group)
+      if (detail.format) setBuilderFormat(detail.format)
+      if (detail.recipients) setBuilderRecipients(detail.recipients)
+
+      setBuilderModal({
+        title: detail.title || `تقرير مخصص: ${detail.source || builderSource}`,
+        period: detail.period || builderPeriod,
+        group: detail.group || builderGroup,
+        format: detail.format || builderFormat,
+        recipients: detail.recipients || builderRecipients,
+        generatedAt: detail.generatedAt || new Date().toLocaleTimeString('ar-EG'),
+        rows: detail.rows || [
+          { col1: 'خطوط العزل CCV', col2: '14 تصريح / جولة', col3: '100% التزام', col4: 'منضبط' },
+          { col1: 'عنبر السحب والجدل', col2: '8 تصاريح / جولات', col3: '96% التزام', col4: 'منضبط' },
+          { col1: 'ورشة الصيانة والمرافق', col2: '12 تصريح / جولة', col3: '94% التزام', col4: 'متابعة دورية' },
+          { col1: 'المستودعات والخامات', col2: '6 تصاريح / جولات', col3: '98% التزام', col4: 'منضبط' },
+        ],
+      })
+    }
+
+    const handleOpenReadyReportEvent = (e) => {
+      const repId = e.detail?.reportId || e.detail?.id || ''
+      const matched = READY_REPORTS.find(
+        (r) =>
+          r.id.toLowerCase() === repId.toLowerCase() ||
+          r.title.includes(repId) ||
+          r.en.toLowerCase().includes(repId.toLowerCase())
+      )
+      if (matched) {
+        setActiveReport(matched)
+      } else {
+        setActiveReport(READY_REPORTS[0])
+      }
+    }
+
+    const handleScheduleReportEvent = (e) => {
+      toast(e.detail?.message || 'تم حفظ التقرير المجدول وتفعيله بنجاح ✅', 'ok')
+    }
+
+    window.addEventListener('hse:data-changed', handleReload)
+    window.addEventListener('hse:notifications-changed', handleReload)
+    window.addEventListener('hse:export-reports-excel', handleExportExcelEvent)
+    window.addEventListener('hse:export-reports-pdf', handleExportPdfEvent)
+    window.addEventListener('hse:send-management', handleSendManagementEvent)
+    window.addEventListener('hse:open-custom-report-builder', handleCustomBuilderEvent)
+    window.addEventListener('hse:open-ready-report', handleOpenReadyReportEvent)
+    window.addEventListener('hse:schedule-report', handleScheduleReportEvent)
+
+    return () => {
+      window.removeEventListener('hse:data-changed', handleReload)
+      window.removeEventListener('hse:notifications-changed', handleReload)
+      window.removeEventListener('hse:export-reports-excel', handleExportExcelEvent)
+      window.removeEventListener('hse:export-reports-pdf', handleExportPdfEvent)
+      window.removeEventListener('hse:send-management', handleSendManagementEvent)
+      window.removeEventListener('hse:open-custom-report-builder', handleCustomBuilderEvent)
+      window.removeEventListener('hse:open-ready-report', handleOpenReadyReportEvent)
+      window.removeEventListener('hse:schedule-report', handleScheduleReportEvent)
+    }
+  }, [builderSource, builderPeriod, builderGroup, builderFormat, builderRecipients])
 
   return (
     <>

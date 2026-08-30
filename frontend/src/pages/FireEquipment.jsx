@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Async,
   Btn,
@@ -65,6 +65,16 @@ export default function FireEquipment() {
     coverage.reload?.()
     inspections.reload?.()
   }
+
+  useEffect(() => {
+    const handleDataChange = () => reloadAll()
+    window.addEventListener('hse:data-changed', handleDataChange)
+    window.addEventListener('hse:notifications-changed', handleDataChange)
+    return () => {
+      window.removeEventListener('hse:data-changed', handleDataChange)
+      window.removeEventListener('hse:notifications-changed', handleDataChange)
+    }
+  }, [])
 
   // --- Add/Edit Equipment Form State & Validation ---
   const initialEqForm = {

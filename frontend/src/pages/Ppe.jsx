@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Async,
   Btn,
@@ -51,6 +51,14 @@ export default function Ppe() {
     matrix.reload?.()
     txHistory.reload?.()
   }
+
+  useEffect(() => {
+    const handleDataChanged = () => {
+      reloadAll()
+    }
+    window.addEventListener('hse:data-changed', handleDataChanged)
+    return () => window.removeEventListener('hse:data-changed', handleDataChanged)
+  }, [])
 
   // --- Issue / Return Transaction Modal & Validation ---
   const [txModal, setTxModal] = useState(false)

@@ -234,6 +234,94 @@ TOOLS = [
             }
         }
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "export_reports_excel",
+            "description": "Automate the 'Excel' export button on the Reports & Analytics page (/reports). Exports the official multi-sheet styled Executive HSE Workbook (.xlsx) comprising Executive KPIs, TRIR Trend, ISO 45001 Clauses, Leading Indicators, and Zone Density Heatmap.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "scope": {"type": "string", "description": "Export scope: 'ALL', 'KPIS', 'TRIR', 'ISO', 'LEADING', 'ZONES'", "default": "ALL"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "export_reports_pdf",
+            "description": "Automate the 'PDF' export / print button on the Reports & Analytics page (/reports). Generates the official printable Executive HSE Safety & Compliance document for management and ISO 45001 audit readiness.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "report_type": {"type": "string", "description": "Report title / scope", "default": "التقرير التنفيذي الشامل للسلامة والصحة المهنية"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_report_to_management",
+            "description": "Automate the 'إرسال للإدارة' (Send to Management) button on the Reports & Analytics page (/reports). Dispatches the executive safety report to plant leadership/management, logs the action to audit trail, and generates an official dispatch ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "report_type": {"type": "string", "description": "Report type: 'التقرير الشهري للسلامة والصحة المهنية (Monthly HSE)', 'تقرير تحليل الحوادث والأسباب الجذرية (Incident RCA)', 'تقرير الامتثال لمعايير ISO 45001 (Audit Pack)', 'تقرير جاهزية الطوارئ ومعدات مكافحة الحريق'", "default": "التقرير الشهري للسلامة والصحة المهنية (Monthly HSE)"},
+                    "recipients": {"type": "string", "description": "Email recipients separated by semicolon", "default": "plant.manager@elsewedy.com; ceo@elsewedy.com; hse.director@elsewedy.com"},
+                    "notes": {"type": "string", "description": "Executive notes, recommendations, and action points", "default": "يرجى الاطلاع على ملخص مؤشرات السلامة ومعدل TRIR والامتثال لمعايير ISO 45001 لشهر أغسطس 2026."}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_custom_report",
+            "description": "Automate the 'توليد الآن' (Generate Now) button in the Ad-Hoc Report Builder on the Reports page (/reports). Generates custom aggregated reports by filtering data source, period, grouping dimension, and export format.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {"type": "string", "description": "Data source: 'الحوادث والبلاغات', 'تصاريح العمل', 'جولات التفتيش', 'معدات الحريق', 'التدريب والكفاءات', 'المواد الكيميائية', 'الصحة المهنية', 'سجل المخاطر'", "default": "الحوادث والبلاغات"},
+                    "period": {"type": "string", "description": "Time period: 'هذا الشهر', 'الربع الحالي', 'سنة حتى تاريخه (YTD)', 'فترة مخصصة'", "default": "هذا الشهر"},
+                    "group_by": {"type": "string", "description": "Grouping dimension: 'القسم / المنطقة', 'النوع', 'الشدة', 'المسؤول', 'الشهر'", "default": "القسم / المنطقة"},
+                    "format": {"type": "string", "description": "Export format: 'Excel (XLSX)', 'PDF', 'CSV'", "default": "Excel (XLSX)"},
+                    "recipients": {"type": "string", "description": "Optional recipient emails", "default": "hse@elsewedy.com; plant.manager@elsewedy.com"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "open_ready_report",
+            "description": "Automate inspecting and opening any of the 6 official ready report cards on the Reports page (/reports): 'monthly' (الشهري), 'incidents' (تحليل الحوادث), 'fire' (جاهزية الحريق), 'competency' (الكفاءات والتدريب), 'risk' (سجل المخاطر HIRA), or 'iso' (حزمة التدقيق ISO 45001).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "report_id": {"type": "string", "description": "Ready report ID or topic: 'monthly', 'incidents', 'fire', 'competency', 'risk', 'iso'", "default": "monthly"}
+                },
+                "required": ["report_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "schedule_report",
+            "description": "Automate the 'حفظ كتقرير مجدول' (Save as Scheduled Report) button on the Reports page (/reports). Activates recurring scheduled distribution of HSE reports to management.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "report_source": {"type": "string", "description": "Data source to schedule", "default": "الحوادث والبلاغات"},
+                    "frequency": {"type": "string", "description": "Schedule frequency: 'يومي — 07:00', 'أسبوعي — الأحد 08:00', 'شهري — أول يوم عمل'", "default": "شهري — أول يوم عمل"},
+                    "recipients": {"type": "string", "description": "Recipient emails", "default": "plant.manager@elsewedy.com; ceo@elsewedy.com"},
+                    "format": {"type": "string", "description": "Report format: 'Excel (XLSX)', 'PDF', 'CSV'", "default": "Excel (XLSX)"}
+                }
+            }
+        }
+    },
 
     # ── 4. Incidents & Safety Observations Module ──────────────────────────────
     {
@@ -355,24 +443,176 @@ TOOLS = [
             }
         }
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "export_incidents_excel",
+            "description": "EXPORT: Generate and export the complete HSE incident register to Excel/CSV with columns: ID, date, time, zone, incident type, title, description, severity, injured employee, status, investigation owner, lost work days, immediate action, and RCA details. (Arabic: تصدير سجل الحوادث إلى إكسل, تصدير Excel, تحميل ملف Excel للحوادث).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Optional filter: ALL, OPEN, INVESTIGATING, CLOSED"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Optional zone filter"},
+                    "severity": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Optional severity filter: MINOR, MODERATE, MAJOR, CRITICAL"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_external_report_template",
+            "description": "COMPLIANCE & LEGAL TEMPLATES: Generate official statutory external reporting documents for government, insurance, and environmental bodies. Supports: 'LABOR_OFFICE' (نموذج مكتب العمل - إخطار إصابة عمل حسب قانون العمل 12 لسنة 2003), 'SOCIAL_INSURANCE' (نموذج التأمينات الاجتماعية - إخطار عن وقوع إصابة عمل حسب قانون 148 لسنة 2019), 'INSURANCE_CLAIM' (مطالبة شركة التأمين للتعويض عن أضرار/إصابة), 'ENVIRONMENTAL_AGENCY' (إخطار جهاز شؤون البيئة EEAA عن حوادث التسريب والانبعاثات حسب قانون البيئة 4 لسنة 1994). (Arabic: توليد نموذج مكتب العمل, نموذج التأمينات الاجتماعية, مطالبة شركة التأمين, إخطار جهاز شؤون البيئة, قوالب الإبلاغ الخارجي).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "template_type": {
+                        "type": "string",
+                        "description": "Template code: 'LABOR_OFFICE' (مكتب العمل), 'SOCIAL_INSURANCE' (التأمينات الاجتماعية), 'INSURANCE_CLAIM' (مطالبة التأمين), 'ENVIRONMENTAL_AGENCY' (شؤون البيئة)"
+                    },
+                    "incident_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Optional linked incident ID (e.g. 1 or 'INC-001') to auto-fill official incident details"
+                    },
+                    "injured_employee": {
+                        "anyOf": [{"type": "string"}, {"type": "integer"}, {"type": "null"}],
+                        "description": "Optional employee name or ID"
+                    },
+                    "notes": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Optional special notes or statutory statements"
+                    }
+                },
+                "required": ["template_type"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_incident_rca",
+            "description": "CRUD CREATE / UPDATE: Record or update Root Cause Analysis (RCA) investigation for an incident with methodology (5-Whys, Fishbone / Ishikawa), problem statement, primary cause category, root cause, and contributing factors. (Arabic: تسجيل تحليل السبب الجذري, توثيق RCA للحادث, إضافة تحليل السبب الجذري).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "incident_id": {"type": "integer", "description": "Incident ID"},
+                    "problem_statement": {"type": "string", "description": "Accurate description of the failure / problem statement"},
+                    "root_cause": {"type": "string", "description": "The determined root cause verified by the investigation"},
+                    "method": {"type": "string", "description": "Methodology used: '5-Whys', 'Fishbone (Ishikawa)', '5 Whys + Fishbone'", "default": "5 Whys + Fishbone (Ishikawa)"},
+                    "primary_cause_category": {"type": "string", "description": "Category: 'سلوكات وأخطاء بشرية', 'قصور في إجراءات وتصاريح العمل', 'أعطال ميكانيكية ومعدات', 'بيئة العمل والظروف الجوية'", "default": "قصور في إجراءات وتصاريح العمل"},
+                    "contributing_factors": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Secondary contributing factors or conditions"},
+                    "completed_by": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Employee ID or name of the lead investigator", "default": 1}
+                },
+                "required": ["incident_id", "root_cause"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_root_causes_summary",
+            "description": "READ: Retrieve Year-To-Date (YTD) root causes distribution percentages, category breakdown (Behaviors 38%, Procedures/Permits 27%, Mechanical failures 22%, Work environment 13%), and recurring trends. (Arabic: تحليل الأسباب الجذرية YTD, نسب أسباب الحوادث, ملخص الأسباب الجذرية).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "year": {"type": "integer", "description": "Year to evaluate (e.g. 2026)", "default": 2026}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "refresh_dashboard",
+            "description": "REAL-TIME SYNC & REFRESH: Trigger a live recalculation and refresh of executive dashboard KPIs, days without LTI streak, open incidents, overdue CAPAs, TRIR metrics, and zone safety scores. (Arabic: تحديث لوحة القيادة, تحديث البيانات, إعادة حساب مؤشرات السلامة).",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
 
     # ── 5. Electronic Permits to Work (ePTW) & SIMOPS Module ───────────────────
     {
         "type": "function",
         "function": {
             "name": "create_permit",
-            "description": "CRUD CREATE: Issue and register a new electronic Permit to Work (ePTW) in the Railway database.",
+            "description": "CRUD CREATE: Issue and register a new electronic Permit to Work (ePTW) in the Railway database. Supports Hot Work, Confined Space, Working at Heights, Electrical Isolation, Mechanical LOTO, Excavation, and Radiography. (Arabic: اصدار تصريح عمل, انشاء تصريح عمل ساخن, تصريح دخول اماكن مغلقة, تصريح مرتفعات).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "permit_type": {"type": "string", "description": "HOT_WORK, CONFINED_SPACE, WORK_AT_HEIGHT, ELECTRICAL, MECHANICAL_LOTO, EXCAVATION, RADIOGRAPHY"},
-                    "zone_id": {"type": "integer", "description": "Zone/Area ID (1-10)", "default": 1},
-                    "work_description": {"type": "string", "description": "Detailed description of the authorized work"},
-                    "requester_id": {"type": "integer", "description": "Employee ID requesting the permit", "default": 1},
-                    "issuer_id": {"type": "integer", "description": "HSE Officer / Issuer employee ID", "default": 1},
-                    "executor_name": {"type": "string", "description": "Contractor or Technician lead executing the work", "default": "Internal Maintenance Team"},
-                    "risk_level": {"type": "string", "description": "LOW, MEDIUM, HIGH, CRITICAL", "default": "MEDIUM"},
-                    "duration_hours": {"type": "integer", "description": "Validity duration in hours", "default": 8}
+                    "permit_type": {
+                        "type": "string",
+                        "description": "Permit type: 'HOT_WORK' (عمل ساخن), 'CONFINED_SPACE' (أماكن مغلقة), 'WORK_AT_HEIGHT' (مرتفعات), 'ELECTRICAL' (كهربائي), 'MECHANICAL_LOTO' (ميكانيكي / عزل), 'EXCAVATION' (حفر), 'RADIOGRAPHY' (إشعاعي)."
+                    },
+                    "work_description": {
+                        "type": "string",
+                        "description": "Detailed description of the authorized work and task scope"
+                    },
+                    "zone_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Zone ID (1-10) or zone name (e.g. 'خطوط العزل CCV', 'عنبر 1', 'Zone 2')",
+                        "default": 1
+                    },
+                    "requester_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Employee ID or name requesting the permit (e.g. 1 or 'أحمد سامي')",
+                        "default": 1
+                    },
+                    "issuer_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "HSE Officer / Issuer employee ID or name authorized to issue",
+                        "default": 1
+                    },
+                    "executor_name": {
+                        "type": "string",
+                        "description": "Contractor or internal technician lead executing the work",
+                        "default": "Internal Maintenance Team"
+                    },
+                    "risk_level": {
+                        "type": "string",
+                        "description": "Risk level: 'LOW' (منخفض), 'MEDIUM' (متوسط), 'HIGH' (عالي), 'CRITICAL' (حرج)",
+                        "default": "HIGH"
+                    },
+                    "duration_hours": {
+                        "type": "integer",
+                        "description": "Validity duration in hours (e.g. 8 for shift, 24, 48)",
+                        "default": 8
+                    },
+                    "jsa_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Optional linked Job Safety Analysis ID (e.g. 1 or 'JSA-001')"
+                    },
+                    "gas_test_required": {
+                        "type": "boolean",
+                        "description": "True if pre-entry atmospheric gas testing is required (mandatory for Confined Space and Hot Work)",
+                        "default": False
+                    },
+                    "gas_o2": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "description": "Oxygen level % (safe range: 19.5% - 23.5%, default 20.9%)"
+                    },
+                    "gas_lel": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "description": "Combustible gas % LEL (must be < 10% LEL, default 0)"
+                    },
+                    "gas_h2s": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "description": "Hydrogen Sulfide H2S ppm (must be < 10 ppm, default 0)"
+                    },
+                    "gas_co": {
+                        "anyOf": [{"type": "number"}, {"type": "null"}],
+                        "description": "Carbon Monoxide CO ppm (must be < 35 ppm, default 0)"
+                    },
+                    "precautions": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Mandatory safety precautions, PPE, and fire watcher assignments"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Initial status: 'ACTIVE' (معتمد/نشط) or 'PENDING_APPROVAL' (بانتظار الموافقة)",
+                        "default": "ACTIVE"
+                    }
                 },
                 "required": ["permit_type", "work_description"]
             }
@@ -382,13 +622,34 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_permits",
-            "description": "List electronic permits to work (ePTW) by status, risk level, or type (HOT_WORK, CONFINED_SPACE, HEIGHT, ELECTRICAL).",
+            "description": "CRUD READ: Query and list electronic permits to work (ePTW) filtered by status, risk level, permit type, zone, or expiry status.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "ACTIVE, APPROVED, PENDING_APPROVAL, EXPIRED, SUSPENDED, CLOSED"},
-                    "risk_level": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "LOW, MEDIUM, HIGH, CRITICAL"},
-                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "status": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Filter by status: 'ACTIVE' (نشط), 'PENDING_APPROVAL' (بانتظار الموافقة), 'APPROVED' (معتمد), 'SUSPENDED' (موقوف), 'CLOSED' (مغلق), 'EXPIRED' (منتهي), 'CANCELLED' (ملغي), 'REJECTED' (مرفوض)"
+                    },
+                    "permit_type": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Filter by type: 'HOT_WORK', 'CONFINED_SPACE', 'WORK_AT_HEIGHT', 'ELECTRICAL', 'MECHANICAL_LOTO', 'EXCAVATION', 'RADIOGRAPHY'"
+                    },
+                    "zone_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Filter by zone ID or zone name"
+                    },
+                    "risk_level": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Filter by risk level: 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'"
+                    },
+                    "expiring_soon": {
+                        "type": "boolean",
+                        "description": "If True, returns active permits expiring within 6 hours or today"
+                    },
+                    "query": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Search keyword in work description, contractor, or PTW ID"
+                    },
                     "limit": {"type": "integer", "default": 10}
                 }
             }
@@ -398,11 +659,14 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "get_permit_details",
-            "description": "Get deep permit details: Gas test results, checklist confirmations, required approvals, executor info, and remaining hours to expiry.",
+            "description": "CRUD READ: Get comprehensive permit details: gas test records, supervisor approvals, safety checklist confirmations, remaining hours to expiry, and zone SIMOPS status by ID (e.g. 5 or 'PTW-005').",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "permit_id": {"type": "integer", "description": "Permit ID"}
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit numeric ID or code (e.g. 10, 'PTW-010', 'PTW-2026-0418')"
+                    }
                 },
                 "required": ["permit_id"]
             }
@@ -412,13 +676,27 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "update_permit_status",
-            "description": "CRUD UPDATE: Transition permit lifecycle (APPROVE, ACTIVATE, SUSPEND, CLOSE, CANCEL) in the Railway database.",
+            "description": "CRUD UPDATE: Transition permit lifecycle (APPROVE, ACTIVATE, SUSPEND, CLOSE, CANCEL, REJECT, EXTEND) in the Railway database with audit logging.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "permit_id": {"type": "integer", "description": "Permit ID to update"},
-                    "status": {"type": "string", "description": "ACTIVE, APPROVED, SUSPENDED, CLOSED, CANCELLED, REJECTED"},
-                    "reason_or_note": {"type": "string", "description": "Approval note, closure sign-off, or suspension reason", "default": "Status updated by HSE Authority"}
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit ID to update (e.g. 10 or 'PTW-010')"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Target status: 'APPROVED' / 'ACTIVE' (اعتماد/تفعيل), 'SUSPENDED' (تعليق/إيقاف), 'CLOSED' (إغلاق/إنهاء), 'CANCELLED' (إلغاء), 'REJECTED' (رفض)"
+                    },
+                    "reason_or_note": {
+                        "type": "string",
+                        "description": "Approval sign-off note, suspension hazard reason, or work completion sign-off",
+                        "default": "Status updated by HSE Authority"
+                    },
+                    "approver_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Employee ID or name authorizing the status change"
+                    }
                 },
                 "required": ["permit_id", "status"]
             }
@@ -427,12 +705,124 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "check_simops_conflicts",
-            "description": "Detect Simultaneous Operations (SIMOPS) conflicts: Identifies overlapping high-risk permits in the same plant zone (e.g. Hot Work + Chemical / Confined Space).",
+            "name": "update_permit",
+            "description": "CRUD UPDATE: Update permit attributes such as location/zone, work description, executor/contractor, risk level, duration extension, or linked JSA.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "Optional zone ID to check specifically"},
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit ID or code to update (e.g. 73 or 'PTW-073')"
+                    },
+                    "location": {
+                        "anyOf": [{"type": "string"}, {"type": "integer"}, {"type": "null"}],
+                        "description": "New location or zone name/ID (e.g. 'production line b', 'خط الإنتاج B', 2)"
+                    },
+                    "zone_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Zone ID or name (e.g. 2, 'Line B')"
+                    },
+                    "work_description": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Updated work or activity description"
+                    },
+                    "executor_name": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Updated contractor or executing technician name"
+                    },
+                    "risk_level": {
+                        "anyOf": [{"type": "string"}, {"type": "integer"}, {"type": "null"}],
+                        "description": "Updated risk level ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')"
+                    },
+                    "permit_type": {
+                        "anyOf": [{"type": "string"}, {"type": "integer"}, {"type": "null"}],
+                        "description": "Updated permit type ('HOT_WORK', 'ELECTRICAL', 'CONFINED_SPACE', etc.)"
+                    },
+                    "duration_hours": {
+                        "anyOf": [{"type": "integer"}, {"type": "number"}, {"type": "null"}],
+                        "description": "Total validity duration in hours"
+                    },
+                    "extend_hours": {
+                        "anyOf": [{"type": "integer"}, {"type": "number"}, {"type": "null"}],
+                        "description": "Additional hours to extend the existing permit validity"
+                    },
+                    "jsa_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Linked JSA ID"
+                    }
+                },
+                "required": ["permit_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_permit",
+            "description": "CRUD DELETE: Safely delete or purge a permit record from the Railway database (Restricted to Admin & HSE Manager).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit ID or code to delete (e.g. 75, 'PTW-075', '75')"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Optional administrative reason or notes for the audit log (default: 'Requested by user')",
+                        "default": "Requested by user"
+                    }
+                },
+                "required": ["permit_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "close_all_permits",
+            "description": "CRUD BULK UPDATE: Close all active and suspended permits in the factory and hand over work sites (e.g. 'اغلق كافة التصاريح', 'إغلاق جميع التصاريح', 'close all permits').",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "Reason for bulk permit closing (e.g. 'End of shift site handover' or 'إغلاق وتسليم الموقع')",
+                        "default": "إغلاق جماعي لكافة تصاريح العمل وتسليم المواقع"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_all_permits",
+            "description": "CRUD BULK DELETE: Permanently delete all permits from database (Restricted to Admin & HSE Manager).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": "Administrative rationale for bulk permit deletion",
+                        "default": "Administrative bulk deletion requested by user"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "check_simops_conflicts",
+            "description": "SIMOPS Conflict Detection: Evaluates simultaneous operations hazards by identifying conflicting active permits in the same factory zone (e.g. Hot Work vs Flammable Chemicals, Confined Space vs Radiography).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}],
+                        "description": "Optional zone ID or zone name to check specifically"
+                    },
                     "limit": {"type": "integer", "default": 10}
                 }
             }
@@ -444,15 +834,62 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "schedule_safety_inspection",
-            "description": "CRUD CREATE: Schedule or book a safety walkthrough, audit, or compliance inspection in a plant zone. (Arabic: جدولة فحص سلامة, جدول تفتيش, موعد فحص, تحديد موعد معاينة).",
+            "description": "CRUD CREATE: Schedule or book a future safety walkthrough, periodic audit, or compliance inspection in a plant zone. (Arabic: جدولة فحص سلامة, جدولة جولة تفتيش, جدول جولة, تحديد موعد معاينة, حجز تفتيش).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "inspection_type": {"type": "string", "description": "e.g., ROUTINE_WALK, FIRE_SAFETY, ELECTRICAL_AUDIT, ISO_45001_AUDIT", "default": "ROUTINE_WALK"},
-                    "zone_id": {"type": "integer", "description": "Zone/Area ID", "default": 1},
-                    "lead_inspector_id": {"type": "integer", "description": "Inspector employee ID", "default": 1},
-                    "scheduled_in_days": {"type": "integer", "description": "Days from now for scheduled date", "default": 7},
-                    "notes": {"type": "string", "description": "Scope notes or focus points", "default": "Scheduled inspection"}
+                    "inspection_type": {"type": "string", "description": "Inspection type (e.g. 'تفتيش السلامة الأسبوعي لمصنع الكابلات', 'ROUTINE_WALK', 'FIRE_SAFETY', 'ELECTRICAL_AUDIT', 'ISO_45001_AUDIT', 'HOUSEKEEPING', 'PPE_COMPLIANCE')", "default": "تفتيش السلامة الأسبوعي لمصنع الكابلات"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Zone/Area ID or name (e.g. 'خطوط العزل CCV', 'عنبر السحب والجدل', 1, 'Zone 1')", "default": 1},
+                    "lead_inspector_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Lead inspector employee ID or name (e.g. 'م. مصطفى (مدير السلامة)', 'م. كريم حسني', 1)"},
+                    "frequency": {"type": "string", "description": "Recurrence frequency (e.g. 'أسبوعي (Weekly)', 'شهري (Monthly)', 'يومي (Daily)', 'ربع سنوي (Quarterly)')", "default": "أسبوعي"},
+                    "scheduled_at": {"type": "string", "description": "Scheduled date / next walk date (e.g. '2026-08-31', '08/31/2026', 'tomorrow', 'next week')"},
+                    "scheduled_in_days": {"type": "integer", "description": "Days from now if relative (e.g. 1, 7, 30)", "default": 7},
+                    "template": {"type": "string", "description": "Approved checklist standard/template (e.g. 'ISO 45001 — تدقيق السلامة والصحة المهنية', 'ISO 14001', 'OSHA General Industry', 'NFPA', 'BBS', '5S')", "default": "ISO 45001 — تدقيق السلامة والصحة المهنية"},
+                    "notes": {"type": "string", "description": "Scope notes, special directions, or focus points", "default": "جولة تفتيش دورية مجدولة"}
+                },
+                "required": ["inspection_type"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "submit_inspection_walk",
+            "description": "CRUD CREATE: Submit, complete, and certify a live inspection walkthrough with compliance score %, template version, checklist items evaluation, and non-conformance findings. (Arabic: بدء جولة تفتيش, تسجيل جولة ميدانية, اعتماد جولة تفتيش, إنهاء تفتيش).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "inspection_type": {"type": "string", "description": "Inspection type (e.g. 'تفتيش السلامة الميداني الشامل', 'ROUTINE_WALK', 'ISO_45001_AUDIT', 'FIRE_SAFETY')", "default": "تفتيش السلامة الميداني الشامل"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Zone/Area ID or name (e.g. 'خطوط العزل CCV', 1)", "default": 1},
+                    "lead_inspector_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Lead inspector employee ID or name", "default": 1},
+                    "score_pct": {"type": "number", "description": "Compliance score percentage (e.g. 95.0, 100.0)", "default": 95.0},
+                    "checklist_version": {"type": "string", "description": "Checklist template standard/version (e.g. 'ISO 45001 — تدقيق السلامة والصحة المهنية')", "default": "ISO 45001 — تدقيق السلامة والصحة المهنية"},
+                    "notes": {"type": "string", "description": "Walk summary notes and recommendations", "default": "تم استكمال الجولة الميدانية وتسجيل نتائج الفحص بنجاح"},
+                    "checklist": {
+                        "type": "array",
+                        "description": "Evaluated checklist items with status PASS, FAIL, or NA",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {"type": "string"},
+                                "status": {"type": "string", "description": "PASS, FAIL, NA"}
+                            }
+                        }
+                    },
+                    "findings": {
+                        "type": "array",
+                        "description": "Non-conformance findings observed during the walk (auto-creates CAPA actions)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {"type": "string"},
+                                "description": {"type": "string"},
+                                "category": {"type": "string", "default": "بيئة العمل والسلامة الميدانية"},
+                                "severity": {"type": "string", "description": "CRITICAL, MAJOR, MINOR", "default": "MAJOR"},
+                                "due_days": {"type": "integer", "default": 7}
+                            }
+                        }
+                    }
                 },
                 "required": ["inspection_type"]
             }
@@ -462,12 +899,12 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_inspections",
-            "description": "List safety inspections and audits with compliance score percentages.",
+            "description": "List safety inspections and audits with compliance score percentages, status, zone, and inspector. (Arabic: قائمة جولات التفتيش, سجل الفحص, استعلام المعاينات).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}]},
-                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Filter by status: SCHEDULED, IN_PROGRESS, COMPLETED"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Filter by Zone ID or name"},
                     "limit": {"type": "integer", "default": 10}
                 }
             }
@@ -476,12 +913,37 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "update_inspection_status",
-            "description": "CRUD UPDATE: Complete or update an inspection record with compliance score percentage and status.",
+            "name": "get_inspection_details",
+            "description": "Get complete detailed view of a specific inspection record by ID, including its zone, inspector, score, and all linked non-conformance findings. (Arabic: تفاصيل التفتيش, بيانات جولة الفحص).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "inspection_id": {"type": "integer", "description": "Inspection ID"},
+                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Primary Key ID of inspection"}
+                },
+                "required": ["inspection_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_inspection_stats",
+            "description": "Get aggregated statistics, compliance scores %, completed vs scheduled ratio, and open/overdue findings for the Inspections module. (Arabic: إحصائيات التفتيش, نسبة امتثال الجولات).",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_inspection_status",
+            "description": "CRUD UPDATE: Complete or update an inspection status, compliance score percentage, and closing notes. (Arabic: إنهاء التفتيش, تحديث حالة الفحص, اعتماد نتيجة التفتيش).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Inspection ID"},
                     "status": {"type": "string", "description": "SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED", "default": "COMPLETED"},
                     "score_pct": {"anyOf": [{"type": "number"}, {"type": "null"}], "description": "Compliance score percentage (e.g. 95.5)"},
                     "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Inspection summary / closing notes"}
@@ -493,16 +955,51 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "create_inspection_finding",
-            "description": "CRUD CREATE: Log a non-conformance or safety finding during an inspection, with responsible person, due date, and CAPA requirement.",
+            "name": "update_inspection",
+            "description": "CRUD UPDATE: Update inspection metadata such as type, zone, inspector, schedule date, notes, or score.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "inspection_id": {"type": "integer", "description": "Inspection ID"},
+                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Inspection ID to update"},
+                    "inspection_type": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated type"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Updated zone ID or name"},
+                    "lead_inspector_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Updated lead inspector"},
+                    "scheduled_at": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated schedule timestamp"},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated notes"},
+                    "score_pct": {"anyOf": [{"type": "number"}, {"type": "null"}], "description": "Updated score percentage"}
+                },
+                "required": ["inspection_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_inspection",
+            "description": "CRUD DELETE: Safely delete an inspection record and remove/unlink associated findings with audit trail. (Arabic: حذف جولة التفتيش, مسح التفتيش).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Inspection ID to delete"},
+                    "reason": {"type": "string", "description": "Justification reason for deletion", "default": "Requested by user"}
+                },
+                "required": ["inspection_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_inspection_finding",
+            "description": "CRUD CREATE: Log a non-conformance or safety finding during an inspection, with responsible person, due date, and automated CAPA triggering. (Arabic: تسجيل ملاحظة تفتيش, رصد مخالفة, تقييد عدم مطابقة).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Inspection ID"},
                     "category": {"type": "string", "description": "Finding category (e.g. PPE, HOUSEKEEPING, ELECTRICAL, FIRE, WORK_AT_HEIGHT)", "default": "HOUSEKEEPING"},
                     "description": {"type": "string", "description": "Factual finding description"},
                     "severity": {"type": "string", "description": "MINOR, MODERATE, MAJOR, CRITICAL", "default": "MODERATE"},
-                    "responsible_id": {"type": "integer", "description": "Employee ID responsible for fixing", "default": 1},
+                    "responsible_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Employee ID or name responsible for fixing", "default": 1},
                     "due_days": {"type": "integer", "description": "Days until deadline", "default": 7},
                     "capa_required": {"type": "boolean", "description": "Whether a formal CAPA must be triggered", "default": True}
                 },
@@ -514,11 +1011,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_inspection_findings",
-            "description": "List non-conformance findings across inspections, filtered by severity, status, or inspection ID.",
+            "description": "List non-conformance findings across inspections, filtered by severity, status, or inspection ID. (Arabic: قائمة ملاحظات التفتيش, مخالفات الفحص المفتوحة).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "inspection_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]},
                     "category": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                     "limit": {"type": "integer", "default": 15}
                 }
@@ -528,12 +1025,61 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "update_inspection_finding",
+            "description": "CRUD UPDATE: Update finding status (e.g. CLOSED, OPEN, IN_PROGRESS), severity, responsible employee, or notes. (Arabic: إغلاق ملاحظة التفتيش, معالجة المخالفة, تحديث الملاحظة).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "finding_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Finding ID to update"},
+                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "CLOSED, IN_PROGRESS, OPEN"},
+                    "severity": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "MINOR, MODERATE, MAJOR, CRITICAL"},
+                    "description": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated finding description"},
+                    "responsible_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Updated responsible person"},
+                    "due_date": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated due date (YYYY-MM-DD)"}
+                },
+                "required": ["finding_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_inspection_finding",
+            "description": "CRUD DELETE: Safely delete a specific inspection non-conformance finding. (Arabic: حذف ملاحظة التفتيش).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "finding_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Finding ID to delete"},
+                    "reason": {"type": "string", "description": "Justification reason", "default": "Requested by user"}
+                },
+                "required": ["finding_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_inspection_templates",
-            "description": "List standard inspection checklists and audit templates (e.g. Daily Walkthrough, ISO 45001, Electrical Safety).",
+            "description": "List standard inspection checklists and audit templates (e.g. Daily Walkthrough, ISO 45001, Electrical Safety, 5S, BBS).",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "limit": {"type": "integer", "default": 10}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_inspection_checklist",
+            "description": "AI standards-compliant checklist advisor: generates checklist checkpoints tailored to a zone and standard (ISO 45001, OSHA 1910, NFPA, 5S, BBS). (Arabic: توليد قائمة فحص, اقتراح بنود تفتيش).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "standard": {"type": "string", "description": "ISO_45001, OSHA_1910, NFPA, 5S, BBS", "default": "ISO_45001"},
+                    "zone_name": {"type": "string", "description": "Factory zone name", "default": "خطوط العزل CCV"},
+                    "hazard_focus": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Specific hazard focus if any"}
                 }
             }
         }
@@ -891,19 +1437,45 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "add_ppe_item",
-            "description": "CRUD CREATE: Add a new PPE item to the plant inventory catalog (e.g. safety helmets, cut-resistant gloves, steel-toe boots, respirators).",
+            "name": "create_ppe_supply_order",
+            "description": "CRUD CREATE: Automatically raise or create an official PPE Supply Order / Reorder Request (طلب توريد مهمات الوقاية) for items below reorder threshold or specific PPE catalog items. Calculates deficits, replenishment batch quantities, and assigned suppliers. (Arabic: رفع طلب توريد, طلب شراء مهمات وقاية, إعادة طلب الأصناف الناقصة).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "item_code": {"type": "string", "description": "Unique PPE code (e.g. 'PPE-HD-05')"},
-                    "name_ar": {"type": "string", "description": "Arabic item title (e.g. 'خوذة حماية كهربائية 20kV')"},
-                    "category": {"type": "string", "description": "HEAD, EYE, HAND, FOOT, RESPIRATORY, BODY", "default": "HEAD"},
-                    "unit": {"type": "string", "description": "Unit (Piece, Pair, Box)", "default": "Piece"},
-                    "balance_qty": {"type": "number", "description": "Initial physical stock quantity", "default": 50.0},
-                    "reorder_threshold": {"type": "number", "description": "Reorder alert trigger quantity", "default": 15.0},
-                    "supplier": {"type": "string", "description": "Supplier name", "default": "3M Egypt"},
-                    "storage_zone_id": {"type": "integer", "description": "Storage warehouse zone ID", "default": 5}
+                    "ppe_item_ids": {
+                        "anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}, {"type": "null"}],
+                        "description": "Optional list or comma-separated item codes/IDs (e.g. ['PPE-EY-01', 'PPE-HD-01']). Omit to automatically scan and order all items below reorder threshold."
+                    },
+                    "order_notes": {
+                        "anyOf": [{"type": "string"}, {"type": "null"}],
+                        "description": "Justification or procurement order notes (e.g. 'طلب توريد عاجل لسد عجز المخزن وبدء الوردية الجديدة')"
+                    },
+                    "urgency": {
+                        "type": "string",
+                        "description": "STANDARD, URGENT, EMERGENCY",
+                        "default": "STANDARD"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_ppe_item",
+            "description": "CRUD CREATE: Add and register a new PPE item in the catalog inventory (e.g. safety helmets, cut-resistant gloves, steel-toe boots, respirators, safety goggles). (Arabic: إضافة صنف وقاية جديد, تسجيل صنف مهمات).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "item_code": {"type": "string", "description": "Unique PPE item code (e.g. 'PPE-HD-05', 'PPE-HLM-02')"},
+                    "name_ar": {"type": "string", "description": "Arabic item title (e.g. 'خوذة حماية كهربائية 20kV', 'نظارة واقية كيميائية')"},
+                    "category": {"type": "string", "description": "HEAD, HANDS, EYES, FEET, FACE, HEARING, RESPIRATORY, BODY, FALL_PROTECTION", "default": "HEAD"},
+                    "unit": {"type": "string", "description": "Unit of measure (e.g. 'Piece', 'Pair', 'Box', 'قطعة (pcs)')", "default": "Piece"},
+                    "balance_qty": {"type": "number", "description": "Initial physical stock quantity count", "default": 50.0},
+                    "reorder_threshold": {"type": "number", "description": "Reorder alert trigger threshold quantity", "default": 15.0},
+                    "monthly_consumption": {"type": "number", "description": "Average monthly consumption rate", "default": 10.0},
+                    "supplier": {"type": "string", "description": "Approved supplier name", "default": "Safety Supply Co"},
+                    "storage_zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Storage warehouse zone ID or name (1-10)", "default": 5}
                 },
                 "required": ["item_code", "name_ar"]
             }
@@ -912,12 +1484,49 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "list_ppe_inventory",
-            "description": "List PPE items (masks, gloves, helmets, safety shoes) with current stock balances and thresholds.",
+            "name": "update_ppe_item",
+            "description": "CRUD UPDATE: Modify catalog details, specifications, monthly consumption, supplier, or zone of an existing PPE item.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "category": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "ppe_item_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "PPE Item ID, Item Code (e.g. 'PPE-HD-01'), or Arabic name"},
+                    "name_ar": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated Arabic title"},
+                    "item_code": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated item code"},
+                    "category": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "HEAD, HANDS, EYES, FEET, FACE, HEARING, RESPIRATORY, BODY, FALL_PROTECTION"},
+                    "unit": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Unit of measure"},
+                    "balance_qty": {"anyOf": [{"type": "number"}, {"type": "null"}], "description": "Updated stock count"},
+                    "reorder_threshold": {"anyOf": [{"type": "number"}, {"type": "null"}], "description": "Updated reorder threshold"},
+                    "monthly_consumption": {"anyOf": [{"type": "number"}, {"type": "null"}], "description": "Updated monthly consumption rate"},
+                    "supplier": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Updated supplier name"},
+                    "storage_zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Updated warehouse zone"}
+                },
+                "required": ["ppe_item_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_ppe_item",
+            "description": "CRUD DELETE: Safely delete a PPE item from catalog inventory (validates that no transaction history is attached).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "ppe_item_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "PPE Item ID, Item Code, or name to delete"}
+                },
+                "required": ["ppe_item_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_ppe_inventory",
+            "description": "List PPE items (masks, gloves, helmets, safety shoes, goggles) with current stock balances, reorder thresholds, and consumption rates.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "category": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Optional category filter: HEAD, HANDS, EYES, FEET, RESPIRATORY, BODY"},
                     "limit": {"type": "integer", "default": 15}
                 }
             }
@@ -955,13 +1564,13 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "update_ppe_matrix",
-            "description": "CRUD UPDATE: Update zone mandatory PPE requirements in the PPE Matrix.",
+            "description": "CRUD UPDATE: Set or update zone mandatory PPE requirements in the PPE Zone Matrix.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "zone_id": {"type": "integer", "description": "Zone ID"},
+                    "zone_id": {"type": "integer", "description": "Zone ID (1-10)"},
                     "ppe_item_id": {"type": "integer", "description": "PPE Item ID"},
-                    "required_flag": {"type": "integer", "description": "1 for Required, 0 for Optional", "default": 1},
+                    "required_flag": {"type": "integer", "description": "1 for Required, 0 for Optional/Task-based", "default": 1},
                     "notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}
                 },
                 "required": ["zone_id", "ppe_item_id"]
@@ -971,8 +1580,23 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "delete_ppe_matrix_rule",
+            "description": "CRUD DELETE: Remove a zone PPE requirement rule from the PPE Matrix.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "matrix_id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "Matrix rule ID"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "Zone ID"},
+                    "ppe_item_id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "PPE Item ID"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "update_ppe_stock",
-            "description": "CRUD UPDATE: Update PPE stock balance quantity or reorder threshold in inventory.",
+            "description": "CRUD UPDATE: Update PPE stock balance physical quantity or reorder threshold directly in inventory.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -988,15 +1612,21 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "create_ppe_transaction",
-            "description": "CRUD CREATE: Issue or adjust PPE inventory stock (helmets, gloves, shoes, masks) for an employee. (Arabic: صرف مهمات وقاية, صرف خوذة سلامة, تسليم مهمات للموظف).",
+            "description": "CRUD CREATE: Log and execute a PPE transaction: ISSUE (صرف لموظف - خصم من الرصيد) or RETURN (إرجاع للمخزن - إضافة للرصيد). Validates available balance, updates live inventory, links to work permits, and logs audit trail. (Arabic: صرف مهمات وقاية, تسجيل إرجاع مهمة, تسليم مهمات للموظف).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "ppe_item_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "PPE item ID, Item Code, or item name (e.g. 1, 'PPE-HD-01', or 'خوذة سلامة')", "default": 1},
-                    "employee_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Employee ID or name (e.g. 1, 'EMP-001', 'أحمد سامي', 'Ahmed Samy')", "default": 1},
-                    "quantity": {"type": "integer", "description": "Quantity issued or adjusted", "default": 1},
-                    "transaction_type": {"type": "string", "description": "ISSUE, RETURN, ADJUSTMENT, DISPOSAL", "default": "ISSUE"},
-                    "reason": {"type": "string", "description": "Reason for issuance or replacement", "default": "Standard periodic issue"}
+                    "ppe_item_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Target PPE Item. Exact Catalog Codes: 'PPE-EY-01' (Safety Glasses / Goggles / نظارة واقية), 'PPE-HD-01' (Safety Helmet / Hard Hat / خوذة أمان), 'PPE-SH-01' (Safety Shoes / Boots / حذاء أمان), 'PPE-GL-05' (Cut-Resistant Gloves / قفاز مقاوم للقطع), 'PPE-EL-01' (Electrical 1000V Gloves / قفاز عازل), 'PPE-ER-01' (Earplugs / Earmuffs / واقي أذن), 'PPE-RP-01' (Half-Face Mask / Respirator / كمامة نصف وجه), 'PPE-FR-01' (FR Coverall / أفرول), 'PPE-HR-01' (Full Body Harness / حزام أمان), 'PPE-FS-01' (Face Shield / درع وجه), or numeric item ID (1-19).",
+                        "default": 1
+                    },
+                    "employee_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Employee ID, code (e.g. 'EMP-001'), or name (e.g. 'أحمد سامي', 'Ahmed Samy')", "default": 1},
+                    "quantity": {"type": "integer", "description": "Quantity issued or returned (must be >= 1)", "default": 1},
+                    "transaction_type": {"type": "string", "description": "ISSUE (صرف لموظف) or RETURN (إرجاع للمخزن)", "default": "ISSUE"},
+                    "reason": {"type": "string", "description": "Reason for issuance or return (e.g. 'صرف دوري لبدء وردية العمل', 'استبدال تالف', 'إرجاع عهدة')", "default": "صرف دوري لبدء وردية العمل"},
+                    "permit_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Associated Work Permit ID or Code (e.g. 'PTW-2026-041', 10)"},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Additional notes"}
                 },
                 "required": ["quantity"]
             }
@@ -1005,8 +1635,22 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "delete_ppe_transaction",
+            "description": "CRUD DELETE: Cancel/revert a previously logged PPE transaction and restore the physical inventory stock balance.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "transaction_id": {"type": "integer", "description": "Transaction ID to revert"}
+                },
+                "required": ["transaction_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_ppe_transactions",
-            "description": "List PPE transactions and issuance history by employee, PPE item, or transaction type.",
+            "description": "List PPE transaction and issuance history by employee, PPE item, or transaction type.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1042,17 +1686,35 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "add_fixed_safety_asset",
-            "description": "CRUD CREATE: Register a fixed safety asset (e.g. Emergency Eyewash Station, Safety Shower, AED Defibrillator, LOTO Station, Assembly Point).",
+            "description": "CRUD CREATE: Register a fixed safety asset (e.g. Emergency Eyewash Station, Emergency Shower, AED Defibrillator, LOTO Station, First Aid Box). (Arabic: تسجيل معدة سلامة ثابتة, محطة غسيل عيون, دش طوارئ).",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "asset_name": {"type": "string", "description": "Name/description of asset (e.g. 'محطة غسيل عيون طوارئ عنبر 2')"},
-                    "asset_type": {"type": "string", "description": "EYEWASH, SHOWER, AED, LOTO_STATION, ASSEMBLY_POINT", "default": "EYEWASH"},
+                    "asset_name": {"type": "string", "description": "Name/description of asset (e.g. 'محطة غسيل عيون طوارئ عنبر 2', 'دش الطوارئ للتعامل مع الكيماويات')"},
+                    "asset_type": {"type": "string", "description": "EYEWASH, SHOWER, EMERGENCY_SHOWER, AED, FIRST_AID, LOTO_STATION, ASSEMBLY_POINT", "default": "EYEWASH"},
                     "total_qty": {"type": "integer", "description": "Total quantity", "default": 1},
                     "operational_qty": {"type": "integer", "description": "Operational quantity", "default": 1},
                     "notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}
                 },
                 "required": ["asset_name", "asset_type"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "record_fixed_safety_asset_inspection",
+            "description": "CRUD UPDATE/LOG: Record routine testing and inspection for fixed safety assets (Emergency Eyewash Stations, Emergency Showers, AED Defibrillators, First Aid Kits). Updates test date, next inspection date, and readiness. (Arabic: فحص محطة غسيل العيون, اختبار دش الطوارئ, فحص أجهزة الصدمات AED).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "asset_summary_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Fixed safety asset ID or name (e.g. 1, 'Emergency shower / eyewash', 'محطة غسيل العيون')"},
+                    "test_result": {"type": "string", "description": "PASS (صالحة ومطابقة) or FAIL (تحتاج صيانة)", "default": "PASS"},
+                    "operational_qty": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "Operational working units count"},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Inspection and testing notes"},
+                    "next_test_days": {"type": "integer", "description": "Days until next scheduled test (default: 30)", "default": 30}
+                },
+                "required": ["asset_summary_id"]
             }
         }
     },
@@ -1088,17 +1750,18 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "log_fire_inspection",
-            "description": "CRUD CREATE: Log, record, or submit a fire extinguisher / protection inspection result (e.g. 'سجل فحص طفاية', 'تسجيل فحص طفاية', 'توثيق فحص طفاية حريق').",
+            "description": "CRUD CREATE: Log, record, or simulate mobile QR inspection of fire equipment (e.g. 'محاكاة مسح الكود', 'سجل فحص طفاية', 'فحص QR طفاية QR-FE-A-014', 'مسح كود المعدة').",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "equipment_id": {"type": "integer", "description": "Fire equipment ID", "default": 1},
-                    "inspector_id": {"type": "integer", "description": "Inspector employee ID", "default": 1},
+                    "equipment_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Fire equipment ID or tag number (e.g. 'QR-FE-A-014', 'FE-A-014', 1)", "default": 1},
+                    "inspector_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Inspector employee ID or name", "default": 1},
                     "result": {"type": "string", "description": "PASS, PASS_WITH_ACTION, FAIL", "default": "PASS"},
-                    "pressure_ok": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "default": True},
-                    "hose_ok": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "default": True},
-                    "safety_pin_ok": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "default": True},
-                    "action_required": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Remediation note if any"}
+                    "pressure_ok": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "description": "Pressure gauge in green safe range", "default": True},
+                    "hose_ok": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "description": "Discharge hose and nozzle intact", "default": True},
+                    "safety_pin_ok": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "description": "Safety pin and tamper seal intact", "default": True},
+                    "access_clear": {"anyOf": [{"type": "boolean"}, {"type": "string"}], "description": "Access path free of obstacles", "default": True},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Inspection findings or remediation note"}
                 },
                 "required": ["equipment_id"]
             }
@@ -1123,7 +1786,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "list_fixed_safety_assets",
-            "description": "List fixed safety assets (eyewash stations, emergency showers, AEDs, LOTO stations) and their operational status.",
+            "description": "List fixed safety assets (eyewash stations, emergency showers, AEDs, first aid stations) and their operational readiness status.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1152,14 +1815,128 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "service_fire_equipment",
+            "description": "CRUD SERVICE & WORK ORDER: Execute service, refill, or replacement on a fire extinguisher or fire protection equipment (Arabic: استبدال فوري, إعادة تعبئة, أمر شغل صيانة طفاية). Automatically computes new expiry (+5 yrs for REPLACE, +2 yrs for REFILL), updates status to VALID, records work order ID, and logs maintenance inspection.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "equipment_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Equipment ID or code (e.g. 'FE-0004', 'FE-0005', 4)"},
+                    "action_type": {"type": "string", "description": "REFILL (إعادة تعبئة) or REPLACE (استبدال فوري) or MAINTENANCE", "default": "REFILL"},
+                    "technician_name": {"type": "string", "description": "Name of authorized technician or vendor", "default": "م. حسام الدين (فريق الصيانة المعتمد)"},
+                    "vendor": {"type": "string", "description": "Vendor / Manufacturer", "default": "Safety Egypt"},
+                    "new_expiry_date": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Optional custom new expiry date YYYY-MM-DD"},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Maintenance work details or replacement rationale"},
+                    "recommission_now": {"type": "boolean", "description": "Whether to immediately recommission the equipment to VALID/ACTIVE status", "default": True}
+                },
+                "required": ["equipment_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fire_equipment_detail",
+            "description": "READ: Inspect full technical profile, location, capacity, zone, status, expiry date, field QR scan code, and recent inspection history for a fire equipment unit (Arabic: تفاصيل معدة الإطفاء, كود المسح الميداني, بيانات الطفاية).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "equipment_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Equipment ID, code, or QR tag (e.g. 'FE-0031', 'FE-0004', 31)"}
+                },
+                "required": ["equipment_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fire_readiness_report",
+            "description": "READ/REPORT: Generate comprehensive readiness report for all fire equipment, suppression systems, hydrants (pressure 8.5 bar), smoke detectors (62/64 operational), zone readiness percentages, and compliance with NFPA 10/13 and Civil Defense codes (Arabic: تقرير الجاهزية, تقرير جاهزية معدات الحريق, نسبة الجاهزية).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Optional zone filter"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fire_inspection_schedule",
+            "description": "READ: Retrieve the periodic fire inspection schedule (15th of every month), inspection routes, testing checklist protocols, and upcoming equipment due for inspection (Arabic: جدول الفحص, جدول الفحص الدوري, مواعيد فحص معدات الإطفاء).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Optional zone filter"},
+                    "month": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Target month name or code"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fire_attention_list",
+            "description": "READ: List fire equipment requiring immediate attention (expired, damaged, due soon) with recommended corrective actions (Immediate Replacement / Refill) (Arabic: معدات تحتاج انتباه فوري, طفايات منتهية الصلاحية, معدات معيبة).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "description": "Maximum records to return", "default": 20}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fire_coverage_by_zone",
+            "description": "READ: Get distribution, unit count, serviceable count, and readiness percentage of fire equipment across all factory industrial zones (Zone A, Quality Lab, Zone B, Workshop, Warehouses, Admin, Substation, Shipping, Chem store, Services) (Arabic: تغطية وجاهزية الشبكة حسب المنطقة, تغطية شبكة الإطفاء).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Optional zone filter"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fire_equipment_stats",
+            "description": "READ: Get live executive KPI summary tiles for fire equipment: total, serviceable (ready), expiring in 30 days, expired/damaged, hydrants count (24 @ 8.5 bar), and smoke detectors working status (62/64) (Arabic: إحصائيات معدات الحريق, كواشف الدخان, حنفيات الحريق).",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "update_fixed_safety_asset",
             "description": "CRUD UPDATE: Update fixed safety asset operational status, quantity, or test date.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "asset_summary_id": {"type": "integer", "description": "Asset Summary ID"},
+                    "asset_summary_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Asset Summary ID or Name"},
                     "operational_qty": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
-                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+                    "total_qty": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+                },
+                "required": ["asset_summary_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_fixed_safety_asset",
+            "description": "CRUD DELETE: Remove a fixed safety asset record.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "asset_summary_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Asset Summary ID or Name to delete"}
                 },
                 "required": ["asset_summary_id"]
             }
@@ -1487,7 +2264,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "delete_record",
-            "description": "CRUD DELETE: Safely delete a draft or test record from authorized tables (with safety checks and automatic audit log).",
+            "description": "CRUD DELETE: Safely delete a record from authorized tables (with safety checks and automatic audit log).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1495,10 +2272,10 @@ TOOLS = [
                         "type": "string",
                         "description": "Allowed table: 'incidents', 'permits', 'capa', 'inspections', 'ppe_inventory', 'fire_equipment', 'chemicals', 'risk_register', 'jsa', 'certificates', 'employees', 'health_exams'."
                     },
-                    "record_id": {"type": "integer", "description": "Primary Key ID of the record to delete"},
-                    "reason": {"type": "string", "description": "Mandatory justification reason for audit log"}
+                    "record_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Primary Key ID or reference of the record to delete (e.g. 75, 'PTW-075')"},
+                    "reason": {"type": "string", "description": "Optional justification reason for audit log", "default": "Requested by user"}
                 },
-                "required": ["table_name", "record_id", "reason"]
+                "required": ["table_name", "record_id"]
             }
         }
     },

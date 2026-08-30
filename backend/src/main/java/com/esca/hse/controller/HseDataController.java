@@ -8,6 +8,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.web.bind.annotation.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +19,8 @@ import java.util.*;
 @RestController
 @RequestMapping({"/api", "/api/v1"})
 public class HseDataController {
+
+    private static final Logger log = LoggerFactory.getLogger(HseDataController.class);
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -413,414 +418,8 @@ public class HseDataController {
     }
 
     /* ------------------------------------------------------------------ */
-    /* 3. PERMITS                                                         */
+    /* 3. PERMITS (Delegated to dedicated WorkPermitController.java)       */
     /* ------------------------------------------------------------------ */
-    @GetMapping("/permits")
-    public List<Map<String, Object>> permitsList() {
-        try {
-            String sql = "SELECT p.permit_id, p.permit_type_id, pt.name as type_name, p.zone_id, z.name_ar as zone_name, " +
-                    "p.work_description, p.requester_id, e_req.display_name as requester_name, " +
-                    "p.issuer_id, e_iss.display_name as issuer_name, " +
-                    "p.executor_type_id, p.executor_name, p.start_at, p.expiry_at, " +
-                    "p.risk_level_id, prl.name as risk_level_name, p.jsa_id, " +
-                    "p.status_id, ps.name as status_name, p.suspended_reason, p.actual_close_at, p.hours_to_expiry " +
-                    "FROM permits p " +
-                    "LEFT JOIN permit_types pt ON p.permit_type_id = pt.permit_type_id " +
-                    "LEFT JOIN zones z ON p.zone_id = z.zone_id " +
-                    "LEFT JOIN employees e_req ON p.requester_id = e_req.employee_id " +
-                    "LEFT JOIN employees e_iss ON p.issuer_id = e_iss.employee_id " +
-                    "LEFT JOIN permit_risk_levels prl ON p.risk_level_id = prl.permit_risk_level_id " +
-                    "LEFT JOIN permit_statuses ps ON p.status_id = ps.permit_status_id " +
-                    "ORDER BY p.permit_id DESC LIMIT 50";
-            List<Map<String, Object>> rows = jdbc.queryForList(sql, Map.of());
-            if (!rows.isEmpty()) {
-                List<Map<String, Object>> list = new ArrayList<>();
-                for (Map<String, Object> r : rows) {
-                    Number pidNum = (Number) r.get("permit_id");
-                    int pid = pidNum != null ? pidNum.intValue() : 1;
-                    String ptwId = "PTW-" + String.format("%03d", pid);
-
-                    String type = String.valueOf(r.getOrDefault("type_name", "HOT_WORK"));
-                    String typeLabel = type.equals("HOT_WORK") ? "عمل ساخن" :
-                            type.equals("ELECTRICAL") ? "كهربائي" :
-                            type.equals("WORK_AT_HEIGHT") ? "مرتفعات" :
-                            type.equals("CONFINED_SPACE") ? "أماكن مغلقة" :
-                            type.equals("MECHANICAL_LOTO") ? "ميكانيكي / LOTO" :
-                            type.equals("EXCAVATION") ? "حفر" :
-                            type.equals("RADIOGRAPHY") ? "إشعاعي" : type;
-
-                    String desc = String.valueOf(r.getOrDefault("work_description", "أعمال صيانة وتشغيل"));
-                    String zone = String.valueOf(r.getOrDefault("zone_name", "خطوط الإنتاج والتصنيع"));
-                    String req = String.valueOf(r.getOrDefault("requester_name", "م. مصطفى"));
-                    String iss = String.valueOf(r.getOrDefault("issuer_name", "م. أحمد عثمان"));
-                    String exec = String.valueOf(r.getOrDefault("executor_name", "فريق الصيانة الداخلي"));
-
-                    Object startObj = r.get("start_at");
-                    Object expObj = r.get("expiry_at");
-                    String startStr = startObj != null ? String.valueOf(startObj) : LocalDateTime.now().toString();
-                    String expStr = expObj != null ? String.valueOf(expObj) : LocalDateTime.now().plusHours(8).toString();
-
-                    String fromTime = startStr.length() >= 16 ? startStr.substring(11, 16) : "08:00";
-                    String toTime = expStr.length() >= 16 ? expStr.substring(11, 16) : "16:00";
-                    String startDate = startStr.length() >= 10 ? startStr.substring(0, 10) : LocalDate.now().toString();
-                    String expDate = expStr.length() >= 10 ? expStr.substring(0, 10) : LocalDate.now().toString();
-
-                    String rawStatus = String.valueOf(r.getOrDefault("status_name", "ACTIVE"));
-                    String statusLabel = rawStatus.equals("ACTIVE") ? "نشط" :
-                            rawStatus.equals("PENDING_APPROVAL") ? "بانتظار الموافقة" :
-                            rawStatus.equals("SUSPENDED") ? "موقوف" :
-                            rawStatus.equals("CLOSED") ? "مغلق" :
-                            rawStatus.equals("EXPIRED") ? "منتهي" :
-                            rawStatus.equals("REJECTED") ? "مرفوض" : rawStatus;
-
-                    String statusTone = rawStatus.equals("ACTIVE") ? "safe" :
-                            rawStatus.equals("PENDING_APPROVAL") ? "in" :
-                            rawStatus.equals("SUSPENDED") || rawStatus.equals("REJECTED") ? "cr" : "wn";
-
-                    String risk = String.valueOf(r.getOrDefault("risk_level_name", "HIGH"));
-                    String riskLabel = risk.equals("CRITICAL") ? "حرج (Critical)" :
-                            risk.equals("HIGH") ? "عالي (High)" :
-                            risk.equals("MEDIUM") ? "متوسط (Medium)" : "منخفض (Low)";
-
-                    Number jsaNum = (Number) r.get("jsa_id");
-                    String jsa = jsaNum != null ? "JSA-" + String.format("%03d", jsaNum.intValue()) : "JSA-001";
-
-                    Number hrsNum = (Number) r.get("hours_to_expiry");
-                    double hrs = hrsNum != null ? hrsNum.doubleValue() : 8.0;
-                    String flag = (hrs <= 6.0 && rawStatus.equals("ACTIVE")) ? "DUE_SOON" : "OK";
-
-                    list.add(map(
-                            "id", ptwId,
-                            "numericId", pid,
-                            "type", type,
-                            "typeLabel", typeLabel,
-                            "description", desc,
-                            "zone", zone,
-                            "zone_id", r.get("zone_id"),
-                            "from", fromTime,
-                            "to", toTime,
-                            "date", startDate,
-                            "startDate", startDate,
-                            "expiryDate", expDate,
-                            "requester", req,
-                            "issuer", iss,
-                            "executor", exec,
-                            "contractor", exec,
-                            "jsa", jsa,
-                            "risk", risk,
-                            "riskLevel", risk,
-                            "riskLabel", riskLabel,
-                            "rawStatus", rawStatus,
-                            "status", statusLabel,
-                            "statusTone", statusTone,
-                            "flag", flag,
-                            "hoursToExpiry", hrs
-                    ));
-                }
-                return list;
-            }
-        } catch (Exception ignored) {}
-
-        return getDefaultPermits();
-    }
-
-    @PostMapping("/permits")
-    public ResponseEntity<Map<String, Object>> createPermit(@RequestBody Map<String, Object> body) {
-        String type = String.valueOf(body.getOrDefault("type", "HOT_WORK"));
-        String zone = String.valueOf(body.getOrDefault("zone", "خطوط العزل CCV"));
-        String desc = String.valueOf(body.getOrDefault("description", "أعمال صيانة وتجهيز بالموقع"));
-        String executor = String.valueOf(body.getOrDefault("executor", "فريق الصيانة الداخلي"));
-        String risk = String.valueOf(body.getOrDefault("riskLevel", "HIGH")).toUpperCase();
-        String from = String.valueOf(body.getOrDefault("from", "08:00"));
-        String to = String.valueOf(body.getOrDefault("to", "16:00"));
-        String date = String.valueOf(body.getOrDefault("date", LocalDate.now().toString()));
-
-        int typeId = type.contains("ELEC") ? 2 :
-                type.contains("HEIGHT") ? 3 :
-                type.contains("CONFINED") ? 4 :
-                type.contains("LOTO") || type.contains("MECH") ? 5 :
-                type.contains("EXCAV") ? 6 :
-                type.contains("RADIO") ? 7 : 1; // HOT_WORK
-
-        int zoneId = 1;
-        try {
-            if (!zone.isBlank()) {
-                Integer zid = jdbc.queryForObject(
-                        "SELECT zone_id FROM zones WHERE name_ar LIKE :z OR name_en LIKE :z LIMIT 1",
-                        Map.of("z", "%" + zone.trim() + "%"),
-                        Integer.class
-                );
-                if (zid != null) zoneId = zid;
-            }
-        } catch (Exception ignored) {}
-
-        int riskId = risk.contains("CRIT") ? 4 : risk.contains("HIGH") ? 3 : risk.contains("MED") ? 2 : 1;
-
-        LocalDateTime startAt = LocalDate.now().atTime(8, 0);
-        LocalDateTime expiryAt = LocalDate.now().atTime(16, 0);
-        try {
-            if (!date.isBlank()) {
-                LocalDate d = LocalDate.parse(date);
-                if (from.contains(":")) {
-                    String[] parts = from.split(":");
-                    startAt = d.atTime(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
-                }
-                if (to.contains(":")) {
-                    String[] parts = to.split(":");
-                    expiryAt = d.atTime(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
-                }
-            }
-        } catch (Exception ignored) {}
-
-        int permitId = 10;
-        try {
-            MapSqlParameterSource params = new MapSqlParameterSource()
-                    .addValue("typeId", typeId)
-                    .addValue("zoneId", zoneId)
-                    .addValue("desc", desc)
-                    .addValue("reqId", 1)
-                    .addValue("issId", 1)
-                    .addValue("execTypeId", 1)
-                    .addValue("execName", executor)
-                    .addValue("startAt", startAt)
-                    .addValue("expAt", expiryAt)
-                    .addValue("riskId", riskId)
-                    .addValue("jsaId", 1)
-                    .addValue("statusId", 2) // PENDING_APPROVAL
-                    .addValue("hrs", 8.00)
-                    .addValue("autoFlag", 0);
-
-            GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbc.update("INSERT INTO permits (permit_type_id, zone_id, work_description, requester_id, issuer_id, executor_type_id, executor_name, start_at, expiry_at, risk_level_id, jsa_id, status_id, hours_to_expiry, automation_flag) " +
-                    "VALUES (:typeId, :zoneId, :desc, :reqId, :issId, :execTypeId, :execName, :startAt, :expAt, :riskId, :jsaId, :statusId, :hrs, :autoFlag)", params, keyHolder);
-
-            Number k = keyHolder.getKey();
-            if (k != null) permitId = k.intValue();
-        } catch (Exception ignored) {}
-
-        String ptwCode = "PTW-" + String.format("%03d", permitId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(map(
-                "id", ptwCode,
-                "numericId", permitId,
-                "type", type,
-                "typeLabel", type.equals("HOT_WORK") ? "عمل ساخن" : type.equals("ELECTRICAL") ? "كهربائي" : "تصريح عمل",
-                "description", desc,
-                "zone", zone,
-                "from", from,
-                "to", to,
-                "date", date,
-                "startDate", date,
-                "expiryDate", date,
-                "requester", "م. مصطفى (مدير السلامة)",
-                "issuer", "م. مصطفى (مدير السلامة)",
-                "executor", executor,
-                "contractor", executor,
-                "jsa", "JSA-001",
-                "risk", risk,
-                "riskLevel", risk,
-                "riskLabel", risk,
-                "rawStatus", "PENDING_APPROVAL",
-                "status", "بانتظار الموافقة",
-                "statusTone", "in",
-                "flag", "OK",
-                "success", true
-        ));
-    }
-
-    @GetMapping("/permits/{id}")
-    public Map<String, Object> permitById(@PathVariable String id) {
-        List<Map<String, Object>> list = permitsList();
-        for (Map<String, Object> p : list) {
-            if (id.equalsIgnoreCase(String.valueOf(p.get("id"))) || id.equalsIgnoreCase(String.valueOf(p.get("numericId")))) {
-                return p;
-            }
-        }
-        return list.isEmpty() ? getDefaultPermits().get(0) : list.get(0);
-    }
-
-    @GetMapping("/permits/{id}/approvals")
-    public Map<String, Object> permitApprovals(@PathVariable String id) {
-        boolean approved = false;
-        String approverName = "Mostafa (HSE Manager)";
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        String hash = "0x8f2a7b3c9e4d1f5a6b8c0d2e4f6a8b0c2d4e6f8a";
-        String status = "PENDING_APPROVAL";
-
-        try {
-            int pid = id.startsWith("PTW-") ? Integer.parseInt(id.replace("PTW-", "")) : Integer.parseInt(id);
-            Integer sid = jdbc.queryForObject("SELECT status_id FROM permits WHERE permit_id = :id", Map.of("id", pid), Integer.class);
-            if (sid != null) {
-                if (sid == 3) {
-                    approved = true;
-                    status = "ACTIVE";
-                } else if (sid == 6) {
-                    approved = true;
-                    status = "CLOSED";
-                } else if (sid == 4) {
-                    status = "SUSPENDED";
-                }
-            }
-        } catch (Exception ignored) {}
-
-        List<Map<String, Object>> steps = new ArrayList<>();
-        steps.add(map("stepNo", 1, "step", "مشرف المنطقة (Area Supervisor)", "detail", "م. أحمد عثمان · 08:30 · تمت المعاينة الميدانية والموافقة", "state", "done"));
-        steps.add(map("stepNo", 2, "step", "مسؤول السلامة والصحة المهنية (HSE Officer)", "detail", "م. كريم حسني · 08:45 · تم التحقق من ضوابط JSA واشتراطات الموقع", "state", "done"));
-
-        if (approved) {
-            steps.add(map("stepNo", 3, "step", "مدير السلامة للفرع (HSE Manager Sign-off)", "detail", "م. مصطفى · تم الاعتماد النهائي وتوثيق التوقيع الرقمي بنجاح", "state", "done"));
-        } else {
-            steps.add(map("stepNo", 3, "step", "مدير السلامة للفرع (HSE Manager Sign-off)", "detail", "بانتظار الاعتماد النهائي والتوقيع الرقمي المعتمد", "state", "pending"));
-        }
-
-        return map(
-                "approved", approved,
-                "status", status,
-                "steps", steps,
-                "signature", map(
-                        "name", approverName,
-                        "algo", "SHA-256 / RSA-2048",
-                        "timestamp", timestamp,
-                        "hash", hash
-                )
-        );
-    }
-
-    @PostMapping("/permits/{id}/approve")
-    public Map<String, Object> approvePermit(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        try {
-            int pid = id.startsWith("PTW-") ? Integer.parseInt(id.replace("PTW-", "")) : Integer.parseInt(id);
-            jdbc.update("UPDATE permits SET status_id = 3 WHERE permit_id = :id", Map.of("id", pid));
-        } catch (Exception ignored) {}
-
-        return map(
-                "success", true,
-                "permitId", id,
-                "status", "ACTIVE",
-                "rawStatus", "ACTIVE",
-                "message", "تم اعتماد التصريح بنجاح وتوثيق التوقيع الرقمي في سجل التدقيق",
-                "approvedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        );
-    }
-
-    @PostMapping("/permits/{id}/suspend")
-    public Map<String, Object> suspendPermit(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        String reason = body != null ? String.valueOf(body.getOrDefault("reason", "إيقاف مؤقت لأسباب تتعلق بالسلامة الميدانية")) : "إيقاف مؤقت";
-        try {
-            int pid = id.startsWith("PTW-") ? Integer.parseInt(id.replace("PTW-", "")) : Integer.parseInt(id);
-            jdbc.update("UPDATE permits SET status_id = 4, suspended_reason = :reason WHERE permit_id = :id", Map.of("reason", reason, "id", pid));
-        } catch (Exception ignored) {}
-
-        return map(
-                "success", true,
-                "permitId", id,
-                "status", "SUSPENDED",
-                "rawStatus", "SUSPENDED",
-                "message", "تم إيقاف التصريح مؤقتاً وتوثيق السبب في السجل"
-        );
-    }
-
-    @PostMapping("/permits/{id}/close")
-    public Map<String, Object> closePermit(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        try {
-            int pid = id.startsWith("PTW-") ? Integer.parseInt(id.replace("PTW-", "")) : Integer.parseInt(id);
-            jdbc.update("UPDATE permits SET status_id = 6, actual_close_at = NOW() WHERE permit_id = :id", Map.of("id", pid));
-        } catch (Exception ignored) {}
-
-        return map(
-                "success", true,
-                "permitId", id,
-                "status", "CLOSED",
-                "rawStatus", "CLOSED",
-                "message", "تم إغلاق التصريح وتسليم موقع العمل بعد نظافته وتأمينه"
-        );
-    }
-
-    @GetMapping("/permits/stats")
-    public Map<String, Object> permitsStats() {
-        int active = 0, pending = 0, expiring = 0, closed = 0, total = 0;
-        try {
-            total = jdbc.queryForObject("SELECT COUNT(*) FROM permits", Map.of(), Integer.class);
-            active = jdbc.queryForObject("SELECT COUNT(*) FROM permits WHERE status_id = 3", Map.of(), Integer.class);
-            pending = jdbc.queryForObject("SELECT COUNT(*) FROM permits WHERE status_id = 2", Map.of(), Integer.class);
-            closed = jdbc.queryForObject("SELECT COUNT(*) FROM permits WHERE status_id = 6", Map.of(), Integer.class);
-            expiring = jdbc.queryForObject("SELECT COUNT(*) FROM permits WHERE status_id = 3 AND hours_to_expiry <= 6.0", Map.of(), Integer.class);
-        } catch (Exception ignored) {}
-
-        if (total == 0) {
-            total = 24; active = 6; pending = 3; expiring = 2; closed = 18;
-        }
-
-        return map(
-                "active", active,
-                "expiringSoon", expiring,
-                "pendingApproval", pending,
-                "avgApprovalMinutes", 18,
-                "violations", 2,
-                "issuedYtd", total,
-                "closedProperly", closed > 0 ? closed : 18,
-                "cancelled", 1,
-                "linkedIncidents", 0,
-                "compliance", 96
-        );
-    }
-
-    @GetMapping("/permits/simops")
-    public Map<String, Object> permitsSimops() {
-        int blockedYtd = 8;
-        Map<String, Object> blocked = map(
-                "permit", "PTW-004",
-                "request", "أعمال لحام وقطع في مسار كابلات التغذية",
-                "reason", "تعارض مكاني وزماني مباشر مع تصريح دهان بمواد مذيبة سريعة الاشتعال على بعد أقل من 11 متراً",
-                "conflictsWith", "PTW-002",
-                "decision", "حظر الإصدار حتى اكتمال أو إلغاء التصريح المتعارض",
-                "zone", "خطوط العزل CCV"
-        );
-
-        try {
-            blockedYtd = jdbc.queryForObject("SELECT COUNT(*) FROM simops", Map.of(), Integer.class);
-            List<Map<String, Object>> latestConflicts = jdbc.queryForList(
-                    "SELECT s.*, z.name_ar as zone_name, pa.work_description as desc_a, pb.work_description as desc_b " +
-                            "FROM simops s " +
-                            "LEFT JOIN zones z ON s.zone_id = z.zone_id " +
-                            "LEFT JOIN permits pa ON s.permit_a_id = pa.permit_id " +
-                            "LEFT JOIN permits pb ON s.permit_b_id = pb.permit_id " +
-                            "ORDER BY s.simops_id DESC LIMIT 1",
-                    Map.of()
-            );
-            if (!latestConflicts.isEmpty()) {
-                Map<String, Object> first = latestConflicts.get(0);
-                blocked = map(
-                        "permit", "PTW-" + String.format("%03d", ((Number) first.get("permit_a_id")).intValue()),
-                        "request", String.valueOf(first.getOrDefault("desc_a", "أعمال تشغيل وصيانة")),
-                        "reason", "تعارض مكاني وزماني: " + String.valueOf(first.getOrDefault("conflict_type", "SIMOPS_CONFLICT")) + " على مسافة " + String.valueOf(first.getOrDefault("distance_m", "11")) + "م",
-                        "conflictsWith", "PTW-" + String.format("%03d", ((Number) first.get("permit_b_id")).intValue()),
-                        "decision", String.valueOf(first.getOrDefault("decision", "حظر الإصدار والتتابع الزمني")),
-                        "zone", String.valueOf(first.getOrDefault("zone_name", "خطوط العزل CCV"))
-                );
-            }
-        } catch (Exception ignored) {}
-
-        return map(
-                "blocked", blocked,
-                "rules", List.of(
-                        map("rule", "عمل ساخن + دهان بمواد قابلة للاشتعال", "limit", "حد 11م"),
-                        map("rule", "دخول أماكن مغلقة + عمل كهربائي", "limit", "فصل تام وإلزامية مرافق"),
-                        map("rule", "رفع ثقيل فوق منطقة عمل نشطة", "limit", "حظر حتى إخلاء الموقع")
-                ),
-                "blockedYtd", blockedYtd
-        );
-    }
-
-    @GetMapping("/permits/checklist")
-    public List<Map<String, Object>> permitsChecklist(@RequestParam(defaultValue = "HOT_WORK") String type) {
-        return List.of(
-                map("code", "CHK-01", "text", "فحص نسبة الغازات والأكسجين في الموقع", "mandatory", true, "response", "PASSED"),
-                map("code", "CHK-02", "text", "توفير مطفأة حريق مناسبة مع مراقب حريق مخصص (Fire Watch)", "mandatory", true, "response", "PASSED"),
-                map("code", "CHK-03", "text", "إزالة المواد القابلة للاشتعال في محيط 10 أمتار", "mandatory", true, "response", "PASSED"),
-                map("code", "CHK-04", "text", "عزل مصادر الطاقة وتطبيق إجراءات LOTO", "mandatory", true, "response", "PASSED"),
-                map("code", "CHK-05", "text", "ارتداء مهمات الوقاية الشخصية المقاومة للحرارة والشرر", "mandatory", true, "response", "PASSED")
-        );
-    }
 
     /* ------------------------------------------------------------------ */
     /* 4. INCIDENTS                                                       */
@@ -1826,75 +1425,77 @@ public class HseDataController {
     @GetMapping("/occupational-health/schedule")
     public List<Map<String, Object>> healthSchedule() {
         try {
-            String sql = "SELECT he.exam_id, he.employee_id, e.display_name as employee_name, he.protocol_id, " +
-                    "he.scheduled_date, he.completed_date, he.fitness_result_id, fr.name as fitness_name, " +
-                    "he.restriction_summary, he.next_due_date, he.status_id, hes.name as status_name, " +
-                    "he.clinician_alias, he.days_overdue " +
+            // Use COALESCE for employee_name so records with NULL display_name still appear.
+            // Removed the health_exam_statuses join – status label is derived from status_id directly.
+            // Increased LIMIT to 200 so all recently-created records (including AI-agent inserts) are visible.
+            String sql = "SELECT he.exam_id, he.employee_id, " +
+                    "COALESCE(e.display_name, CONCAT('EMP-', he.employee_id)) as employee_name, " +
+                    "he.protocol_id, he.scheduled_date, he.completed_date, he.fitness_result_id, " +
+                    "COALESCE(fr.name, '') as fitness_name, " +
+                    "he.restriction_summary, he.next_due_date, he.status_id, he.clinician_alias, he.days_overdue " +
                     "FROM health_exams he " +
                     "LEFT JOIN employees e ON he.employee_id = e.employee_id " +
                     "LEFT JOIN fitness_results fr ON he.fitness_result_id = fr.fitness_result_id " +
-                    "LEFT JOIN health_exam_statuses hes ON he.status_id = hes.health_exam_status_id " +
-                    "ORDER BY he.exam_id DESC LIMIT 50";
+                    "ORDER BY he.exam_id DESC LIMIT 200";
             List<Map<String, Object>> rows = jdbc.queryForList(sql, Map.of());
-            if (!rows.isEmpty()) {
-                List<Map<String, Object>> list = new ArrayList<>();
-                for (Map<String, Object> r : rows) {
-                    Number xidNum = (Number) r.get("exam_id");
-                    int xid = xidNum != null ? xidNum.intValue() : 1;
-                    Number pNum = (Number) r.get("protocol_id");
-                    int pid = pNum != null ? pNum.intValue() : 1;
+            List<Map<String, Object>> list = new ArrayList<>();
+            for (Map<String, Object> r : rows) {
+                Number xidNum = (Number) r.get("exam_id");
+                int xid = xidNum != null ? xidNum.intValue() : 1;
+                Number pNum = (Number) r.get("protocol_id");
+                int pid = pNum != null ? pNum.intValue() : 1;
 
-                    String protocolName = pid == 1 ? "فحص قياس السمع (Audiometry)" :
-                            pid == 2 ? "فحص وظائف التنفس والرئة (Spirometry)" :
-                            pid == 3 ? "لياقة الارتفاعات والأماكن المغلقة" :
-                            pid == 5 ? "المناولة اليدوية والإجهاد البدني" :
-                            "الفحص الطبي الشامل الدوري";
+                String protocolName = pid == 1 ? "فحص قياس السمع (Audiometry)" :
+                        pid == 2 ? "فحص وظائف التنفس والرئة (Spirometry)" :
+                        pid == 3 ? "لياقة الارتفاعات والأماكن المغلقة" :
+                        pid == 5 ? "المناولة اليدوية والإجهاد البدني" :
+                        "الفحص الطبي الشامل الدوري";
 
-                    String emp = String.valueOf(r.getOrDefault("employee_name", "موظف بالشركة"));
-                    Object schedObj = r.get("scheduled_date");
-                    Object compObj = r.get("completed_date");
-                    Object nextObj = r.get("next_due_date");
-                    String schedDate = schedObj != null ? String.valueOf(schedObj) : LocalDate.now().toString();
-                    String compDate = compObj != null ? String.valueOf(compObj) : null;
-                    String nextDate = nextObj != null ? String.valueOf(nextObj) : LocalDate.now().plusMonths(6).toString();
+                String emp = String.valueOf(r.getOrDefault("employee_name", "موظف بالشركة"));
+                Object schedObj = r.get("scheduled_date");
+                Object compObj = r.get("completed_date");
+                Object nextObj = r.get("next_due_date");
+                String schedDate = schedObj != null ? String.valueOf(schedObj) : LocalDate.now().toString();
+                String compDate = compObj != null ? String.valueOf(compObj) : null;
+                String nextDate = nextObj != null ? String.valueOf(nextObj) : LocalDate.now().plusMonths(6).toString();
 
-                    Number statNum = (Number) r.get("status_id");
-                    int sid = statNum != null ? statNum.intValue() : 1;
-                    String status = sid == 3 ? "مكتمل" : sid == 2 ? "متأخر" : "مجدول";
-                    String statusTone = sid == 3 ? "ok" : sid == 2 ? "cr" : "in";
+                Number statNum = (Number) r.get("status_id");
+                int sid = statNum != null ? statNum.intValue() : 1;
+                String status = sid == 3 ? "مكتمل" : sid == 2 ? "متأخر" : "مجدول";
+                String statusTone = sid == 3 ? "ok" : sid == 2 ? "cr" : "in";
 
-                    Number fitNum = (Number) r.get("fitness_result_id");
-                    int fid = fitNum != null ? fitNum.intValue() : 1;
-                    String fitLabel = fid == 2 ? "لائق مع قيود" : fid == 3 ? "غير لائق مؤقتاً" : "لائق طبياً";
-                    String fitTone = fid == 2 ? "wn" : fid == 3 ? "cr" : "ok";
+                Number fitNum = (Number) r.get("fitness_result_id");
+                int fid = fitNum != null ? fitNum.intValue() : 1;
+                String fitLabel = fid == 2 ? "لائق مع قيود" : fid == 3 ? "غير لائق مؤقتاً" : "لائق طبياً";
+                String fitTone = fid == 2 ? "wn" : fid == 3 ? "cr" : "ok";
 
-                    String doctor = String.valueOf(r.getOrDefault("clinician_alias", "د. حازم القاضي"));
-                    String restrictions = String.valueOf(r.getOrDefault("restriction_summary", "لا توجد قيود طبية"));
+                String doctor = String.valueOf(r.getOrDefault("clinician_alias", "د. حازم القاضي"));
+                String restrictions = String.valueOf(r.getOrDefault("restriction_summary", "لا توجد قيود طبية"));
 
-                    list.add(map(
-                            "id", "HEX-" + String.format("%03d", xid),
-                            "examId", xid,
-                            "employee", emp,
-                            "employeeId", r.get("employee_id"),
-                            "protocol", protocolName,
-                            "protocolId", pid,
-                            "scheduledDate", schedDate,
-                            "completedDate", compDate,
-                            "fitness", fitLabel,
-                            "fitnessTone", fitTone,
-                            "fitnessId", fid,
-                            "restrictions", restrictions,
-                            "doctor", doctor,
-                            "nextDueDate", nextDate,
-                            "status", status,
-                            "statusTone", statusTone
-                    ));
-                }
-                return list;
+                list.add(map(
+                        "id", "HEX-" + String.format("%03d", xid),
+                        "examId", xid,
+                        "employee", emp,
+                        "employeeId", r.get("employee_id"),
+                        "protocol", protocolName,
+                        "protocolId", pid,
+                        "scheduledDate", schedDate,
+                        "completedDate", compDate,
+                        "fitness", fitLabel,
+                        "fitnessTone", fitTone,
+                        "fitnessId", fid,
+                        "restrictions", restrictions,
+                        "doctor", doctor,
+                        "nextDueDate", nextDate,
+                        "status", status,
+                        "statusTone", statusTone
+                ));
             }
-        } catch (Exception ignored) {}
-
-        return List.of();
+            return list;
+        } catch (Exception e) {
+            log.error("healthSchedule() query failed: {}", e.getMessage(), e);
+            return List.of();
+        }
     }
 
     @PostMapping("/occupational-health/exams")
@@ -1905,10 +1506,16 @@ public class HseDataController {
 
         try {
             if (empIdNum == null && !empName.isBlank()) {
-                Integer id = jdbc.queryForObject("SELECT employee_id FROM employees WHERE display_name LIKE :n LIMIT 1", Map.of("n", "%" + empName.trim() + "%"), Integer.class);
+                // Match on display_name or email_alias
+                String namePct = "%" + empName.trim() + "%";
+                Integer id = jdbc.queryForObject(
+                        "SELECT employee_id FROM employees WHERE display_name LIKE :n OR email_alias LIKE :n LIMIT 1",
+                        Map.of("n", namePct), Integer.class);
                 if (id != null) empId = id;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("registerExam: could not resolve employee by name '{}': {}", empName, e.getMessage());
+        }
 
         Number protNum = (Number) body.getOrDefault("protocolId", 1);
         int protocolId = protNum != null ? protNum.intValue() : 1;
@@ -1931,7 +1538,9 @@ public class HseDataController {
         try {
             if (!schedDateStr.isBlank()) schedDate = LocalDate.parse(schedDateStr);
             if (!nextDueStr.isBlank()) nextDue = LocalDate.parse(nextDueStr);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("registerExam: could not parse date string '{}'/'{}: {}", schedDateStr, nextDueStr, e.getMessage());
+        }
 
         int examId = 10;
         try {
@@ -1954,7 +1563,9 @@ public class HseDataController {
 
             Number k = keyHolder.getKey();
             if (k != null) examId = k.intValue();
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.error("registerExam: INSERT into health_exams failed for employee='{}': {}", empName, e.getMessage(), e);
+        }
 
         String hexCode = "HEX-" + String.format("%03d", examId);
         return ResponseEntity.status(HttpStatus.CREATED).body(map(

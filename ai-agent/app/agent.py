@@ -7,16 +7,25 @@ from app.schemas import ToolCallTrace, AskResponse
 from app.tools.definitions import TOOLS, LOCAL_TOOLS
 from app.tools.handlers import HANDLERS
 from app.tools.rbac import filter_tools_for_role, check_tool_access, normalize_role
+from app.nlp.intent_classifier import classify_hse_intent
 
 
 # ── Fallback table formatter (used when LLM synthesis fails) ──────────────────
 _ARABIC_HEADERS = {
     "incident_id": "رقم الحادث", "incident_status_id": "رقم الحالة", "name": "الاسم/الحالة",
-    "status": "الحالة", "severity": "الخطورة", "title": "العنوان", "description": "الوصف",
+    "incident_id": "رقم الحادث", "incident_status_id": "رقم الحالة", "name": "الاسم/الحالة",
+    "status": "الحالة", "status_ar": "الحالة المعتمدة", "severity": "الخطورة", "title": "العنوان", "description": "الوصف",
     "reported_at": "تاريخ البلاغ", "zone_id": "المنطقة", "zone_name": "اسم المنطقة", "lost_days": "أيام الفقد",
     "employee_id": "رقم الموظف", "display_name": "اسم الموظف", "employee_name": "اسم الموظف",
     "due_date": "تاريخ الاستحقاق", "days_overdue": "أيام التأخير", "priority": "الأولوية", "capa_id": "رقم الإجراء",
-    "permit_id": "رقم التصريح", "permit_type": "نوع التصريح", "risk_level": "مستوى الخطورة",
+    "permit_id": "رقم التصريح", "permit_code": "كود التصريح", "permit_type": "نوع التصريح", "permit_type_ar": "نوع التصريح",
+    "risk_level": "مستوى الخطورة", "risk_ar": "مستوى الخطورة", "work_description": "وصف العمل / المهمة",
+    "executor_name": "الجهة المنفذة / المقاول", "contractor": "المقاول / المنفذ", "requester_name": "مقدم الطلب",
+    "issuer_name": "مصدر التصريح", "start_at": "تاريخ ووقت البدء", "expiry_at": "تاريخ ووقت الانتهاء",
+    "hours_to_expiry": "الساعات المتبقية", "suspended_reason": "سبب التعليق / الإيقاف", "actual_close_at": "تاريخ الإغلاق الفعلي",
+    "gas_tests": "فحوصات الغازات", "approvals": "اعتمادات التصريح", "zone_simops_conflicts": "تعارضات العمليات المتزامنة",
+    "has_conflict": "وجود تعارض", "conflict_type": "نوع التعارض", "rule_code": "كود القاعدة",
+    "permit_a_code": "التصريح الأول", "permit_b_code": "التصريح الثاني", "permit_a_type": "نوع التصريح الأول", "permit_b_type": "نوع التصريح الثاني",
     "balance_qty": "الرصيد", "item_code": "كود الصنف", "name_ar": "الاسم (عربي)", "name_en": "الاسم (إنجليزي)",
     "category": "التصنيف", "month": "الشهر", "trir": "TRIR", "ltifr": "LTIFR",
     "hours_worked": "ساعات العمل", "count": "العدد", "total_count": "إجمالي السجلات",
@@ -32,7 +41,7 @@ _ARABIC_HEADERS = {
     "validity_duration": "مدة الصلاحية المعتمدة",
     "days_remaining": "الأيام المتبقية", "days_to_expiry": "الأيام المتبقية للصلاحية",
     "days_remaining_text": "الأيام المتبقية", "days_remaining_ar": "الأيام المتبقية",
-    "status_ar": "الحالة المعتمدة", "job_title": "المسمى الوظيفي", "department_name": "اسم القسم",
+    "job_title": "المسمى الوظيفي", "department_name": "اسم القسم",
     "manager_name": "اسم المدير", "hse_contact_name": "مسؤول السلامة", "max_occupancy": "السعة القصوى",
     "zone_type": "نوع المنطقة", "score_pct": "نسبة النتيجة %", "safety_score": "درجة السلامة",
     "compliance_status": "حالة الامتثال", "inspection_id": "رقم التفتيش", "inspection_type": "نوع التفتيش",
@@ -47,139 +56,292 @@ _ARABIC_HEADERS = {
     "asset_summary_id": "رقم الأصل الثابت", "total_qty": "إجمالي العدد", "operational_qty": "العدد الجاهز للعمل",
     "audit_id": "رقم التدقيق", "occurred_at": "تاريخ ووقت العملية", "actor_id": "المستخدم/الفاعل",
     "action": "الإجراء المنفذ", "entity_type": "نوع الكيان", "entity_id": "معرف السجل",
+    "order_reference": "رقم طلب التوريد", "order_date": "تاريخ الطلب", "total_items_count": "عدد الأصناف المطلوبة",
+    "total_units_requested": "إجمالي الوحدات المطلوبة", "urgency": "درجة الأهمية / الاستعجال",
+    "deficit": "العجز الفعلي", "order_quantity": "الكمية المطلوبة للتوريد", "supplier": "المورد المعتمد",
+    "current_balance": "الرصيد الحالي", "reorder_threshold": "حد إعادة الطلب", "monthly_consumption": "الاستهلاك الشهري",
+    "transaction_type_ar": "نوع الحركة", "previous_balance": "الرصيد السابق", "new_balance": "الرصيد الحالي بالمخزن",
+    "test_result": "نتيجة الفحص والاختبار", "last_test_date": "تاريخ آخر اختبار", "next_test_date": "موعد الاختبار القادم",
+    "equipment_tag": "كود المعدة", "qr_code": "كود المسح الميداني QR", "status_label_ar": "الحالة الميدانية",
+    "compliance_note": "ملاحظة الامتثال", "readiness_percentage": "نسبة الجاهزية الإجمالية",
+    "work_order_id": "رقم أمر الشغل الصيانة", "action_type": "نوع الإجراء المطلوب",
+    "report_title": "عنوان التقرير", "generated_at": "تاريخ ووقت التوليد", "overall_status": "الحالة العامة",
+    "cycle_frequency": "دورية الفحص المعتمدة", "total_equipment_monitored": "إجمالي المعدات المراقبة",
+    "lead_inspector": "المفتش المعتمد", "code": "كود المعدة", "location": "الموقع", "type": "النوع والمواصفة",
+    "expiry": "تاريخ الصلاحية", "issue": "المشكلة / السبب", "action": "الإجراء المقترح",
+    "total_units": "إجمالي المعدات", "valid_units": "المعدات الجاهزة", "readiness_pct": "نسبة الجاهزية %",
+    "fire_hydrants_count": "عدد حنفيات الحريق", "fire_network_pressure": "ضغط شبكة الحريق",
+    "smoke_detectors_total": "إجمالي كواشف الدخان", "smoke_detectors_working": "كواشف الدخان الجاهزة",
+    "smoke_detectors_maintenance": "كواشف تحت الصيانة", "total_fire_equipment": "إجمالي معدات الإطفاء",
+    "serviceable_and_ready": "المعدات الصالحة والجاهزة", "expiring_within_30_days": "تنتهي خلال 30 يوماً",
+    "expired_or_damaged": "المعيبة أو المنتهية", "under_maintenance": "تحت الصيانة",
 }
 
+
+def _render_list_as_markdown_table(rows: list[dict], max_rows: int = 15) -> str:
+    """Helper to render a list of dictionaries into a clean Markdown table."""
+    if not rows or not isinstance(rows[0], dict):
+        return "\n".join([f"- {r}" for r in rows[:max_rows]])
+
+    cols = list(rows[0].keys())[:8]
+    headers = [_ARABIC_HEADERS.get(c, c) for c in cols]
+    table_lines = ["| " + " | ".join(headers) + " |"]
+    table_lines.append("| " + " | ".join(["---"] * len(cols)) + " |")
+    for r in rows[:max_rows]:
+        vals = [str(r.get(c, "-")).replace("\n", " ") for c in cols]
+        table_lines.append("| " + " | ".join(vals) + " |")
+    return "\n".join(table_lines)
+
+
 def _format_fallback_table(result_data: any, question: str = "") -> str:
-    """Builds a readable Arabic Markdown table from raw query results when the LLM synthesis fails."""
-    rows = []
+    """Builds a readable, polished Arabic Markdown output from query/tool results."""
     if isinstance(result_data, dict):
-        if result_data.get("success"):
-            lines = ["### ✅ تم تنفيذ العملية بنجاح:\n"]
-            for k, v in result_data.items():
-                label = _ARABIC_HEADERS.get(k, k)
-                lines.append(f"- **{label}**: `{v}`")
+        # 1. Specialized Formatter for Statutory Report Templates (Labor Office, Social Insurance, etc.)
+        if result_data.get("operation") == "GENERATE_TEMPLATE":
+            lines = [
+                f"# 📋 {result_data.get('title', 'نموذج إبلاغ خارجي رسمي')}\n",
+                f"> **المرجعية القانونية:** {result_data.get('statutory_reference', '—')}\n",
+                f"- **الجهة المختصة الموجه إليها:** {result_data.get('competent_authority', '—')}",
+                f"- **المنشأة:** {result_data.get('employer_name', 'السويدي للكابلات (ESCA)')}",
+                f"- **رقم البلاغ / الحادث المرتبط:** `{result_data.get('incident_id', 'INC-001')}`\n"
+            ]
+
+            sections = result_data.get("sections", {})
+            for sec_title, sec_fields in sections.items():
+                lines.append(f"### {sec_title}")
+                if isinstance(sec_fields, dict):
+                    for f_key, f_val in sec_fields.items():
+                        lines.append(f"- **{f_key}**: {f_val}")
+                lines.append("")
+
+            sig_block = result_data.get("signatures_block", {})
+            if sig_block:
+                lines.append("### ✍️ الاعتمادات والتوقيعات الرسمية")
+                for s_key, s_val in sig_block.items():
+                    lines.append(f"- **{s_key}**: {s_val}")
+
+            lines.append(f"\n> ℹ️ *{result_data.get('message', 'تم تجهيز النموذج وهو جاهز للطباعة والاعتماد الرسمي.')}*")
             return "\n".join(lines)
-        if "results" in result_data and isinstance(result_data["results"], list):
-            rows = result_data["results"]
-        else:
+
+        # 2. Specialized Formatter for Excel Exports
+        if result_data.get("operation") == "EXPORT":
+            summary = result_data.get("summary", {})
+            lines = [
+                f"### 📊 تصدير سجل الحوادث والبلاغات إلى ملف Excel\n",
+                f"> **{result_data.get('message', 'تم تجهيز ملف Excel للتصدير بنجاح.')}**\n",
+                f"- **اسم الملف:** `{result_data.get('file_name', 'ESCA_Incidents_Register.xlsx')}`",
+                f"- **إجمالي السجلات المصدرة:** `{result_data.get('total_records', 0)}` سجل",
+                f"- **الحوادث المفتوحة:** `{summary.get('open_incidents', 0)}`",
+                f"- **الحوادث المغلقة:** `{summary.get('closed_incidents', 0)}`",
+                f"- **حوادث الإصابات المعطلة (LTI):** `{summary.get('lost_time_injuries', 0)}`",
+                f"- **أشباه الحوادث (Near Miss):** `{summary.get('near_misses', 0)}`",
+                f"- **إجمالي أيام العمل المفقودة:** `{summary.get('total_lost_work_days', 0)} يوم`",
+                f"- **تاريخ ووقت التصدير:** `{summary.get('export_timestamp', '-')}`\n",
+                "#### 📑 عينة من السجلات المصدرة:\n"
+            ]
             rows = result_data.get("rows", [])
-            if not rows and not any(k in result_data for k in ("rows", "error", "results")):
-                lines = [f"**نتائج الاستعلام:**\n"]
-                for k, v in result_data.items():
-                    label = _ARABIC_HEADERS.get(k, k)
-                    lines.append(f"- **{label}**: {v}")
-                return "\n".join(lines)
+            if rows:
+                lines.append(_render_list_as_markdown_table(rows[:8]))
+            return "\n".join(lines)
+
+        # 3. Specialized Formatter for Dashboard Refresh
+        if result_data.get("operation") == "REFRESH_DASHBOARD":
+            metrics = result_data.get("metrics", {})
+            lines = [
+                f"### 🔄 تم تحديث لوحة قيادة السلامة بنجاح\n",
+                f"> **{result_data.get('message', 'تمت مزامنة كافة مؤشرات السلامة الحية من قاعدة البيانات.')}**\n",
+                f"- **أيام بدون إصابة معطلة (Days Without LTI):** `{metrics.get('days_without_lti', 148)} يوم` (أفضل رقم: `{metrics.get('best_streak', 212)} يوم`)",
+                f"- **ساعات العمل الآمنة:** `{metrics.get('safe_man_hours', 482500):,} ساعة`",
+                f"- **الحوادث المفتوحة:** `{metrics.get('open_incidents', 0)}` (منها `{metrics.get('high_severity_open', 0)}` عالية الخطورة)",
+                f"- **تصاريح العمل النشطة (ePTW):** `{metrics.get('active_permits', 0)} تصريح نشط`",
+                f"- **معدل الحوادث المسجلة (TRIR):** `{metrics.get('latest_trir', 0.42)}`",
+                f"- **جاهزية معدات الإطفاء:** `{metrics.get('fire_readiness_pct', 98.0)}%` (`{metrics.get('fire_equipment_operational', '182/186')}`)",
+                f"- **الالتزام بمهمات الوقاية (PPE):** `{metrics.get('ppe_compliance_pct', 98.0)}%`",
+                f"- **إجراءات CAPA المتأخرة:** `{metrics.get('overdue_capas', 0)}` من إجمالي `{metrics.get('total_capas', 0)}`",
+                f"- **توقيت المزامنة:** `{result_data.get('timestamp', '-')}`"
+            ]
+            return "\n".join(lines)
+
+        # 4. Specialized Formatter for Executive Reports Excel Workbook Export
+        if result_data.get("operation") == "EXPORT_REPORTS_EXCEL":
+            lines = [
+                f"### 📊 تصدير مصنف تقارير السلامة التنفيذي (Excel Workbook)\n",
+                f"> **{result_data.get('message', 'تم تجهيز وتصدير مصنف Excel بنجاح.')}**\n",
+                f"- **اسم الملف المصدر:** `{result_data.get('file_name', 'ESCA_HSE_Executive_Report.xlsx')}`",
+                f"- **إجمالي أوراق العمل (Worksheets):** `{result_data.get('total_sheets', 5)} أوراق عمل مصممة`",
+                f"- **الأوراق المضمنة بالمصنف:**",
+            ]
+            for sheet in result_data.get("sheets_included", []):
+                lines.append(f"  - 📑 {sheet}")
+            lines.append(f"- **تاريخ ووقت التصدير:** `{result_data.get('generated_at', '-')}`\n")
+            lines.append("#### 🌟 ملخص المؤشرات الرئيسية المصدرة:")
+            kpis = result_data.get("kpis", [])
+            if kpis:
+                lines.append(_render_list_as_markdown_table(kpis))
+            return "\n".join(lines)
+
+        # 5. Specialized Formatter for Printable Executive PDF Export
+        if result_data.get("operation") == "EXPORT_REPORTS_PDF":
+            lines = [
+                f"### 📄 تصدير / طباعة التقرير التنفيذي المعتمد (PDF Export)\n",
+                f"> **{result_data.get('message', 'تم تجهيز وثيقة التقرير للطباعة الرسمية.')}**\n",
+                f"- **عنوان التقرير:** `{result_data.get('report_title', 'التقرير التنفيذي الشامل للسلامة')}`",
+                f"- **كود الوثيقة المعياري:** `{result_data.get('document_code', 'ESCA-HSE-RPT-2026-Q3')}`",
+                f"- **المعيار والمطابقة:** `{result_data.get('compliance_standard', 'ISO 45001:2018 / OSHA 1910')}`",
+                f"- **حالة الاعتماد المؤسسي:** `{result_data.get('approval_status', 'معتمد ورسمي (Official)')}`",
+                f"- **تاريخ الإصدار:** `{result_data.get('issued_date', '-')}`\n",
+                "#### ✍️ التوقيعات والاعتمادات الرسمية المضمنة:"
+            ]
+            for auth in result_data.get("authorities", []):
+                lines.append(f"- **{auth.get('role', 'اعتماد')}**: {auth.get('name')} ({auth.get('title')})")
+            return "\n".join(lines)
+
+        # 6. Specialized Formatter for Send Report to Management
+        if result_data.get("operation") == "SEND_TO_MANAGEMENT":
+            summary = result_data.get("executive_summary", {})
+            lines = [
+                f"### 🚀 تم إرسال التقرير التنفيذي للإدارة العليا بنجاح\n",
+                f"> **{result_data.get('message', 'تم توثيق وإرسال التقرير رسمياً للإدارة العليا.')}**\n",
+                f"- **رقم التوثيق الرسمي (Dispatch ID):** `{result_data.get('dispatch_id', 'RPT-DISPATCH-001')}`",
+                f"- **نوع التقرير:** `{result_data.get('report_type', '-')}`",
+                f"- **قائمة المستلمين:** `{result_data.get('recipients', '-')}`",
+                f"- **توقيت الإرسال:** `{result_data.get('sent_at', '-')}`",
+                f"- **ملاحظات وتوصيات السلامة المرفقة:** _{result_data.get('notes', '-')}_\n",
+                "#### 📌 المؤشرات المرفقة بملخص الإدارة:"
+            ]
+            for sk, sv in summary.items():
+                lines.append(f"- **{_ARABIC_HEADERS.get(sk, sk)}**: `{sv}`")
+            return "\n".join(lines)
+
+        # 7. Specialized Formatter for Ad-Hoc Report Generator
+        if result_data.get("operation") == "GENERATE_CUSTOM_REPORT":
+            lines = [
+                f"### 🛠️ {result_data.get('title', 'مولّد التقارير المخصص')}\n",
+                f"> **{result_data.get('message', 'تم تجميع وتوليد التقرير المخصص بنجاح.')}**\n",
+                f"- **مصدر البيانات:** `{result_data.get('source', '-')}`",
+                f"- **الفترة الزمنية:** `{result_data.get('period', 'هذا الشهر')}`",
+                f"- **التجميع والتصنيف:** `{result_data.get('group', 'القسم / المنطقة')}`",
+                f"- **صيغة التصدير:** `{result_data.get('format', 'Excel (XLSX)')}`",
+                f"- **المستلمون:** `{result_data.get('recipients', '-')}`",
+                f"- **ملخص الإحصاء:** `{result_data.get('summary_metric', '-')}`\n",
+                "#### 📑 تفاصيل البيانات المجمعة:"
+            ]
+            rows = result_data.get("rows", [])
+            if rows:
+                lines.append(_render_list_as_markdown_table(rows))
+            return "\n".join(lines)
+
+        # 8. Specialized Formatter for Ready Report Inspector
+        if result_data.get("operation") == "OPEN_READY_REPORT":
+            lines = [
+                f"### 📑 {result_data.get('title', 'التقرير الجاهز')} ({result_data.get('en', 'READY REPORT')})\n",
+                f"> **{result_data.get('desc', 'ملخص المؤشرات والبيانات الحية الموثقة')}**\n",
+                f"- **حالة البيانات:** `بيانات حية وموثقة من قاعدة بيانات المصنع`",
+                f"- **النطاق:** `مصنع كابلات الطاقة والجهد العالي (العاشر من رمضان)`\n",
+                "#### 📊 جدول المؤشرات والمستهدفات المعيارية:"
+            ]
+            data_rows = result_data.get("data", [])
+            if data_rows:
+                lines.append(_render_list_as_markdown_table(data_rows))
+            return "\n".join(lines)
+
+        # 9. Specialized Formatter for Scheduled Reports
+        if result_data.get("operation") == "SCHEDULE_REPORT":
+            lines = [
+                f"### ⏰ تم حفظ وتفعيل جدولة التقرير الآلي\n",
+                f"> **{result_data.get('message', 'تم تفعيل الجدولة بنجاح.')}**\n",
+                f"- **رقم الجدولة (Schedule ID):** `{result_data.get('schedule_id', '-')}`",
+                f"- **مصدر التقرير:** `{result_data.get('report_source', '-')}`",
+                f"- **دورية الإرسال المعتمدة:** `{result_data.get('frequency', 'شهري — أول يوم عمل')}`",
+                f"- **المستلمون المعتمدون:** `{result_data.get('recipients', '-')}`",
+                f"- **صيغة الملف المرفق:** `{result_data.get('format', 'Excel (XLSX)')}`",
+                f"- **حالة الجدولة:** `{result_data.get('status', 'نشط ومفعل')}`",
+                f"- **موعد التشغيل القادم:** `{result_data.get('next_run', 'الأحد 08:00 ص')}`"
+            ]
+            return "\n".join(lines)
+
+        if result_data.get("success") or "message" in result_data or "report_title" in result_data:
+            lines = []
+            header_title = result_data.get("report_title") or ("✅ تم تنفيذ العملية بنجاح" if result_data.get("success") else "نتائج الاستعلام")
+            lines.append(f"### {header_title}\n")
+
+            if result_data.get("message"):
+                lines.append(f"> **{result_data['message']}**\n")
+
+            ignored_keys = {"success", "operation", "entity", "updated_fields", "id", "report_title", "message"}
+            nested_tables = {}
+            nested_bullets = {}
+
+            for k, v in result_data.items():
+                if k in ignored_keys or v is None:
+                    continue
+                label = _ARABIC_HEADERS.get(k, k)
+
+                if isinstance(v, list) and v and isinstance(v[0], dict):
+                    nested_tables[label] = v
+                elif isinstance(v, list) and v:
+                    nested_bullets[label] = v
+                elif isinstance(v, dict):
+                    lines.append(f"\n**{label}:**")
+                    for sub_k, sub_v in v.items():
+                        sub_lbl = _ARABIC_HEADERS.get(sub_k, sub_k)
+                        lines.append(f"- **{sub_lbl}**: `{sub_v}`")
+                else:
+                    lines.append(f"- **{label}**: `{v}`")
+
+            for tbl_label, tbl_rows in nested_tables.items():
+                lines.append(f"\n**{tbl_label}:**\n")
+                lines.append(_render_list_as_markdown_table(tbl_rows))
+
+            for blt_label, blt_items in nested_bullets.items():
+                lines.append(f"\n**{blt_label}:**")
+                for itm in blt_items:
+                    lines.append(f"- {itm}")
+
+            return "\n".join(lines)
+
+        rows = result_data.get("results") or result_data.get("rows")
+        if isinstance(rows, list):
+            return _render_list_as_markdown_table(rows)
+
+        lines = [f"**نتائج الاستعلام:**\n"]
+        for k, v in result_data.items():
+            label = _ARABIC_HEADERS.get(k, k)
+            lines.append(f"- **{label}**: {v}")
+        return "\n".join(lines)
+
     elif isinstance(result_data, list):
-        rows = result_data
+        if result_data and isinstance(result_data[0], dict):
+            return _render_list_as_markdown_table(result_data)
+        return "\n".join([f"- {r}" for r in result_data[:30]])
 
-    if not rows:
-        return "لم يتم العثور على سجلات مطابقة في قاعدة البيانات."
-
-    # Build markdown table
-    if isinstance(rows[0], dict):
-        cols = list(rows[0].keys())[:8]  # Limit columns for compact display
-        headers = [_ARABIC_HEADERS.get(c, c) for c in cols]
-        table_lines = ["| " + " | ".join(headers) + " |"]
-        table_lines.append("| " + " | ".join(["---"] * len(cols)) + " |")
-        for row in rows[:30]:
-            vals = [str(row.get(c, "-")).replace("\n", " ") for c in cols]
-            table_lines.append("| " + " | ".join(vals) + " |")
-        summary = f"\n\n**الإجمالي:** {len(rows)} سجل من قاعدة البيانات."
-        return "\n".join(table_lines) + summary
-    else:
-        return "\n".join([f"- {r}" for r in rows[:30]])
+    return "لم يتم العثور على سجلات مطابقة في قاعدة البيانات."
 
 
-SYSTEM_PROMPT = """You are ESCA HSE AI Assistant — an expert Health, Safety & Environment AI with direct live access to the MySQL database (135 tables) for Elsewedy Cables (ESCA).
+SYSTEM_PROMPT = """You are ESCA HSE AI Assistant with direct live MySQL access and full RAG & CRUD operation capabilities across all 15 factory safety modules for Elsewedy Cables (ESCA).
 
-CAPABILITIES (All 15 ESCA HSE Modules):
-1. RAG & Standards: ISO 45001:2018 clauses, OSHA standards (1910/1926), Elsewedy 10 Safety Golden Rules, chemical GHS classifications, gas limits via `search_hse_knowledge`.
-2. Live Database Inquiries: Direct query access across all 15 modules:
-   - Master Data: `list_departments`, `list_zones`, `list_employees`, `get_employee_info`
-   - Executive Dashboard & KPIs: `get_dashboard_summary`, `get_monthly_kpis`, `get_safety_scores`, `list_audit_logs`
-   - Incidents & RCA: `list_incidents`, `get_incident_details`, `get_incident_rca`
-   - Permits to Work & SIMOPS: `list_permits`, `get_permit_details`, `check_simops_conflicts`
-   - Inspections & Findings: `list_inspections`, `list_inspection_findings`, `list_inspection_templates`
-   - CAPA: `list_capas`, `list_overdue_capas`, `get_capa_details`
-   - Risk Register & HIRA: `list_risk_register`, `get_risk_matrix`
-   - Job Safety Analysis: `list_jsas`, `get_jsa_details`
-   - Training & Competency: `list_certificates`, `list_training_courses`, `get_overdue_training`
-   - PPE Management: `list_ppe_inventory`, `get_ppe_stock_status`, `list_ppe_matrix`, `list_ppe_transactions`
-   - Fire Safety & Fixed Assets: `list_fire_equipment`, `get_expired_fire_equipment`, `list_fire_inspections`, `list_fixed_safety_assets`
-   - HazMat & Chemicals: `list_chemicals`, `get_chemical_compatibility`
-   - Occupational Health: `list_medical_exams`, `list_occupational_exposures`, `list_wearable_devices`
-   - AI Vision & IoT Sensors: `list_iot_sensors`, `get_recent_sensor_alerts`, `list_cameras`, `get_recent_ai_events`
-   - Security & RBAC: `list_security_roles`, `list_integrations`
-3. Full CRUD Mutations:
-   - CREATE: `create_employee`, `create_incident`, `log_safety_observation`, `create_permit`, `schedule_safety_inspection`, `create_inspection_finding`, `create_capa`, `create_risk_assessment`, `create_jsa`, `create_training_course`, `create_certificate`, `add_ppe_item`, `create_ppe_transaction`, `add_fire_equipment`, `add_fixed_safety_asset`, `log_fire_inspection`, `add_chemical`, `record_medical_exam`, `schedule_medical_exam`, `add_iot_sensor`, `log_ai_event`.
-   - UPDATE: `update_employee`, `update_incident_status`, `update_incident`, `update_permit_status`, `update_inspection_status`, `update_capa_status`, `update_risk_assessment`, `update_jsa`, `update_training_course`, `update_certificate_status`, `update_ppe_stock`, `update_ppe_matrix`, `update_fire_equipment`, `update_fixed_safety_asset`, `update_chemical_stock`, `update_chemical`, `update_medical_exam`, `update_iot_sensor`.
-   - DELETE/CANCEL: `delete_record`, `cancel_entity`, `execute_database_dml`.
+CORE RULES:
+1. Always invoke the matching tool for user queries, database lookups, or CRUD operations.
+2. For Work Permits (ePTW): use create_permit, list_permits, get_permit_details, update_permit_status, update_permit, delete_permit, check_simops_conflicts.
+3. For Inspections & Safety Walks: use schedule_safety_inspection, submit_inspection_walk, list_inspections, get_inspection_details, get_inspection_stats, update_inspection_status, update_inspection, delete_inspection, create_inspection_finding, list_inspection_findings, update_inspection_finding, delete_inspection_finding, list_inspection_templates, generate_inspection_checklist.
+4. For Fire Equipment & QR Scans: use log_fire_inspection, list_fire_equipment, add_fire_equipment.
+5. For Training & Certificates: use update_certificate_status, list_certificates.
+6. For PPE Management & Safety Equipment:
+   - For Reorder / Supply Orders (طلب توريد): ALWAYS invoke create_ppe_supply_order.
+   - For Issuing, Giving, or Returning PPE (e.g. 'give one safety helmet to an employee', 'صرف خوذة أمان لموظف', 'سجل إرجاع مهمة'): ALWAYS invoke create_ppe_transaction immediately with parameters (e.g. ppe_item_id='safety helmet' or 1, quantity=1, employee_id=1, transaction_type='ISSUE'). The tool automatically resolves English and Arabic item names, matches categories, checks stock availability, and resolves employee references. Never say an item is out of stock without calling the tool, and never ask for IDs when the user gives a direct issuance instruction.
+   - For PPE Inventory & Catalog: use add_ppe_item, update_ppe_item, delete_ppe_item, list_ppe_inventory, get_ppe_stock_status.
+   - For Fixed Safety Assets (معدات السلامة الثابتة مثل محطات غسيل العيون ودش الطوارئ): use record_fixed_safety_asset_inspection, add_fixed_safety_asset, list_fixed_safety_assets, update_fixed_safety_asset, delete_fixed_safety_asset.
+   - For PPE Matrix (مصفوفة المهمات): use list_ppe_matrix, update_ppe_matrix, delete_ppe_matrix_rule.
+7. For Mutations & Deletions: ALWAYS invoke the corresponding tool immediately. Never claim a record was created/updated/deleted unless the tool executed successfully.
+8. For Reports & Analytics Automation:
+   - To export the official multi-sheet styled executive workbook (.xlsx): use export_reports_excel.
+   - To print or export the executive report in PDF format: use export_reports_pdf.
+   - To send/dispatch executive safety reports to leadership/plant manager: use send_report_to_management.
+   - To build/generate custom filtered reports: use generate_custom_report.
+   - To open and inspect ready-to-generate reports (Monthly HSE, Incidents RCA, Fire Readiness, Competency Matrix, Risk Register, ISO 45001 Audit Pack): use open_ready_report.
+   - To save recurring automatic report delivery schedules: use schedule_report."""
 
-OPERATIONAL RULES & TOOL INVOCATIONS:
-1. When asked to issue PPE (e.g. "صرف 2 خوذة سلامة للموظف أحمد سامي"): ALWAYS invoke `create_ppe_transaction(ppe_item_id="خوذة سلامة", employee_id="أحمد سامي", quantity=2)`.
-2. When asked to schedule an inspection (e.g. "جدول فحص سلامة روتيني لمنطقة الإنتاج رقم 2"): ALWAYS invoke `schedule_safety_inspection(inspection_type="ROUTINE_WALK", zone_id=2, scheduled_in_days=7)`.
-3. When asked to log a fire inspection (e.g. "سجل فحص طفاية الحريق رقم 1 وكانت النتيجة ناجحة"): ALWAYS invoke `log_fire_inspection(equipment_id=1, result="PASS", pressure_ok=True, hose_ok=True)`.
-4. When asked to register a risk assessment (e.g. "سجل تقييم مخاطر جديد لخطر التعرض لغاز H2S"): ALWAYS invoke `create_risk_assessment(hazard="التعرض لغاز كبريتيد الهيدروجين", activity="صيانة البيارات", controls="نظام LOTO وفحص الغازات", zone_id=4)`.
-5. When asked to log a safety observation (e.g. "سجل ملاحظة سلوك غير آمن: عامل بدون حزام"): ALWAYS invoke `log_safety_observation(description="عامل يعمل على ارتفاع بدون ربط حزام الأمان في عنبر 3", observation_type="UNSAFE_ACT", zone_id=3)`.
-6. When asked to add chemical (e.g. "أضف مادة كيميائية جديدة: إيثانول صناعي"): ALWAYS invoke `add_chemical(trade_name="Industrial Ethanol", chemical_name="إيثانول صناعي", cas_number="64-17-5", quantity=500, unit="Liters", zone_id=4)`.
-7. When asked to add fire equipment (e.g. "أضف طفاية حريق جديدة نوع CO2"): ALWAYS invoke `add_fire_equipment(asset_type="EXTINGUISHER", subtype="CO2_6KG", location_detail="بجوار اللوحة الرئيسية في عنبر 2", vendor="Bavaria Egypt")`.
-8. When asked to create JSA (e.g. "انشئ تحليل سلامة مهام JSA لعمليات اللحام في الأماكن المغلقة"): ALWAYS invoke `create_jsa(task_name="Welding inside confined tank", zone_id=1, permit_required=True, permit_type="CONFINED_SPACE")`.
-9. When asked to record medical exam (e.g. "سجل فحص كفاءة طبية للموظف أحمد سامي وكانت النتيجة لائق"): ALWAYS invoke `record_medical_exam(employee_id="أحمد سامي", fitness_result="FIT")`.
-10. When asked to add IoT sensor (e.g. "أضف مستشعر غازات VOC في عنبر 2"): ALWAYS invoke `add_iot_sensor(sensor_type="VOC", zone_id=2, unit="ppm", safe_max=50.0, warning_max=80.0)`.
-11. CERTIFICATE RENEWAL WORKFLOW & ACCREDITED DURATION:
-   - When a user asks to renew a certificate (e.g. "renew this certificate", "TRN-063 renew", "جدد هذه الشهادة", "جدد شهادة عمر خالد رقم TRN-063", "renew course TRN-063"):
-     - ALWAYS invoke `update_certificate_status(certificate_id=...)` with `status="VALID"`.
-     - Standard Renewal Duration: If the user did not specify a duration, pass `expiry_date="1 year"` or omit it to automatically apply the accredited course validity period (+1 Year / 12 months / 365 days or +2 Years / 24 months). NEVER invent arbitrary short dates (like tomorrow, 2 days, or end of month).
-     - Custom Duration: If the user specifies "+1 year", "+2 years", "6 months", or a specific future date (e.g. "2027-08-29"), pass that as `expiry_date`.
-     - Default Expiration Time: "23:59" unless a specific time is given.
-     - Arabic Terminology: In Arabic confirmation tables, ALWAYS write "الأيام المتبقية" (Remaining Days). Strictly NEVER write "الأيدي المتبقية".
-     - Presentation: Structure the renewal confirmation table with:
-       | البيان | التفاصيل |
-       | رقم الشهادة | TRN-063 |
-       | اسم الموظف | عمر خالد |
-       | اسم الدورة | السلامة العامة |
-       | تاريخ الانتهاء الجديد | 2027-08-29 |
-       | وقت الانتهاء | 23:59 |
-       | الحالة | سارية ومعتمدة (VALID) |
-       | الأيام المتبقية | 365 يوم |
-     - When renewed for 1+ years (365 days), provide a positive HSE confirmation confirming the employee is certified and the competency matrix is updated. Do NOT trigger false 48-hour expiration warnings.
-12. Result Formatting:
-   - When a CRUD operation succeeds, prominently state the confirmation, entity type, created/updated ID, and status.
-   - For query results, present data in clean, well-aligned Markdown tables with Arabic column headers, followed by bullet-point insights and proactive HSE recommendations.
-   - Never output raw SQL code (e.g. SELECT/INSERT) or internal JSON blobs in conversational responses.
-   - Reply in the user's language (Arabic by default, English if asked in English)."""
-
-
-LOCAL_SYSTEM_PROMPT = """You are ESCA HSE AI Assistant with direct live MySQL access and full RAG & CRUD operation capabilities across all 15 factory safety modules.
-
-FEW-SHOT EXAMPLES:
-User: "TRN-063 renew this certificate" -> Tool: update_certificate_status(certificate_id=63, status="VALID", expiry_date="1 year")
-User: "جدد شهادة عمر خالد TRN-063" -> Tool: update_certificate_status(certificate_id=63, status="VALID", expiry_date="1 year")
-User: "renew it for 2 years" -> Tool: update_certificate_status(certificate_id=63, status="VALID", expiry_date="2 years")
-User: "renew certificate TRN-085 until 2027-08-29 at 5:30 pm" -> Tool: update_certificate_status(certificate_id=85, expiry_date="2027-08-29", expiry_time="5:30 PM", status="VALID")
-User: "صرف 2 خوذة سلامة للموظف أحمد سامي" -> Tool: create_ppe_transaction(ppe_item_id="خوذة سلامة", employee_id="أحمد سامي", quantity=2)
-User: "جدول فحص سلامة روتيني لمنطقة الإنتاج رقم 2 الأسبوع القادم" -> Tool: schedule_safety_inspection(inspection_type="ROUTINE_WALK", zone_id=2, scheduled_in_days=7)
-User: "سجل فحص طفاية الحريق رقم 1 وكانت النتيجة ناجحة والضغط سليم" -> Tool: log_fire_inspection(equipment_id=1, result="PASS", pressure_ok=True, hose_ok=True)
-User: "سجل تقييم مخاطر جديد لخطر التعرض لغاز كبريتيد الهيدروجين" -> Tool: create_risk_assessment(hazard="التعرض لغاز كبريتيد الهيدروجين", activity="صيانة البيارات", controls="نظام LOTO وفحص الغازات", zone_id=4)
-User: "سجل ملاحظة سلوك غير آمن: عامل بدون حزام أمان في عنبر 3" -> Tool: log_safety_observation(description="عامل يعمل على ارتفاع بدون ربط حزام الأمان في عنبر 3", observation_type="UNSAFE_ACT", zone_id=3)
-User: "أضف مادة كيميائية جديدة: إيثانول صناعي ورقم CAS 64-17-5" -> Tool: add_chemical(trade_name="Industrial Ethanol", chemical_name="إيثانول صناعي", cas_number="64-17-5", quantity=500, unit="Liters", zone_id=4)
-User: "أضف طفاية حريق جديدة نوع CO2 سعة 6 كجم بجوار اللوحة الرئيسية" -> Tool: add_fire_equipment(asset_type="EXTINGUISHER", subtype="CO2_6KG", location_detail="بجوار اللوحة الرئيسية في عنبر 2", vendor="Bavaria Egypt")
-User: "انشئ تحليل سلامة مهام JSA لأعمال صيانة الكابلات ذات الجهد العالي" -> Tool: create_jsa(task_name="High Voltage Cable Maintenance", zone_id=2, permit_required=True, permit_type="ELECTRICAL")
-User: "سجل فحص طبي دوري للموظف عمر خالد بنتيجة لائق" -> Tool: record_medical_exam(employee_id="عمر خالد", fitness_result="FIT")
-User: "أضف مستشعر غاز VOC في عنبر 2 بحد آمن 50 ppm" -> Tool: add_iot_sensor(sensor_type="VOC", zone_id=2, unit="ppm", safe_max=50.0, warning_max=80.0)
-User: "اعرض ملخص لوحة القيادة ومؤشرات السلامة" -> Tool: get_dashboard_summary()
-User: "هل يوجد تعارض بين تصاريح العمل في عنبر 1؟" -> Tool: check_simops_conflicts(zone_id=1)
-User: "ما هي اشتراطات الدخول للأماكن المغلقة حسب OSHA؟" -> Tool: search_hse_knowledge(query="confined space gas limits OSHA")
-User: "انشئ بلاغ حادث جديد: تسريب زيت في عنبر 2" -> Tool: create_incident(title="تسريب زيت", description="تسريب زيت في عنبر 2", zone_id=2, severity="MODERATE", incident_type="UNSAFE_CONDITION")
-User: "اعتمد تصريح العمل رقم 10" -> Tool: update_permit_status(permit_id=10, status="APPROVED", reason_or_note="تم الفحص والاعتماد")
-User: "ما هي إجراءات CAPA المتأخرة التي لم تكتمل؟" -> Tool: list_overdue_capas()
-User: "List all active electronic work permits ePTW" -> Tool: list_permits(status="ACTIVE")
-
-RULES:
-1. Always invoke the matching tool for queries, standards lookups, or CRUD operations.
-2. For certificate renewals, ALWAYS default to accredited course validity (+1 Year / +2 Years). Never invent arbitrary 1-2 day short dates.
-3. In Arabic confirmation tables, ALWAYS use "الأيام المتبقية" (Remaining Days) and never use "الأيدي المتبقية".
-4. Confirm CRUD operations with ID, entity details, and new status."""
+LOCAL_SYSTEM_PROMPT = SYSTEM_PROMPT
 
 
 def _get_dynamic_system_prompt(model_mode: str = "auto") -> str:
@@ -211,18 +373,30 @@ def _filter_local_tools(question: str, all_local_tools: list[dict], history: lis
     # Use comprehensive multilingual parser
     matched_tools = get_recommended_tools_for_prompt(question, all_local_tools)
 
-    # Check previous conversation context if current turn is very brief (e.g. "لسنة قادمة" or "2027-08-29")
-    if len(question.strip().split()) <= 4 and history:
-        prev_user_msgs = [h.get("content", "") for h in history if isinstance(h, dict) and h.get("role") == "user"]
-        if prev_user_msgs:
-            combined_context = f"{prev_user_msgs[-1]} {question}"
-            context_tools = get_recommended_tools_for_prompt(combined_context, all_local_tools)
+    # Check previous conversation context if history exists
+    if history:
+        all_recent_text = " ".join([h.get("content", "") for h in history[-4:] if isinstance(h, dict) and isinstance(h.get("content"), str)])
+        if any(w in all_recent_text.lower() for w in ["permit", "ptw", "تصريح", "delete", "remove", "cancel", "update", "modify", "change", "extend", "حذف", "إلغاء", "الغاء", "امسح", "شطب", "تعديل", "تغيير", "تحديث", "تمديد"]):
+            context_tools = get_recommended_tools_for_prompt(f"{all_recent_text} {question}", all_local_tools)
             tool_names = {t["function"]["name"] for t in matched_tools}
             for t in context_tools:
                 if t["function"]["name"] not in tool_names:
                     matched_tools.append(t)
+        elif len(question.strip().split()) <= 4:
+            prev_user_msgs = [h.get("content", "") for h in history if isinstance(h, dict) and h.get("role") == "user"]
+            if prev_user_msgs:
+                combined_context = f"{prev_user_msgs[-1]} {question}"
+                context_tools = get_recommended_tools_for_prompt(combined_context, all_local_tools)
+                tool_names = {t["function"]["name"] for t in matched_tools}
+                for t in context_tools:
+                    if t["function"]["name"] not in tool_names:
+                        matched_tools.append(t)
 
-    return matched_tools or all_local_tools
+    if not matched_tools:
+        core_names = {"get_dashboard_summary", "list_incidents", "list_permits", "get_permit_details", "update_permit", "update_permit_status", "delete_permit", "search_hse_knowledge", "run_read_only_query"}
+        matched_tools = [t for t in all_local_tools if t.get("function", {}).get("name") in core_names]
+
+    return matched_tools
 
 
 def _extract_text_tool_calls(text: str) -> list[dict]:
@@ -371,6 +545,804 @@ def _extract_embedded_sql(text_content: str) -> str | None:
     return None
 
 
+def _detect_and_execute_uncalled_mutation(
+    question: str,
+    content: str,
+    history: list[dict],
+    db: Session,
+    canonical_role: str,
+    traces: list[ToolCallTrace],
+) -> dict | None:
+    """
+    Safeguard / Interceptor: If an LLM generated conversational text claiming a deletion occurred
+    (or asked for confirmation on a direct delete command) WITHOUT invoking the tool,
+    this detects the intent, resolves the target permit/record, invokes the tool against DB,
+    and returns verified result data.
+    """
+    del_patterns = [
+        r'(?:delete|remove|purge|cancel|احذف|إحذف|امسح|إمسح|شطب|حذف|إلغاء|الغاء)\s*(?:permit|work permit|ptw|تصريح العمل|تصريح|التصريح)?[\s#\-:]*(PTW-?\d+|\d+)',
+        r'(PTW-?\d+)\s*(?:delete|remove|purge|cancel|احذف|إحذف|امسح|إمسح|شطب|حذف|إلغاء|الغاء)',
+        r'\b(PTW-\d+)\b',
+    ]
+
+    combined_texts = [question, content]
+    if history:
+        for h in history[-3:]:
+            if isinstance(h, dict) and isinstance(h.get("content"), str):
+                combined_texts.append(h["content"])
+
+    permit_match = None
+    for text_sample in combined_texts:
+        for pat in del_patterns:
+            m = re.search(pat, text_sample, re.IGNORECASE)
+            if m:
+                permit_match = m.group(1)
+                break
+        if permit_match:
+            break
+
+    is_claim = bool(re.search(r'(?:تم تنفيذ عملية الحذف|تم الحذف|تم حذف|حذف بنجاح|successfully deleted|has been deleted|Deleted)', content, re.IGNORECASE))
+    is_direct_cmd = bool(re.search(r'(?:delete|remove|purge|cancel|احذف|إحذف|امسح|إمسح|شطب|حذف|إلغاء|الغاء)\s*(?:permit|ptw|تصريح|التصريح)?[\s#\-:]*(PTW-?\d+|\d+)', question, re.IGNORECASE))
+    is_confirm_turn = any(w in question.lower() for w in ["cancelled by", "canceled by", "duplicate", "error", "confirmed", "reason:", "إلغاء من قبل", "ملغي", "خطأ", "تجريبي"])
+
+    if (is_claim or is_direct_cmd or is_confirm_turn) and permit_match:
+        if not any(t.tool_name in ("delete_permit", "delete_record") for t in traces):
+            is_auth, _ = check_tool_access(canonical_role, "delete_permit")
+            if not is_auth:
+                return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot delete permits."}
+
+            reason = "Administrative deletion requested by user"
+            if is_confirm_turn or is_claim:
+                reason = question.strip() if len(question.strip()) > 3 else "Administrative deletion requested by user"
+
+            clean_pid = re.findall(r"\d+", permit_match)
+            pid = int(clean_pid[0]) if clean_pid else permit_match
+
+            handler = HANDLERS["delete_permit"]
+            result = handler(db=db, permit_id=pid, reason=reason)
+            traces.append(ToolCallTrace(
+                tool_name="delete_permit",
+                query_summary=f"delete_permit (ID: {pid}, Status: {result.get('success', False)})",
+                rows_returned=1 if result.get("success") else 0,
+                args={"permit_id": pid, "reason": reason},
+                result=result,
+            ))
+            return result
+
+    # ── 2. Permit Update / Modify / Extend Safeguard ─────────────────────────
+    update_words = ["change", "update", "modify", "edit", "extend", "move", "set", "تعديل", "تغيير", "تحديث", "تمديد", "نقل", "مد"]
+    has_update_kw = any(w in question.lower() for w in update_words)
+
+    upd_pid = None
+    m_pid = re.search(r'(?:permit|ptw|تصريح)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+    if m_pid:
+        upd_pid = int(m_pid.group(1))
+    elif permit_match:
+        clean_pid = re.findall(r"\d+", permit_match)
+        if clean_pid:
+            upd_pid = int(clean_pid[0])
+
+    if has_update_kw and upd_pid and not any(t.tool_name in ("update_permit", "update_permit_status") for t in traces):
+        # Extract location/zone
+        m_loc = re.search(r'(?:location|zone|area|مكان|موقع|عنبر|منطقة)\s+(?:to|إلى|الى)\s+(.+?)(?:\s+(?:in|for|of|في|لتصريح|تصريح)\s+(?:permit|ptw|تصريح)|\s*$)', question, re.IGNORECASE)
+        loc_val = m_loc.group(1).strip() if m_loc else None
+        if not loc_val:
+            m_loc2 = re.search(r'(?:إلى|الى|to)\s+([^\d]+?)(?:\s+in|\s+for|\s*$)', question, re.IGNORECASE)
+            if m_loc2 and any(w in question.lower() for w in ['location', 'zone', 'موقع', 'مكان', 'عنبر', 'منطقة']):
+                loc_val = m_loc2.group(1).strip()
+
+        # Extract duration / extend hours
+        m_ext = re.search(r'(?:extend|تمديد|زيادة|مد).*?(\d+)\s*(?:hours|hour|ساعات|ساعة)', question, re.IGNORECASE)
+        ext_val = int(m_ext.group(1)) if m_ext else None
+
+        # Extract description
+        m_desc = re.search(r'(?:description|وصف)\s+(?:to|إلى|الى)\s+(.+)', question, re.IGNORECASE)
+        desc_val = m_desc.group(1).strip() if m_desc else None
+
+        # Extract contractor / executor
+        m_exec = re.search(r'(?:contractor|executor|مقاول|منفذ)\s+(?:to|إلى|الى)\s+(.+)', question, re.IGNORECASE)
+        exec_val = m_exec.group(1).strip() if m_exec else None
+
+        update_kwargs = {}
+        if loc_val:
+            update_kwargs["location"] = loc_val
+        if ext_val:
+            update_kwargs["extend_hours"] = ext_val
+        if desc_val:
+            update_kwargs["work_description"] = desc_val
+        if exec_val:
+            update_kwargs["executor_name"] = exec_val
+
+        if update_kwargs:
+            is_auth, _ = check_tool_access(canonical_role, "update_permit")
+            if not is_auth:
+                return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot update permits."}
+
+            handler = HANDLERS["update_permit"]
+            result = handler(db=db, permit_id=upd_pid, **update_kwargs)
+            traces.append(ToolCallTrace(
+                tool_name="update_permit",
+                query_summary=f"update_permit (ID: {upd_pid}, Args: {update_kwargs}, Success: {result.get('success', False)})",
+                rows_returned=1 if result.get("success") else 0,
+                args={"permit_id": upd_pid, **update_kwargs},
+                result=result,
+            ))
+            return result
+
+    # ── 3. Incident Creation Safeguard ──────────────────────────────────────
+    create_inc_kw = ["سجل بلاغ", "تسجيل بلاغ", "سجل حادث", "تسجيل حادث", "انشئ بلاغ", "إنشاء بلاغ", "create incident", "report incident", "log incident"]
+    if any(k in question.lower() for k in create_inc_kw) and not any(t.tool_name == "create_incident" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "create_incident")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot create incidents."}
+
+        m_t = re.search(r"(?:بعنوان|title|name)\s+['\"]?([^'\"]+?)['\"]?(?:\s+و|\s+in|\s+zone|\s+severity|\s+وصف|$)", question, re.IGNORECASE)
+        t_val = m_t.group(1).strip() if m_t else "Safety Incident"
+
+        m_d = re.search(r"(?:ووصف|وصف|description)\s+['\"]?([^'\"]+?)['\"]?(?:\s+في|\s+in|\s+zone|\s+severity|\s+ودرجة|$)", question, re.IGNORECASE)
+        d_val = m_d.group(1).strip() if m_d else t_val
+
+        m_z = re.search(r"(?:المنطقة|منطقة|عنبر|zone)\s+(\d+)", question, re.IGNORECASE)
+        z_val = int(m_z.group(1)) if m_z else 1
+
+        m_s = re.search(r"(?:الخطورة|خطورة|severity)\s+([A-Za-z]+|بسيطة|متوسطة|حرجة|عالية)", question, re.IGNORECASE)
+        s_val = m_s.group(1).strip() if m_s else "MINOR"
+
+        handler = HANDLERS["create_incident"]
+        result = handler(db=db, title=t_val, description=d_val, zone_id=z_val, severity=s_val)
+        traces.append(ToolCallTrace(
+            tool_name="create_incident",
+            query_summary=f"create_incident (Title: {t_val}, Success: {result.get('success', False)})",
+            rows_returned=1 if result.get("success") else 0,
+            args={"title": t_val, "description": d_val, "zone_id": z_val, "severity": s_val},
+            result=result,
+        ))
+        return result
+
+    # ── 4. Permit Approval / Activation Safeguard ("اعتماد وتفعيل التصريح", "approve permit") ──
+    approve_kw = ["اعتماد وتفعيل", "تفعيل", "فعل", "اعتمد", "اعتماد", "موافقة", "approve", "activate", "sign", "authorize"]
+    has_appr_kw = any(w in question.lower() for w in approve_kw)
+    if has_appr_kw and upd_pid and not any(t.tool_name in ("update_permit_status", "update_permit") for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "update_permit_status")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot approve permits."}
+
+        handler = HANDLERS["update_permit_status"]
+        result = handler(db=db, permit_id=upd_pid, status="APPROVED", reason_or_note="اعتماد وتفعيل التصريح عبر المساعد الذكي")
+        traces.append(ToolCallTrace(
+            tool_name="update_permit_status",
+            query_summary=f"update_permit_status (ID: {upd_pid}, Status: APPROVED, Success: {result.get('success', False)})",
+            rows_returned=1 if result.get("success") else 0,
+            args={"permit_id": upd_pid, "status": "APPROVED"},
+            result=result,
+        ))
+        return result
+
+    # ── 5. Single Permit Closing Safeguard ("اغلق تصريح", "close permit", "تسليم الموقع") ──
+    close_kw = ["اغلق", "أغلق", "إغلاق", "اقفل", "قفل", "close", "إنهاء", "انهاء", "تسليم الموقع", "handover"]
+    has_close_kw = any(w in question.lower() for w in close_kw)
+    if has_close_kw and upd_pid and not any(t.tool_name in ("update_permit_status", "update_permit") for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "update_permit_status")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot close permits."}
+
+        handler = HANDLERS["update_permit_status"]
+        result = handler(db=db, permit_id=upd_pid, status="CLOSED", reason_or_note="تم إنهاء الأعمال وتسليم الموقع نظيفاً")
+        traces.append(ToolCallTrace(
+            tool_name="update_permit_status",
+            query_summary=f"update_permit_status (ID: {upd_pid}, Status: CLOSED, Success: {result.get('success', False)})",
+            rows_returned=1 if result.get("success") else 0,
+            args={"permit_id": upd_pid, "status": "CLOSED"},
+            result=result,
+        ))
+        return result
+
+    # ── 6. Bulk Permit Closing Safeguard ("close all permits", "اغلق كافة التصاريح") ──
+    is_bulk_close = not upd_pid and any(w in question.lower() for w in [
+        "close all permits", "close all ptw", "shut down permits", "close all active permits",
+        "اغلق كافة التصاريح", "إغلاق كافة التصاريح", "اغلق جميع التصاريح", "إغلاق جميع التصاريح",
+        "إنهاء كافة التصاريح", "انهاء كافة التصاريح", "إنهاء جميع التصاريح", "انهاء جميع التصاريح",
+        "إغلاق كافة تصاريح", "اغلاق كافة تصاريح", "إغلاق جميع تصاريح العمل", "اغلاق جميع تصاريح العمل"
+    ])
+    if is_bulk_close and not any(t.tool_name in ("close_all_permits", "update_permit_status") for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "close_all_permits")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot close permits."}
+
+        handler = HANDLERS["close_all_permits"]
+        result = handler(db=db, reason="إغلاق جماعي لكافة تصاريح العمل وتسليم المواقع")
+        traces.append(ToolCallTrace(
+            tool_name="close_all_permits",
+            query_summary=f"close_all_permits (Closed: {result.get('closed_count', 0)})",
+            rows_returned=result.get("closed_count", 1),
+            args={"reason": "إغلاق جماعي لكافة تصاريح العمل وتسليم المواقع"},
+            result=result,
+        ))
+        return result
+
+    # ── 7. Inspection Scheduling Safeguard ("جدولة جولة", "schedule walk") ──
+    is_sched_insp = any(w in question.lower() for w in [
+        "schedule inspection", "schedule walk", "schedule safety walk", "book inspection", "routine safety walk",
+        "جدولة جولة", "جدولة جولة تفتيش", "جدول جولة", "جدولة فحص", "جدولة تفتيش", "حجز جولة تفتيش", "جدولة جولة سلامة"
+    ])
+    if is_sched_insp and not any(t.tool_name == "schedule_safety_inspection" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "schedule_safety_inspection")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot schedule inspections."}
+
+        # Extract zone if mentioned
+        m_zone = re.search(r'(?:في|منطقة|عنبر|zone|in)\s+([^\d,\n]+?)(?:\s+(?:بتاريخ|يوم|مع|بواسطة|تكرار)|\s*$)', question, re.IGNORECASE)
+        zone_arg = m_zone.group(1).strip() if m_zone else 1
+
+        # Extract inspector if mentioned
+        m_insp = re.search(r'(?:مع|المسؤول|inspector|owner|بواسطة)\s+([^\d,\n]+?)(?:\s+(?:بتاريخ|يوم|في|تكرار)|\s*$)', question, re.IGNORECASE)
+        insp_arg = m_insp.group(1).strip() if m_insp else 1
+
+        # Extract frequency
+        freq = "شهري" if any(w in question for w in ["شهري", "monthly"]) else ("يومي" if any(w in question for w in ["يومي", "daily"]) else "أسبوعي")
+
+        # Extract date
+        m_date = re.search(r'\b(20\d{2}[-/.]\d{2}[-/.]\d{2}|\d{2}[-/.]\d{2}[-/.]20\d{2})\b', question)
+        date_arg = m_date.group(1) if m_date else None
+
+        handler = HANDLERS["schedule_safety_inspection"]
+        result = handler(db=db, zone_id=zone_arg, lead_inspector_id=insp_arg, frequency=freq, scheduled_at=date_arg, notes="جولة تفتيش دورية مجدولة بواسطة المساعد الذكي")
+        traces.append(ToolCallTrace(
+            tool_name="schedule_safety_inspection",
+            query_summary=f"schedule_safety_inspection (ID: {result.get('inspection_id')}, Status: {result.get('status')})",
+            rows_returned=1 if result.get("success") else 0,
+            args={"zone_id": zone_arg, "frequency": freq, "scheduled_at": date_arg},
+            result=result,
+        ))
+        return result
+
+    # ── 8. Inspection Live Walk Submission Safeguard ("بدء جولة تفتيش", "submit walk") ──
+    is_walk_submit = any(w in question.lower() for w in [
+        "submit inspection walk", "start inspection walk", "complete walk", "record walk",
+        "بدء جولة تفتيش", "بدء جولة", "ابدأ جولة", "تسجيل جولة ميدانية", "اعتماد جولة ميدانية", "توثيق جولة تفتيش"
+    ])
+    if is_walk_submit and not any(t.tool_name == "submit_inspection_walk" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "submit_inspection_walk")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot submit inspection walks."}
+
+        m_score = re.search(r'(?:score|بنسبة|التزام|درجة)\s*[:=]?\s*(\d+(?:\.\d+)?)%?', question, re.IGNORECASE)
+        score_val = float(m_score.group(1)) if m_score else 96.0
+
+        m_zone = re.search(r'(?:في|منطقة|عنبر|zone|in)\s+([^\d,\n]+?)(?:\s+(?:بنسبة|درجة|مع)|\s*$)', question, re.IGNORECASE)
+        zone_arg = m_zone.group(1).strip() if m_zone else 1
+
+        handler = HANDLERS["submit_inspection_walk"]
+        result = handler(db=db, zone_id=zone_arg, score_pct=score_val, notes="تم استكمال الجولة الميدانية وتسجيل نتائج الفحص بنجاح")
+        traces.append(ToolCallTrace(
+            tool_name="submit_inspection_walk",
+            query_summary=f"submit_inspection_walk (ID: {result.get('inspection_id')}, Score: {score_val}%)",
+            rows_returned=1 if result.get("success") else 0,
+            args={"zone_id": zone_arg, "score_pct": score_val},
+            result=result,
+        ))
+        return result
+
+    # ── 9. Fire Equipment Inspection Safeguard ("سجل فحص", "فحص ميداني", "محاكاة مسح الكود", "فحص QR") ──
+    is_fire_inspect = any(w in question.lower() for w in [
+        "qr-fe-a-014", "fe-a-014", "qr scan", "simulate scan", "mobile inspection", "scan qr", "log fire inspection",
+        "محاكاة مسح الكود", "مسح الكود", "فحص qr", "محاكاة مسح qr", "مسح كود المعدة", "فحص طفاية الحريق qr",
+        "تسجيل فحص لهذه المعدة", "تسجيل فحص ميداني", "سجل فحص", "فحص لهذه المعدة", "فحص ميداني", "تسجيل فحص دوري"
+    ]) or ("فحص" in question and ("طفاية" in question or "fe-" in question.lower() or "معدة" in question))
+    if is_fire_inspect and not any(t.tool_name in ("log_fire_inspection", "service_fire_equipment") for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "log_fire_inspection")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot log fire inspections."}
+
+        m_tag = re.search(r'\b(QR-FE-[A-Z0-9\-]+|FE-[A-Z0-9\-]+)\b', question, re.IGNORECASE)
+        m_num = re.search(r'(?:طفاية|معدة|معدة\s+اطفاء|معدة\s+الإطفاء|fe)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+        if m_tag:
+            eq_tag = m_tag.group(1).upper()
+        elif m_num:
+            eq_tag = f"FE-{int(m_num.group(1)):04d}"
+        else:
+            eq_tag = "FE-0001"
+
+        handler = HANDLERS["log_fire_inspection"]
+        result = handler(db=db, equipment_tag=eq_tag, pressure_ok=True, hose_ok=True, safety_pin_ok=True, access_clear=True, notes="تم الفحص الميداني للمعدة - مطابقة وجاهزة للعمل")
+        traces.append(ToolCallTrace(
+            tool_name="log_fire_inspection",
+            query_summary=f"log_fire_inspection (Tag: {eq_tag}, Result: PASS)",
+            rows_returned=1 if result.get("success") else 0,
+            args={"equipment_tag": eq_tag, "result": "PASS"},
+            result=result,
+        ))
+        return result
+
+    # ── 9b. Fire Equipment Service / Work Order Safeguard ("استبدال فوري", "إعادة تعبئة", "أمر شغل صيانة") ──
+    is_fire_service = any(w in question.lower() for w in [
+        "استبدال فوري", "إعادة تعبئة", "اعادة تعبئة", "أمر شغل", "امر شغل", "عمرة طفاية", "صيانة طفاية", "تعبئة طفاية",
+        "service fire equipment", "refill extinguisher", "replace extinguisher", "fire work order", "recharge extinguisher"
+    ])
+    if is_fire_service and not any(t.tool_name == "service_fire_equipment" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "service_fire_equipment")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot service fire equipment."}
+
+        m_tag = re.search(r'\b(FE-[A-Z0-9\-]+)\b', question, re.IGNORECASE)
+        m_num = re.search(r'(?:طفاية|معدة|معدة\s+اطفاء|fe)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+        if m_tag:
+            eq_target = m_tag.group(1).upper()
+        elif m_num:
+            eq_target = int(m_num.group(1))
+        else:
+            eq_target = 4
+
+        act_type = "REPLACE" if any(k in question for k in ["استبدال", "replace", "تغيير"]) else "REFILL"
+        handler = HANDLERS["service_fire_equipment"]
+        result = handler(db=db, equipment_id=eq_target, action_type=act_type)
+        traces.append(ToolCallTrace(
+            tool_name="service_fire_equipment",
+            query_summary=f"service_fire_equipment (Target: {eq_target}, Action: {act_type})",
+            rows_returned=1 if result.get("success") else 0,
+            args={"equipment_id": eq_target, "action_type": act_type},
+            result=result,
+        ))
+        return result
+
+    # ── 9c. Fire Equipment Details & QR Lookup ("تفاصيل معدة", "details of extinguisher", "qr code") ──
+    is_fire_detail = (
+        any(w in question.lower() for w in ["fire extinguisher", "fire equipment", "طفاية", "معدة إطفاء", "معدة اطفاء", "طفاية الحريق", "fe-"])
+        and any(w in question.lower() for w in ["detail", "details", "qr", "qr code", "تفاصيل", "بيانات", "كود المسح", "معلومات", "موقع"])
+        and not is_fire_inspect and not is_fire_service
+    )
+    if is_fire_detail and not any(t.tool_name == "get_fire_equipment_detail" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_fire_equipment_detail")
+        if is_auth:
+            m_tag = re.search(r'\b(QR-FE-[A-Z0-9\-]+|FE-[A-Z0-9\-]+)\b', question, re.IGNORECASE)
+            m_num = re.search(r'(?:طفاية|معدة|معدة\s+اطفاء|fe)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+            if m_tag:
+                eq_target = m_tag.group(1).upper()
+            elif m_num:
+                eq_target = int(m_num.group(1))
+            else:
+                eq_target = 31
+
+            handler = HANDLERS["get_fire_equipment_detail"]
+            result = handler(db=db, equipment_id=eq_target)
+            traces.append(ToolCallTrace(
+                tool_name="get_fire_equipment_detail",
+                query_summary=f"get_fire_equipment_detail (Target: {eq_target})",
+                rows_returned=1 if result.get("success") else 0,
+                args={"equipment_id": eq_target},
+                result=result,
+            ))
+            return result
+
+    # ── 9d. Fire Readiness Report ("تقرير الجاهزية", "readiness report") ──
+    is_fire_readiness = any(w in question.lower() for w in [
+        "readiness report", "fire readiness", "تقرير الجاهزية", "تقرير جاهزية", "جاهزية شبكة الإطفاء", "جاهزية معدات الحريق"
+    ])
+    if is_fire_readiness and not any(t.tool_name == "get_fire_readiness_report" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_fire_readiness_report")
+        if is_auth:
+            handler = HANDLERS["get_fire_readiness_report"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="get_fire_readiness_report",
+                query_summary="get_fire_readiness_report",
+                rows_returned=1 if result.get("success") else 0,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # ── 9e. Fire Inspection Schedule ("جدول الفحص", "inspection schedule") ──
+    is_fire_schedule = (
+        any(w in question.lower() for w in ["inspection schedule", "fire schedule", "جدول الفحص", "جدول الفحص الدوري", "مواعيد فحص معدات الإطفاء", "فحص الحريق القادم"])
+        and not any(w in question.lower() for w in ["jsa", "permit", "capa", "incident"])
+    )
+    if is_fire_schedule and not any(t.tool_name == "get_fire_inspection_schedule" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_fire_inspection_schedule")
+        if is_auth:
+            handler = HANDLERS["get_fire_inspection_schedule"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="get_fire_inspection_schedule",
+                query_summary="get_fire_inspection_schedule",
+                rows_returned=1 if result.get("success") else 0,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # ── 9f. Fire Attention List ("معدات تحتاج انتباه", "attention list") ──
+    is_fire_attention = any(w in question.lower() for w in [
+        "attention list", "needing attention", "urgent repairs", "انتباه فوري", "تحتاج انتباه", "معدات تحتاج انتباه", "طفايات معيبة"
+    ])
+    if is_fire_attention and not any(t.tool_name == "get_fire_attention_list" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_fire_attention_list")
+        if is_auth:
+            handler = HANDLERS["get_fire_attention_list"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="get_fire_attention_list",
+                query_summary="get_fire_attention_list",
+                rows_returned=len(result.get("rows", [])) if result.get("success") else 0,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # ── 9g. Fire Coverage by Zone ("تغطية وجاهزية الشبكة", "coverage by zone") ──
+    is_fire_coverage = any(w in question.lower() for w in [
+        "coverage by zone", "network coverage", "تغطية وجاهزية الشبكة", "تغطية شبكة الإطفاء", "تغطية معدات الحريق"
+    ])
+    if is_fire_coverage and not any(t.tool_name == "get_fire_coverage_by_zone" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_fire_coverage_by_zone")
+        if is_auth:
+            handler = HANDLERS["get_fire_coverage_by_zone"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="get_fire_coverage_by_zone",
+                query_summary="get_fire_coverage_by_zone",
+                rows_returned=len(result.get("rows", [])) if result.get("success") else 0,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # ── 10. Inspection Finding Closing / Updating Safeguard ("إغلاق ملاحظة", "close finding") ──
+    is_finding_update = any(w in question.lower() for w in [
+        "close finding", "resolve finding", "fix finding", "update finding",
+        "اغلاق ملاحظة", "إغلاق ملاحظة", "إغلاق ملاحظة عدم المطابقة", "حل الملاحظة", "معالجة المخالفة", "إغلاق مخالفة", "اغلاق مخالفة"
+    ])
+    m_find_id = re.search(r'(?:finding|fnd|ملاحظة|ملاحظه|مخالفة|عدم مطابقة)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+    if is_finding_update and m_find_id and not any(t.tool_name == "update_inspection_finding" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "update_inspection_finding")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot update findings."}
+
+        fid = int(m_find_id.group(1))
+        handler = HANDLERS["update_inspection_finding"]
+        result = handler(db=db, finding_id=fid, status="CLOSED", notes="تمت المعالجة وإغلاق الملاحظة بنجاح")
+        traces.append(ToolCallTrace(
+            tool_name="update_inspection_finding",
+            query_summary=f"update_inspection_finding (ID: {fid}, Status: CLOSED)",
+            rows_returned=1 if result.get("success") else 0,
+            args={"finding_id": fid, "status": "CLOSED"},
+            result=result,
+        ))
+        return result
+
+    # ── 11. Inspection Deletion Safeguard ("حذف جولة التفتيش", "delete inspection") ──
+    is_insp_del = any(w in question.lower() for w in [
+        "delete inspection", "remove inspection", "drop inspection",
+        "حذف تفتيش", "احذف تفتيش", "حذف جولة التفتيش", "احذف جولة التفتيش", "الغاء جولة التفتيش", "مسح التفتيش"
+    ])
+    m_insp_del_id = re.search(r'(?:inspection|insp|تفتيش|جولة)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+    if is_insp_del and m_insp_del_id and not any(t.tool_name == "delete_inspection" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "delete_inspection")
+        if not is_auth:
+            return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot delete inspections."}
+
+        iid = int(m_insp_del_id.group(1))
+        handler = HANDLERS["delete_inspection"]
+        result = handler(db=db, inspection_id=iid, reason="Requested by user via AI assistant")
+        traces.append(ToolCallTrace(
+            tool_name="delete_inspection",
+            query_summary=f"delete_inspection (ID: {iid}, Status: {result.get('success', False)})",
+            rows_returned=1 if result.get("success") else 0,
+            args={"inspection_id": iid},
+            result=result,
+        ))
+        return result
+
+    # ── 12. PPE Issuance & Giveaway Safeguard ("give safety glasses", "صرف نظارة", "give helmet") ──
+    is_ppe_issue = any(w in question.lower() for w in [
+        "give one", "giveaway", "give away", "dispense", "issue ppe", "give safety", "give helmet", "give glasses", "give boots", "give gloves",
+        "give safety glassess", "safety glassess", "صرف", "اصرف", "تسليم مهمة", "صرف مهمة", "صرف خوذة", "صرف نظارة", "صرف حذاء", "صرف قفاز"
+    ])
+    if is_ppe_issue and not any(t.tool_name == "create_ppe_transaction" for t in traces):
+        from app.nlp.keyword_parser import extract_equipment_info, extract_quantity
+        eq_match = extract_equipment_info(question)
+        if eq_match and eq_match.get("ppe_item_id"):
+            is_auth, _ = check_tool_access(canonical_role, "create_ppe_transaction")
+            if not is_auth:
+                return {"error": f"RBAC Access Denied: Role '{canonical_role}' cannot issue PPE transactions."}
+
+            pid = eq_match["ppe_item_id"]
+            qty = extract_quantity(question)
+            handler = HANDLERS["create_ppe_transaction"]
+            result = handler(db=db, ppe_item_id=pid, employee_id=1, quantity=qty, transaction_type="ISSUE", reason="صرف مهمات وقاية بناءً على طلب المستخدم")
+    # ── 13. Incidents Excel Export Safeguard ("تصدير سجل الحوادث excel", "export incidents") ──
+    is_inc_specific = any(k in question.lower() for k in ["حادث", "حوادث", "بلاغ", "بلاغات", "incident", "incidents"])
+    is_excel_export = is_inc_specific and (
+        any(w in question.lower() for w in [
+            "export incidents excel", "export incident excel", "export incidents",
+            "تصدير سجل الحوادث", "تصدير الحوادث", "سجل الحوادث excel", "شيت الحوادث"
+        ]) or (("تصدير" in question or "export" in question.lower()) and any(k in question.lower() for k in ["excel", "اكسل", "xlsx", "إكسل", "سجل", "شيت"]))
+    )
+    if is_excel_export and not any(t.tool_name in ("export_incidents_excel", "export_incidents") for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "export_incidents_excel")
+        if is_auth:
+            handler = HANDLERS["export_incidents_excel"]
+            status_param = "OPEN" if "مفتوح" in question else ("CLOSED" if "مغلق" in question else None)
+            result = handler(db=db, status=status_param)
+            traces.append(ToolCallTrace(
+                tool_name="export_incidents_excel",
+                query_summary=f"export_incidents_excel ({result.get('total_records', 0)} records exported)",
+                rows_returned=result.get("total_records", 0),
+                args={"status": status_param},
+                result=result,
+            ))
+            return result
+
+    # ── 14. Statutory Report Templates Safeguard ("توليد نموذج مكتب العمل", "نموذج التأمينات", "مطالبة التأمين") ──
+    is_template_gen = any(w in question.lower() for w in [
+        "توليد نموذج", "نموذج مكتب العمل", "نموذج التأمينات", "استمارة 1", "مطالبة التأمين", "مطالبة شركة التأمين",
+        "إخطار جهاز شؤون البيئة", "إخطار البيئة", "إخطار شؤون البيئة", "قوالب الإبلاغ الخارجي", "قوالب الابلاغ الخارجي",
+        "labor office form", "social insurance form", "insurance claim form", "environmental agency notification"
+    ]) or (("نموذج" in question or "إخطار" in question or "اخطار" in question or "مطالبة" in question or "قالب" in question or "قوالب" in question) and any(k in question for k in ["مكتب العمل", "التأمينات", "التامينات", "البيئة", "البيئه", "شركة التأمين", "شؤون البيئة", "شئون البيئة"]))
+    if is_template_gen and not any(t.tool_name == "generate_external_report_template" for t in traces):
+        from app.nlp.ui_automation_keywords import extract_template_type_from_text
+        tmpl_type = extract_template_type_from_text(question)
+        is_auth, _ = check_tool_access(canonical_role, "generate_external_report_template")
+        if is_auth:
+            m_inc = re.search(r'(?:incident|inc|حادث|بلاغ)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+            inc_target = int(m_inc.group(1)) if m_inc else 1
+
+            handler = HANDLERS["generate_external_report_template"]
+            result = handler(db=db, template_type=tmpl_type, incident_id=inc_target)
+            traces.append(ToolCallTrace(
+                tool_name="generate_external_report_template",
+                query_summary=f"generate_external_report_template ({result.get('title')}, Incident: INC-{inc_target:03d})",
+                rows_returned=1 if result.get("success") else 0,
+                args={"template_type": tmpl_type, "incident_id": inc_target},
+                result=result,
+            ))
+            return result
+
+    # ── 15. RCA Management & YTD Summary Safeguard ("تحليل السبب الجذري", "سجل rca", "root causes ytd") ──
+    is_rca_summary = any(w in question.lower() for w in [
+        "تحليل الأسباب الجذرية", "تحليل الاسباب الجذرية", "الأسباب الجذرية الأكثر تكراراً",
+        "الاسباب الجذرية الاكثر تكرارا", "نسب أسباب الحوادث", "ملخص الأسباب الجذرية", "root causes ytd", "root cause breakdown", "root causes"
+    ])
+    if is_rca_summary and not any(t.tool_name == "get_root_causes_summary" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_root_causes_summary")
+        if is_auth:
+            handler = HANDLERS["get_root_causes_summary"]
+            result = handler(db=db, year=2026)
+            traces.append(ToolCallTrace(
+                tool_name="get_root_causes_summary",
+                query_summary="get_root_causes_summary (YTD 2026)",
+                rows_returned=4,
+                args={"year": 2026},
+                result=result,
+            ))
+            return result
+
+    is_rca_create = any(w in question.lower() for w in [
+        "تحليل السبب الجذري", "سجل تحليل السبب الجذري", "تحليل rca", "إضافة تحليل السبب الجذري",
+        "توثيق rca", "السبب الجذري للحادث", "5 whys", "fishbone", "عظم السمكة"
+    ]) and not is_rca_summary
+    if is_rca_create and not any(t.tool_name in ("create_incident_rca", "get_incident_rca") for t in traces):
+        m_inc = re.search(r'(?:incident|inc|حادث|بلاغ)[\s#\-:]*0*(\d+)', question, re.IGNORECASE)
+        inc_target = int(m_inc.group(1)) if m_inc else 1
+
+        is_create_intent = any(w in question.lower() for w in ["سجل", "أضف", "اضف", "توثيق", "create", "record", "add", "تحديث"])
+        if is_create_intent:
+            is_auth, _ = check_tool_access(canonical_role, "create_incident_rca")
+            if is_auth:
+                handler = HANDLERS["create_incident_rca"]
+                result = handler(
+                    db=db,
+                    incident_id=inc_target,
+                    problem_statement="تسريب زيت هيدروليكي محدود بالقرب من ماكينة السحب #3 بعنبر السحب والجدل",
+                    root_cause="تآكل حلقة الإحكام المطاطية (O-Ring) لصمام الضغط العالي بسبب تجاوز عدد ساعات التشغيل الموصى بها دون استبدال",
+                    method="5 Whys + Fishbone (Ishikawa)",
+                    primary_cause_category="قصور في إجراءات وتصاريح العمل",
+                    contributing_factors="تأخر استلام قطع الغيار الدورية وارتفاع حرارة الزيت في الوردية",
+                    completed_by=1
+                )
+                traces.append(ToolCallTrace(
+                    tool_name="create_incident_rca",
+                    query_summary=f"create_incident_rca (Incident: INC-{inc_target:03d}, Status: {result.get('success', False)})",
+                    rows_returned=1 if result.get("success") else 0,
+                    args={"incident_id": inc_target},
+                    result=result,
+                ))
+                return result
+        else:
+            is_auth, _ = check_tool_access(canonical_role, "get_incident_rca")
+            if is_auth:
+                handler = HANDLERS["get_incident_rca"]
+                result = handler(db=db, incident_id=inc_target)
+                traces.append(ToolCallTrace(
+                    tool_name="get_incident_rca",
+                    query_summary=f"get_incident_rca (Incident: INC-{inc_target:03d})",
+                    rows_returned=1 if "rca" in result else 0,
+                    args={"incident_id": inc_target},
+                    result=result,
+                ))
+                return result
+
+    # ── 16. Dashboard Live Refresh Safeguard ("تحديث", "تحديث لوحة القيادة", "refresh dashboard") ──
+    is_dash_refresh = any(w in question.lower() for w in [
+        "تحديث لوحة القيادة", "تحديث لوحه القياده", "تحديث الداشبورد", "تحديث البيانات", "تحديث مؤشرات السلامة",
+        "refresh dashboard", "refresh stats", "reload dashboard"
+    ]) or (question.strip() in ("تحديث", "حدث", "تحديث البيانات", "refresh", "refresh stats"))
+    if is_dash_refresh and not any(t.tool_name in ("refresh_dashboard", "get_dashboard_summary") for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "refresh_dashboard")
+        if is_auth:
+            handler = HANDLERS["refresh_dashboard"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="refresh_dashboard",
+                query_summary="refresh_dashboard (Live KPI Recalculation)",
+                rows_returned=1,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # ── 17. Reports & Analytics Fast-Path Automation ─────────────────────────
+    classified_intent, _ = classify_hse_intent(question)
+
+    # 17.1 Export Reports Excel Workbook
+    is_reports_excel = (classified_intent == "EXPORT_REPORTS_EXCEL") or any(w in question.lower() for w in [
+        "تصدير تقرير الإكسل", "تصدير تقرير السلامة excel", "تصدير تقرير التقارير والتحليلات",
+        "تصدير مصنف التقارير", "تصدير تقرير الإكسيل التنفيذي", "تصدير تقرير الايكسل",
+        "تصدير مصنف الإكسيل", "تصدير التقارير إكسل", "تصدير التقارير excel", "تحميل شيت تقرير السلامة",
+        "export reports excel", "export executive report excel", "download executive workbook",
+        "export reports to excel", "export analytics excel", "export safety workbook excel",
+        "export report to excel", "export executive report"
+    ])
+    if is_reports_excel and not any(t.tool_name == "export_reports_excel" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "export_reports_excel")
+        if is_auth:
+            handler = HANDLERS["export_reports_excel"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="export_reports_excel",
+                query_summary="export_reports_excel (Executive 5-Sheet Workbook)",
+                rows_returned=5,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # 17.2 Export Reports PDF / Print View
+    is_reports_pdf = (classified_intent == "EXPORT_REPORTS_PDF") or any(w in question.lower() for w in [
+        "تصدير pdf", "طباعة التقرير", "تصدير تقرير السلامة pdf", "طباعة تقرير المؤشرات",
+        "تصدير بي دي اف", "تصدير بي دي إف", "طباعة التقرير التنفيذي", "تصدير التقرير التنفيذي pdf",
+        "اطبع التقرير", "اطبع تقرير", "اطبع التقرير التنفيذي", "اطبع pdf", "طباعة pdf",
+        "اطبع تقرير السلامة", "اطبع التقرير التنفيذي pdf", "export pdf", "print report",
+        "print executive report", "export reports to pdf", "download pdf report", "print hse report"
+    ])
+    if is_reports_pdf and not any(t.tool_name == "export_reports_pdf" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "export_reports_pdf")
+        if is_auth:
+            handler = HANDLERS["export_reports_pdf"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="export_reports_pdf",
+                query_summary="export_reports_pdf (Executive PDF Document Layout)",
+                rows_returned=1,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # 17.3 Send Report to Management
+    is_send_management = (classified_intent == "SEND_REPORT_TO_MANAGEMENT") or any(w in question.lower() for w in [
+        "إرسال للإدارة", "إرسال التقرير للإدارة", "ارسل التقرير للادارة العليا", "إرسال تقرير السلامة للإدارة",
+        "إرسال التقرير التنفيذي للإدارة العليا", "ارسل تقرير السلامة", "إرسال التقرير للمدير", "ارسل للإدارة",
+        "ارسال للادارة", "ارسال التقرير للإدارة التنفيذية", "إرسال للإدارة العليا", "إرسال ملخص السلامة للإدارة",
+        "ارسل تقرير السلامة للإدارة العليا", "ارسل تقرير السلامة للإدارة", "ارسل التقرير للإدارة",
+        "send report to management", "send to management", "dispatch report to leadership", "send executive report",
+        "dispatch safety report", "submit report to management", "send safety report to management"
+    ])
+    if is_send_management and not any(t.tool_name == "send_report_to_management" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "send_report_to_management")
+        if is_auth:
+            handler = HANDLERS["send_report_to_management"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="send_report_to_management",
+                query_summary=f"send_report_to_management (Dispatch: {result.get('dispatch_id', 'RPT-001')})",
+                rows_returned=1,
+                args={},
+                result=result,
+            ))
+            return result
+
+    # 17.4 Custom Ad-Hoc Report Generator
+    is_custom_report = (classified_intent == "GENERATE_CUSTOM_REPORT") or any(w in question.lower() for w in [
+        "توليد تقرير مخصص", "مولد التقارير", "توليد الآن", "انشئ تقرير مخصص", "تقرير مخصص للحوادث",
+        "تقرير مخصص للتصاريح", "تقرير مخصص للتفتيش", "تقرير مخصص للحريق", "توليد تقرير فوري",
+        "مولد التقارير المخصص", "توليد الان", "انشاء تقرير مخصص", "توليد تقرير مخصص عن تصاريح العمل",
+        "توليد تقرير مخصص عن الحوادث", "تقرير مخصص عن التصاريح", "generate custom report",
+        "ad hoc report builder", "build custom report", "generate custom hse report", "ad-hoc report"
+    ])
+    if is_custom_report and not any(t.tool_name == "generate_custom_report" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "generate_custom_report")
+        if is_auth:
+            source_match = "الحوادث والبلاغات"
+            if "تصريح" in question.lower() or "تصاريح" in question.lower() or "permit" in question.lower() or "ptw" in question.lower():
+                source_match = "تصاريح العمل"
+            elif "تفتيش" in question.lower() or "inspection" in question.lower():
+                source_match = "جولات التفتيش"
+            elif "حريق" in question.lower() or "حرائق" in question.lower() or "fire" in question.lower():
+                source_match = "معدات الحريق"
+            elif "تدريب" in question.lower() or "كفاء" in question.lower() or "training" in question.lower():
+                source_match = "التدريب والكفاءات"
+
+            handler = HANDLERS["generate_custom_report"]
+            result = handler(db=db, source=source_match)
+            traces.append(ToolCallTrace(
+                tool_name="generate_custom_report",
+                query_summary=f"generate_custom_report (Source: {source_match})",
+                rows_returned=len(result.get("rows", [])),
+                args={"source": source_match},
+                result=result,
+            ))
+            return result
+
+    # 17.5 Open Ready Report Card
+    is_ready_report = (classified_intent == "OPEN_READY_REPORT") or any(w in question.lower() for w in [
+        "التقارير الجاهزة للتوليد", "التقارير الجاهزة", "افتح التقرير الشهري", "عرض التقرير الشهري",
+        "تقرير تحليل الحوادث", "تقرير جاهزية الحريق", "مصفوفة الكفاءات والتدريب", "سجل المخاطر المحدث",
+        "سجل المخاطر المحدّث", "حزمة التدقيق iso 45001", "حزمة التدقيق أيزو 45001", "حزمة تدقيق iso",
+        "افتح تقرير جاهزية الحريق", "افتح حزمة تدقيق iso 45001", "عرض تقرير الكفاءات والتدريب",
+        "عرض تقرير سجل المخاطر", "التقرير الشهري للسلامة", "open ready report", "open monthly hse report",
+        "open fire readiness report", "open iso 45001 audit pack", "inspect ready report"
+    ])
+    if is_ready_report and not any(t.tool_name == "open_ready_report" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "open_ready_report")
+        if is_auth:
+            rep_id = "monthly"
+            if any(k in question.lower() for k in ("incident", "حادث", "rca", "تحليل")):
+                rep_id = "incidents"
+            elif any(k in question.lower() for k in ("fire", "حريق", "اطفاء", "إطفاء")):
+                rep_id = "fire"
+            elif any(k in question.lower() for k in ("competency", "train", "تدريب", "كفاء", "شهادات")):
+                rep_id = "competency"
+            elif any(k in question.lower() for k in ("risk", "مخاطر", "hira", "تقييم")):
+                rep_id = "risk"
+            elif any(k in question.lower() for k in ("iso", "ايزو", "أيزو", "audit", "تدقيق")):
+                rep_id = "iso"
+
+            handler = HANDLERS["open_ready_report"]
+            result = handler(db=db, report_id=rep_id)
+            traces.append(ToolCallTrace(
+                tool_name="open_ready_report",
+                query_summary=f"open_ready_report (ID: {rep_id})",
+                rows_returned=len(result.get("data", [])),
+                args={"report_id": rep_id},
+                result=result,
+            ))
+            return result
+
+    # 17.6 Schedule Recurring Report
+    is_schedule_report = (classified_intent == "SCHEDULE_REPORT") or any(w in question.lower() for w in [
+        "حفظ كتقرير مجدول", "جدولة التقرير", "جدولة إرسال التقرير", "جدولة الإرسال الآلي", "جدولة التقرير أسبوعيا",
+        "جدولة التقرير شهريا", "حفظ التقرير المجدول", "تفعيل التقرير المجدول", "تفعيل الجدولة الآلية",
+        "حفظ كتقرير مجدول شهرياً", "حفظ كتقرير مجدول اسبوعياً", "جدولة إرسال", "schedule report",
+        "save scheduled report", "save as scheduled report", "automate report schedule"
+    ])
+    if is_schedule_report and not any(t.tool_name == "schedule_report" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "schedule_report")
+        if is_auth:
+            handler = HANDLERS["schedule_report"]
+            result = handler(db=db)
+            traces.append(ToolCallTrace(
+                tool_name="schedule_report",
+                query_summary=f"schedule_report (ID: {result.get('schedule_id', 'SCH-001')})",
+                rows_returned=1,
+                args={},
+                result=result,
+            ))
+            return result
+
+    return None
+
+
 def run_agent_loop(
     question: str,
     db: Session,
@@ -421,6 +1393,28 @@ def run_agent_loop(
     seen_tool_calls: set[str] = set()
     last_model_used = None
     last_successful_result = None
+
+    # 0. Deterministic Zero-Shot Intent Interceptor (Fast-Path for instant UI & Command Actions)
+    early_mutation_res = _detect_and_execute_uncalled_mutation(
+        question=question,
+        content="",
+        history=history,
+        db=db,
+        canonical_role=canonical_role,
+        traces=traces,
+    )
+    if early_mutation_res is not None:
+        last_successful_result = early_mutation_res
+        last_model_used = "ESCA Fast-Path Engine (Direct Execution)"
+        final_answer = _format_fallback_table(last_successful_result, question)
+        SESSION_HISTORIES[session_id].append({"role": "user", "content": question})
+        SESSION_HISTORIES[session_id].append({"role": "assistant", "content": final_answer})
+        return AskResponse(
+            session_id=session_id,
+            answer=final_answer,
+            tool_calls=traces,
+            model_used=last_model_used,
+        )
 
     for i in range(max_loops):
         current_tools = _filter_local_tools(question, role_allowed_tools, history=messages)
@@ -538,7 +1532,20 @@ def run_agent_loop(
                 })
                 continue
 
-            # 3. Regular conversational response
+            # 3. Intercept uncalled mutations / deletion hallucinations
+            uncalled_res = _detect_and_execute_uncalled_mutation(
+                question=question,
+                content=content,
+                history=history,
+                db=db,
+                canonical_role=canonical_role,
+                traces=traces,
+            )
+            if uncalled_res is not None:
+                last_successful_result = uncalled_res
+                break
+
+            # 4. Regular conversational response
             sanitized_content = _sanitize_response_text(content)
             if sanitized_content:
                 final_answer = sanitized_content

@@ -44,7 +44,7 @@ public class PlatformService {
             parameters.addValue("status", status.trim().toUpperCase(Locale.ROOT));
         }
         String where = predicates.isEmpty() ? "" : " WHERE " + String.join(" AND ", predicates);
-        String sql = "SELECT * FROM " + definition.table() + where + " ORDER BY created_at DESC LIMIT :limit";
+        String sql = "SELECT * FROM " + definition.table() + where + " ORDER BY " + definition.idColumn() + " DESC LIMIT :limit";
         return jdbc.queryForList(sql, parameters);
     }
 
@@ -209,13 +209,20 @@ public class PlatformService {
             }
         }
         if (creating) {
-            Map<String, String> defaults = Map.ofEntries(
-                    Map.entry("incidents", "OPEN"), Map.entry("jsa", "DRAFT"), Map.entry("permits", "REQUESTED"),
-                    Map.entry("risks", "OPEN"), Map.entry("inspections", "SCHEDULED"), Map.entry("findings", "OPEN"),
-                    Map.entry("capa", "OPEN"), Map.entry("hazmat", "ACTIVE"), Map.entry("occupational-health", "COMPLETED"),
-                    Map.entry("certificates", "VALID"), Map.entry("notifications", "UNREAD"));
-            if (defaults.containsKey(module)) {
-                values.putIfAbsent("status", defaults.get(module));
+            // occupational-health uses status_id (integer FK) instead of a status string column
+            if (module.equals("occupational-health")) {
+                values.putIfAbsent("status_id", 3); // 3 = COMPLETED
+                values.putIfAbsent("confidentiality_level_id", 1);
+                values.putIfAbsent("days_overdue", 0.0);
+            } else {
+                Map<String, String> defaults = Map.ofEntries(
+                        Map.entry("incidents", "OPEN"), Map.entry("jsa", "DRAFT"), Map.entry("permits", "REQUESTED"),
+                        Map.entry("risks", "OPEN"), Map.entry("inspections", "SCHEDULED"), Map.entry("findings", "OPEN"),
+                        Map.entry("capa", "OPEN"), Map.entry("hazmat", "ACTIVE"),
+                        Map.entry("certificates", "VALID"), Map.entry("notifications", "UNREAD"));
+                if (defaults.containsKey(module)) {
+                    values.putIfAbsent("status", defaults.get(module));
+                }
             }
         }
     }

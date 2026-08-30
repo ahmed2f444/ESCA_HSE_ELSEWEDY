@@ -95,16 +95,28 @@ def test_all_15_modules_crud(db):
 
     # ── Module 4: Permits & SIMOPS
     print("\n--- 4. Electronic Permits & SIMOPS ---")
-    ptw_res = HANDLERS["create_permit"](db=db, permit_type="HOT_WORK", work_description="Welding cable tray", zone_id=1)
+    ptw_res = HANDLERS["create_permit"](
+        db=db, permit_type="HOT_WORK", work_description="Welding cable tray in Area 1",
+        zone_id=1, duration_hours=8, risk_level="HIGH", gas_test_required=True
+    )
     print(f"create_permit: {ptw_res}")
     assert ptw_res.get("success") is True
     created_ids["permit_id"] = ptw_res["permit_id"]
 
+    ptw_details = HANDLERS["get_permit_details"](db=db, permit_id=created_ids["permit_id"])
+    print(f"get_permit_details: {ptw_details.get('permit', {}).get('permit_code')} - Type: {ptw_details.get('permit', {}).get('permit_type')}")
+    assert ptw_details.get("permit") is not None
+
+    ptw_update = HANDLERS["update_permit"](db=db, permit_id=created_ids["permit_id"], duration_hours=12)
+    print(f"update_permit: {ptw_update}")
+    assert ptw_update.get("success") is True
+
     simops = HANDLERS["check_simops_conflicts"](db=db, zone_id=1)
     print(f"check_simops_conflicts: {simops.get('total_conflicts')} conflicts detected.")
 
-    ptw_up = HANDLERS["update_permit_status"](db=db, permit_id=created_ids["permit_id"], status="CLOSED")
+    ptw_up = HANDLERS["update_permit_status"](db=db, permit_id=created_ids["permit_id"], status="ACTIVE")
     print(f"update_permit_status: {ptw_up}")
+    assert ptw_up.get("success") is True
 
     # ── Module 5: Inspections & Findings
     print("\n--- 5. Inspections & Findings ---")

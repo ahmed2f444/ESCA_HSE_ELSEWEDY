@@ -10,6 +10,7 @@ import { api, agent } from './client.js'
 
 const get = (url, params) => api.get(url, { params }).then((r) => r.data)
 const post = (url, body) => api.post(url, body).then((r) => r.data)
+const del = (url) => api.delete(url).then((r) => r.data)
 
 export const auth = {
   login: (username, password) => post('/auth/login', { username, password }),
@@ -71,6 +72,8 @@ export const permits = {
   list: (params) => get('/permits', params),
   byId: (id) => get(`/permits/${id}`),
   create: (body) => post('/permits', body),
+  update: (id, body) => put(`/permits/${id}`, body),
+  delete: (id, reason) => del(`/permits/${id}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
   stats: () => get('/permits/stats'),
   approvals: (id) => get(`/permits/${id}/approvals`),
   approve: (id, note) => post(`/permits/${id}/approve`, { note }),
@@ -126,6 +129,14 @@ export const health = {
   exposure: () => get('/occupational-health/exposure'),
   schedule: () => get('/occupational-health/schedule'),
   registerExam: (body) => post('/occupational-health/exams', body),
+
+  // ── Full CRUD via OccupationalHealthController (mirrors Certificates pattern) ──
+  records: (params) => get('/occupational-health/records', params),
+  recordById: (id) => get(`/occupational-health/records/${id}`),
+  createRecord: (body) => post('/occupational-health/records', body),
+  updateRecord: (id, body) => api.patch(`/occupational-health/records/${id}`, body).then((r) => r.data),
+  replaceRecord: (id, body) => api.put(`/occupational-health/records/${id}`, body).then((r) => r.data),
+  deleteRecord: (id) => api.delete(`/occupational-health/records/${id}`).then((r) => r.data),
 }
 
 export const reports = {

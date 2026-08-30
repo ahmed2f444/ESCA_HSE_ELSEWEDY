@@ -36,6 +36,20 @@ export default function AgentDock() {
     }
   }, [open])
 
+  useEffect(() => {
+    const handleOpen = (e) => {
+      setOpen(true)
+      if (e?.detail?.prompt) {
+        setDraft(e.detail.prompt)
+        if (e.detail.autoSend) {
+          send(e.detail.prompt)
+        }
+      }
+    }
+    window.addEventListener('hse:open-assistant', handleOpen)
+    return () => window.removeEventListener('hse:open-assistant', handleOpen)
+  }, [])
+
   // Dedicated container-only scroll to bottom
   const scrollToBottom = useCallback((behavior = 'smooth') => {
     if (bodyRef.current) {
@@ -135,6 +149,243 @@ export default function AgentDock() {
           color: isExp ? 'var(--crit)' : 'var(--safe)',
           type: isExp ? 'AUTOMATION_CERTIFICATE_EXPIRY' : 'TRAINING',
           to: '/training',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      const inspCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'schedule_safety_inspection' ||
+          t.name === 'schedule_safety_inspection' ||
+          t.tool_name === 'submit_inspection_walk' ||
+          t.name === 'submit_inspection_walk' ||
+          t.tool_name === 'create_inspection_finding' ||
+          t.name === 'create_inspection_finding' ||
+          t.tool_name === 'update_inspection_status' ||
+          t.name === 'update_inspection_status' ||
+          t.tool_name === 'update_inspection' ||
+          t.name === 'update_inspection' ||
+          t.tool_name === 'delete_inspection' ||
+          t.name === 'delete_inspection' ||
+          t.tool_name === 'update_inspection_finding' ||
+          t.name === 'update_inspection_finding' ||
+          t.tool_name === 'delete_inspection_finding' ||
+          t.name === 'delete_inspection_finding' ||
+          t.tool_name === 'log_fire_inspection' ||
+          t.name === 'log_fire_inspection' ||
+          t.tool_name === 'service_fire_equipment' ||
+          t.name === 'service_fire_equipment' ||
+          t.tool_name === 'add_fire_equipment' ||
+          t.name === 'add_fire_equipment' ||
+          t.tool_name === 'update_fire_equipment' ||
+          t.name === 'update_fire_equipment'
+      )
+      if (inspCall) {
+        const tName = inspCall.tool_name || inspCall.name || ''
+        const args = inspCall.args || inspCall.arguments || {}
+        const result = inspCall.result || inspCall.output || {}
+        const isDelete = tName.includes('delete')
+        const isFinding = tName.includes('finding')
+        const isFire = tName.includes('fire')
+        const isService = tName.includes('service')
+
+        const notifObj = {
+          id: 'NTF-INSP-' + (result.inspection_id || result.work_order_id || result.finding_id || Date.now()),
+          notificationId: result.inspection_id || result.finding_id || Date.now(),
+          title: isDelete
+            ? `حذف سجل #${result.inspection_id || result.finding_id || args.inspection_id || ''}`
+            : isService
+            ? `أمر شغل صيانة إطفاء (${result.work_order_id || 'WO-FIRE'}): ${result.equipment_tag || 'طفاية حريق'}`
+            : isFire
+            ? `فحص وتفتيش معدات الحريق: ${result.equipment_tag || args.equipment_tag || 'معدة إطفاء'}`
+            : isFinding
+            ? `ملاحظات التفتيش وعدم المطابقة (${args.category || result.category || 'ميدانية'})`
+            : `جولات التفتيش: ${args.inspection_type || result.inspection_type || 'جولة سلامة'}`,
+          body: result.message || `تم تنفيذ العملية بنجاح وتحديث لوحة جولات السلامة والتفتيش.`,
+          time: 'الآن (مباشر)',
+          color: isDelete ? 'var(--crit)' : isFinding ? 'var(--warn)' : 'var(--safe)',
+          type: isFire ? 'FIRE_SAFETY' : 'INSPECTION',
+          to: isFire ? '/fire-equipment' : '/inspections',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if PPE or Safety Equipment action was executed
+      const ppeCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_ppe_supply_order' ||
+          t.name === 'create_ppe_supply_order' ||
+          t.tool_name === 'create_ppe_transaction' ||
+          t.name === 'create_ppe_transaction' ||
+          t.tool_name === 'delete_ppe_transaction' ||
+          t.name === 'delete_ppe_transaction' ||
+          t.tool_name === 'add_ppe_item' ||
+          t.name === 'add_ppe_item' ||
+          t.tool_name === 'update_ppe_item' ||
+          t.name === 'update_ppe_item' ||
+          t.tool_name === 'delete_ppe_item' ||
+          t.name === 'delete_ppe_item' ||
+          t.tool_name === 'update_ppe_stock' ||
+          t.name === 'update_ppe_stock' ||
+          t.tool_name === 'record_fixed_safety_asset_inspection' ||
+          t.name === 'record_fixed_safety_asset_inspection'
+      )
+      if (ppeCall) {
+        const tName = ppeCall.tool_name || ppeCall.name || ''
+        const result = ppeCall.result || ppeCall.output || {}
+        const args = ppeCall.args || ppeCall.arguments || {}
+        const isOrder = tName.includes('supply_order')
+        const isTx = tName.includes('transaction')
+        const isFixed = tName.includes('fixed_safety')
+
+        const notifObj = {
+          id: 'NTF-PPE-' + (result.transaction_id || result.order_reference || result.ppe_item_id || Date.now()),
+          notificationId: result.transaction_id || result.ppe_item_id || Date.now(),
+          title: isOrder
+            ? `طلب توريد مهمات الوقاية (${result.order_reference || 'PO-PPE'})`
+            : isTx
+            ? `حركة مهمات الوقاية: ${result.transaction_type_ar || 'صرف / إرجاع'}`
+            : isFixed
+            ? `فحص معدات السلامة: ${result.asset_name || 'معدة سلامة ثابتة'}`
+            : `تحديث مخزون الوقاية: ${result.item_code || result.name_ar || 'صنف مهمة'}`,
+          body: result.message || 'تم تحديث سجلات مهمات الوقاية الشخصية ومخزون السلامة بنجاح.',
+          time: 'الآن (مباشر)',
+          color: isOrder ? 'var(--info)' : 'var(--safe)',
+          type: 'PPE',
+          to: '/ppe',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if Incident / RCA / Export / Template / Dashboard action was executed
+      const incCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'export_incidents_excel' ||
+          t.name === 'export_incidents_excel' ||
+          t.tool_name === 'generate_external_report_template' ||
+          t.name === 'generate_external_report_template' ||
+          t.tool_name === 'create_incident_rca' ||
+          t.name === 'create_incident_rca' ||
+          t.tool_name === 'create_incident' ||
+          t.name === 'create_incident' ||
+          t.tool_name === 'refresh_dashboard' ||
+          t.name === 'refresh_dashboard'
+      )
+      if (incCall) {
+        const tName = incCall.tool_name || incCall.name || ''
+        const result = incCall.result || incCall.output || {}
+        const isExport = tName.includes('export')
+        const isTmpl = tName.includes('template')
+        const isRca = tName.includes('rca')
+        const isDash = tName.includes('dashboard')
+
+        if (isExport) {
+          window.dispatchEvent(new CustomEvent('hse:export-incidents', { detail: { rows: result.rows, summary: result.summary } }))
+        }
+        if (isTmpl) {
+          window.dispatchEvent(new CustomEvent('hse:open-template-modal', { detail: { templateType: result.template_type, data: result } }))
+        }
+        if (isDash) {
+          window.dispatchEvent(new CustomEvent('hse:refresh-dashboard'))
+        }
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+
+        const notifObj = {
+          id: 'NTF-INC-' + (result.incident_id || result.rca_id || Date.now()),
+          notificationId: result.incident_id || result.rca_id || Date.now(),
+          title: isExport
+            ? 'تصدير سجل الحوادث إلى ملف Excel'
+            : isTmpl
+            ? `توليد ${result.title || 'النموذج الرسمي'}`
+            : isRca
+            ? `تحليل السبب الجذري للحادث #${result.incident_id || 'INC'}`
+            : isDash
+            ? 'تحديث لوحة قيادة السلامة الحية'
+            : `تسجيل بلاغ حادث جديد (${result.incident_id || 'INC'})`,
+          body: result.message || 'تم تنفيذ العملية وتحديث سجلات السلامة بنجاح.',
+          time: 'الآن (مباشر)',
+          color: isExport ? 'var(--info)' : isDash ? 'var(--info)' : isRca ? 'var(--warn)' : 'var(--safe)',
+          type: isDash ? 'DASHBOARD' : 'INCIDENT',
+          to: isDash ? '/' : '/incidents',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if Reports & Analytics action was executed
+      const reportCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'export_reports_excel' ||
+          t.name === 'export_reports_excel' ||
+          t.tool_name === 'export_reports_pdf' ||
+          t.name === 'export_reports_pdf' ||
+          t.tool_name === 'send_report_to_management' ||
+          t.name === 'send_report_to_management' ||
+          t.tool_name === 'generate_custom_report' ||
+          t.name === 'generate_custom_report' ||
+          t.tool_name === 'open_ready_report' ||
+          t.name === 'open_ready_report' ||
+          t.tool_name === 'schedule_report' ||
+          t.name === 'schedule_report'
+      )
+      if (reportCall) {
+        const tName = reportCall.tool_name || reportCall.name || ''
+        const result = reportCall.result || reportCall.output || {}
+        const args = reportCall.args || reportCall.arguments || {}
+
+        const isExcel = tName === 'export_reports_excel'
+        const isPdf = tName === 'export_reports_pdf'
+        const isSend = tName === 'send_report_to_management'
+        const isCustom = tName === 'generate_custom_report'
+        const isReady = tName === 'open_ready_report'
+        const isSched = tName === 'schedule_report'
+
+        if (isExcel) {
+          window.dispatchEvent(new CustomEvent('hse:export-reports-excel', { detail: result }))
+        }
+        if (isPdf) {
+          window.dispatchEvent(new CustomEvent('hse:export-reports-pdf', { detail: result }))
+        }
+        if (isSend) {
+          window.dispatchEvent(new CustomEvent('hse:send-management', { detail: { ...args, ...result, autoSubmit: true } }))
+        }
+        if (isCustom) {
+          window.dispatchEvent(new CustomEvent('hse:open-custom-report-builder', { detail: result }))
+        }
+        if (isReady) {
+          window.dispatchEvent(new CustomEvent('hse:open-ready-report', { detail: { reportId: result.report_id || args.report_id } }))
+        }
+        if (isSched) {
+          window.dispatchEvent(new CustomEvent('hse:schedule-report', { detail: result }))
+        }
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+
+        const notifObj = {
+          id: 'NTF-RPT-' + (result.dispatch_id || result.schedule_id || Date.now()),
+          notificationId: result.dispatch_id || Date.now(),
+          title: isExcel
+            ? 'تصدير مصنف تقارير السلامة Excel'
+            : isPdf
+            ? 'تصدير / طباعة التقرير التنفيذي PDF'
+            : isSend
+            ? `إرسال ${result.report_type || 'التقرير التنفيذي'} للإدارة`
+            : isCustom
+            ? `توليد ${result.title || 'تقرير مخصص'}`
+            : isReady
+            ? `فحص ${result.title || 'التقرير الجاهز'}`
+            : 'تفعيل جدولة تقرير السلامة الآلي',
+          body: result.message || 'تمت أتمتة إجراء التقارير بنجاح وتحديث لوحة التحليلات.',
+          time: 'الآن (مباشر)',
+          color: isSend ? 'var(--pri)' : isPdf ? 'var(--info)' : isExcel ? 'var(--safe)' : 'var(--warn)',
+          type: 'REPORTS_ANALYTICS',
+          to: '/reports',
           unread: true,
         }
         window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))

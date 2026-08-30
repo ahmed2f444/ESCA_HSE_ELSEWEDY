@@ -24,14 +24,16 @@ public final class ModuleCatalog {
                 "department_id", "zone_id", "hazard", "activity", "likelihood", "severity", "inherent_score", "risk_level", "controls", "residual_likelihood", "residual_severity", "residual_score", "owner_id", "status", "last_reviewed_at", "next_review_date");
         add("inspections", "inspections", "inspection_id", "INS", "title",
                 "inspection_type", "title", "department_id", "zone_id", "inspector_id", "scheduled_at", "completed_at", "score", "status", "notes");
-        add("findings", "inspection_findings", "finding_id", "FND", "description",
+        add("findings", "findings", "finding_id", "FND", "description",
                 "inspection_id", "category", "description", "severity", "status", "photo_url");
         add("capa", "capa", "capa_id", "CAPA", "title",
                 "incident_id", "finding_id", "title", "action_type", "priority", "assigned_to", "due_date", "status", "completion_date", "verification_status", "verified_by", "last_reminder_at");
         add("hazmat", "chemicals", "chemical_id", "CHM", "chemical_name",
                 "chemical_name", "cas_number", "department_id", "zone_id", "quantity", "unit", "hazard_class", "storage_requirements", "sds_url", "expiry_date", "status");
-        add("occupational-health", "health_exams", "exam_id", "HEX", "exam_type",
-                "employee_id", "exam_type", "exam_date", "next_exam_date", "fitness_status", "restrictions", "provider", "status");
+        add("occupational-health", "health_exams", "exam_id", "HEX", "protocol_id",
+                "employee_id", "protocol_id", "scheduled_date", "completed_date",
+                "fitness_result_id", "restriction_summary", "next_due_date",
+                "status_id", "clinician_alias", "confidentiality_level_id", "days_overdue");
         add("training-courses", "training_courses", "course_id", "CRS", "course_name",
                 "course_code", "course_name", "validity_months", "provider", "mandatory", "active");
         add("certificates", "certificates", "certificate_id", "CERT", "certificate_number",

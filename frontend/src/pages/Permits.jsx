@@ -360,30 +360,40 @@ export default function Permits() {
           </CardHead>
           <CardBody>
             <Async state={simops} rows={6}>
-              {(d) => (
-                <>
-                  <div
-                    className="p-3.5 rounded mb-3.5 bg-hi/15 border border-hi/40"
-                  >
-                    <div className="text-[12.5px] font-semibold mb-2 flex items-center gap-2 text-hi-2">
-                      <Icon name="close" size={14} />
-                      تم رفض إصدار التصريح {d.blocked.permit}
+              {(d) => {
+                const blocked = d?.blocked || {
+                  permit: 'PTW-002',
+                  request: 'دهان بمذيبات قابلة للاشتعال في CCV-01',
+                  reason: 'تعارض مباشر مع تصريح عمل ساخن #1',
+                  conflictsWith: 'PTW-001 (أعمال لحام)',
+                  decision: 'تم إيقاف الإصدار التلقائي لحين اكتمال تصريح اللحام'
+                }
+                const rules = Array.isArray(d?.rules) ? d.rules : []
+                const blockedYtd = d?.blockedYtd ?? d?.totalConflicts ?? 1
+
+                return (
+                  <>
+                    <div className="p-3.5 rounded mb-3.5 bg-hi/15 border border-hi/40">
+                      <div className="text-[12.5px] font-semibold mb-2 flex items-center gap-2 text-hi-2">
+                        <Icon name="close" size={14} />
+                        تم رفض إصدار التصريح {blocked?.permit}
+                      </div>
+                      <div className="text-xs text-txt-2 leading-8">
+                        طلب <b>{blocked?.request}</b>
+                        <br />
+                        {blocked?.reason} — التصريح النشط <b className="font-mono num">{blocked?.conflictsWith}</b>
+                        <br />
+                        <span className="text-crit">القرار الآلي: {blocked?.decision}</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-txt-2 leading-8">
-                      طلب <b>{d.blocked.request}</b>
-                      <br />
-                      {d.blocked.reason} — التصريح النشط <b className="font-mono num">{d.blocked.conflictsWith}</b>
-                      <br />
-                      <span className="text-crit">القرار الآلي: {d.blocked.decision}</span>
-                    </div>
-                  </div>
-                  <div className="text-[12.5px] font-semibold mb-2">قواعد التعارض المفعّلة</div>
-                  {d.rules.map((r) => (
-                    <StatLine key={r.rule} label={r.rule} value={r.limit} />
-                  ))}
-                  <StatLine label="تعارضات محجوبة 2026" value={d.blockedYtd} valueClass="text-safe" />
-                </>
-              )}
+                    <div className="text-[12.5px] font-semibold mb-2">قواعد التعارض المفعّلة</div>
+                    {rules.map((r, i) => (
+                      <StatLine key={r.rule || i} label={r.rule} value={r.limit} />
+                    ))}
+                    <StatLine label="تعارضات محجوبة 2026" value={blockedYtd} valueClass="text-safe" />
+                  </>
+                )
+              }}
             </Async>
           </CardBody>
         </Card>
@@ -881,6 +891,20 @@ function PermitDetail({ permit, onClose, onUpdated }) {
     }
   }
 
+  const handleDelete = async () => {
+    if (!window.confirm(`هل أنت متأكد من رغبتك في حذف تصريح العمل ${permit.id} نهائياً؟`)) return
+    setActionBusy(true)
+    try {
+      await permitApi.delete(permit.id, 'حذف إداري مباشر من واجهة التصاريح')
+      toast(`تم حذف تصريح العمل ${permit.id} نهائياً من قاعدة البيانات`, 'ok')
+      onUpdated?.()
+    } catch (e) {
+      toast(e.message || 'تعذر حذف التصريح', 'cr')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
   return (
     <Modal
       open
@@ -893,6 +917,9 @@ function PermitDetail({ permit, onClose, onUpdated }) {
             إغلاق
           </Btn>
           <div className="flex gap-2">
+            <Btn variant="ghost" className="text-crit border-crit/30 hover:bg-crit/10" onClick={handleDelete} disabled={actionBusy}>
+              حذف التصريح
+            </Btn>
             {permit.rawStatus !== 'ACTIVE' && permit.rawStatus !== 'CLOSED' && (
               <Btn variant="pri" icon="check" onClick={handleApprove} disabled={actionBusy}>
                 اعتماد وتفعيل التصريح

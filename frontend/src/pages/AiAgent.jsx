@@ -79,6 +79,22 @@ const PROMPT_TEMPLATES = [
     tone: 'cr',
     badge: 'Fire Safety',
   },
+  {
+    title: 'إحصائيات جولات التفتيش والامتثال',
+    category: 'استعلام مباشر',
+    icon: 'inspection',
+    prompt: 'ما هي إحصائيات ومعدل الامتثال لجولات التفتيش والسلامة ونسبة الملاحظات المفتوحة والمتأخرة؟',
+    tone: 'safe',
+    badge: 'Inspections',
+  },
+  {
+    title: 'قائمة فحص ISO 45001 لمنطقة الإنتاج',
+    category: 'معايير السلامة',
+    icon: 'inspection',
+    prompt: 'اقترح قائمة فحص مطابقة لمعيار ISO 45001 مخصصة لمنطقة خطوط العزل CCV مع تصنيف بنود التدقيق.',
+    tone: 'in',
+    badge: 'ISO Checklist',
+  },
 
   // ── CRUD Action Operations ─────────────────────────────────────────────
   {
@@ -88,6 +104,22 @@ const PROMPT_TEMPLATES = [
     prompt: 'سجل بلاغ حادث جديد: العنوان "تسريب زيت هيدروليكي"، الوصف "تسريب زيت في خط سحب الكابلات رقم 3 دون إصابات"، المنطقة 2، درجة الخطورة MODERATE، نوع الحادث UNSAFE_CONDITION.',
     tone: 'cr',
     badge: 'CRUD Create',
+  },
+  {
+    title: 'جدولة جولة تفتيش سلامة',
+    category: 'عمليات CRUD',
+    icon: 'inspection',
+    prompt: 'جدول جولة تفتيش سلامة دورية جديدة لنظام LOTO والسلامة الكهربائية في عنبر 2 الأسبوع القادم.',
+    tone: 'in',
+    badge: 'CRUD Schedule',
+  },
+  {
+    title: 'تسجيل جولة ميدانية واعتماد نتيجتها',
+    category: 'عمليات CRUD',
+    icon: 'inspection',
+    prompt: 'سجل جولة تفتيش ميدانية مكتملة في عنبر 1 بنسبة التزام 96% مع تسجيل ملاحظة عدم ارتداء نظارات واقية لعامل الصيانة.',
+    tone: 'safe',
+    badge: 'CRUD Walk',
   },
   {
     title: 'اعتماد تصريح عمل ePTW',
@@ -106,12 +138,36 @@ const PROMPT_TEMPLATES = [
     badge: 'CRUD Create',
   },
   {
-    title: 'صرف مهمة وقاية PPE',
+    title: 'رفع طلب توريد مهمات (Supply Order)',
     category: 'عمليات CRUD',
     icon: 'ppe',
-    prompt: 'سجل حركة صرف مهمة وقاية شخصية: صرف عدد 2 خوذة سلامة للموظف رقم 3 وتحديث رصيد المخزون الفعلي.',
+    prompt: 'ارفع طلب توريد رسمي عاجل لجميع أصناف مهمات الوقاية الشخصية التي انخفض رصيدها عن حد إعادة الطلب لسد عجز المخزن وتغطية الاستهلاك الشهري.',
+    tone: 'cr',
+    badge: 'CRUD Reorder',
+  },
+  {
+    title: 'صرف / إرجاع مهمة وقاية PPE',
+    category: 'عمليات CRUD',
+    icon: 'ppe',
+    prompt: 'سجل حركة صرف مهمة وقاية شخصية: صرف عدد 2 خوذة أمان (Hard Hat) للموظف أحمد سامي وتحديث رصيد المخزون الفعلي.',
     tone: 'in',
+    badge: 'CRUD Transaction',
+  },
+  {
+    title: 'إضافة صنف وقاية جديد للمخزن',
+    category: 'عمليات CRUD',
+    icon: 'ppe',
+    prompt: 'أضف صنف وقاية جديد لمخزون السلامة: الكود "PPE-HLM-05"، الاسم "خوذة أمان عازلة للجهد الكهربائي"، الفئة HEAD، الرصيد 50، حد إعادة الطلب 15، ومعدل الاستهلاك 12 شهرياً.',
+    tone: 'safe',
     badge: 'CRUD Create',
+  },
+  {
+    title: 'فحص واختبار محطة غسيل العيون',
+    category: 'عمليات CRUD',
+    icon: 'fire',
+    prompt: 'سجل نتيجة الفحص والاختبار الدوري لمحطة غسيل العيون ودش الطوارئ بنتيجة PASS وتأكيد جاهزيتها التامة للعمل.',
+    tone: 'safe',
+    badge: 'CRUD Inspect',
   },
 ]
 
@@ -121,10 +177,12 @@ const AGENT_TOOLS = [
   { name: 'list_incidents / list_permits', desc: 'استعلام مباشر لسجلات الحوادث وتصاريح العمل الإلكترونية ePTW', target: 'incidents, permits', category: 'READ' },
   { name: 'list_certificates / list_courses', desc: 'استعلام وتدقيق سجلات الشهادات والدورات التدريبية للموظفين', target: 'certificates, training_courses', category: 'READ' },
   { name: 'get_ppe_stock_status', desc: 'تحليل أرصدة المخزون والتنبؤ بمعدلات الاستهلاك ونفاد الأصناف', target: 'ppe_inventory, transactions', category: 'READ' },
+  { name: 'create_ppe_supply_order', desc: 'رفع طلبات التوريد والشراء التلقائية للأصناف التي انخفض رصيدها عن الحد', target: 'ppe_inventory (REORDER)', category: 'CREATE' },
+  { name: 'create_ppe_transaction', desc: 'تسجيل حركات صرف وإرجاع مهمات الوقاية وتحديث رصيد المخزن آلياً', target: 'ppe_transactions (ISSUE/RETURN)', category: 'CREATE' },
+  { name: 'add_ppe_item / update_ppe_item', desc: 'إضافة وتعديل أصناف مهمات الوقاية ومعدات السلامة الثابتة', target: 'ppe_inventory, fixed_assets', category: 'CREATE' },
+  { name: 'record_fixed_safety_asset_inspection', desc: 'تسجيل واختبار فحص محطات غسيل العيون ودش الطوارئ وأجهزة AED', target: 'fixed_safety_assets (TEST)', category: 'UPDATE' },
   { name: 'get_expired_fire_equipment', desc: 'فحص مطافئ الحريق المنتهية وجداول الاختبار الهيدروستاتيكي', target: 'fire_equipment, inspections', category: 'READ' },
   { name: 'create_incident / create_permit', desc: 'تسجيل الحوادث الفورية وإصدار تصاريح العمل الإلكترونية', target: 'incidents, permits (INSERT)', category: 'CREATE' },
-  { name: 'create_certificate / create_capa', desc: 'إصدار شهادات التدريب وإنشاء إجراءات CAPA وصرف مهمات الوقاية', target: 'certificates, capa (INSERT)', category: 'CREATE' },
-  { name: 'update_permit_status / update_cert', desc: 'اعتماد التصاريح، تحديث صلاحية الشهادات، وإغلاق الحوادث', target: 'permits, certificates, incidents (UPDATE)', category: 'UPDATE' },
   { name: 'delete_record / cancel_entity', desc: 'إلغاء التصاريح وحذف المسودات مع التوثيق الكامل في سجل التدقيق', target: 'audit_log + Allowed Tables (DELETE)', category: 'DELETE' },
 ]
 
@@ -276,34 +334,6 @@ export default function AiAgent() {
         }
       }
 
-      // Check specifically for incident creation
-      const incCall = toolCalls.find(
-        (t) =>
-          t.tool_name === 'create_incident' ||
-          t.name === 'create_incident' ||
-          t.tool === 'create_incident'
-      )
-      if (incCall) {
-        const args = incCall.args || incCall.arguments || {}
-        const result = incCall.result || incCall.output || {}
-        const title = args.title || result.title || 'بلاغ حادث'
-        const notifObj = {
-          id: 'NTF-' + (result.notification_id || Date.now()),
-          notificationId: result.notification_id || Date.now(),
-          title: `تسجيل بلاغ حادث جديد: ${title}`,
-          body: `تم تسجيل بلاغ حادث جديد بنجاح في النظام وربطه بسجل التدقيق وإخطار مسؤولي السلامة.`,
-          time: 'الآن (مباشر)',
-          color: 'var(--crit)',
-          type: 'INCIDENT',
-          to: '/incidents',
-          unread: true,
-        }
-        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
-        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
-        window.dispatchEvent(new CustomEvent('hse:data-changed'))
-        toast(`تم تسجيل بلاغ الحادث (${title}) بنجاح وإرسال الإشعار`, 'cr')
-      }
-
       // Check specifically for permit creation / approval
       const permitCall = toolCalls.find(
         (t) =>
@@ -316,6 +346,175 @@ export default function AiAgent() {
         window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
         window.dispatchEvent(new CustomEvent('hse:data-changed'))
         toast('تم تحديث تصاريح العمل الإلكترونية ePTW بنجاح', 'ok')
+      }
+
+      // Check specifically for fire equipment actions (inspections, service, add, update)
+      const fireCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'log_fire_inspection' ||
+          t.name === 'log_fire_inspection' ||
+          t.tool_name === 'service_fire_equipment' ||
+          t.name === 'service_fire_equipment' ||
+          t.tool_name === 'add_fire_equipment' ||
+          t.name === 'add_fire_equipment' ||
+          t.tool_name === 'update_fire_equipment' ||
+          t.name === 'update_fire_equipment'
+      )
+      if (fireCall) {
+        const result = fireCall.result || fireCall.output || {}
+        const args = fireCall.args || fireCall.arguments || {}
+        const tName = fireCall.tool_name || fireCall.name || ''
+        const isService = tName.includes('service')
+        const tag = result.equipment_tag || args.equipment_tag || `FE-${args.equipment_id || ''}`
+
+        const notifObj = {
+          id: 'NTF-FIRE-' + (result.inspection_id || result.work_order_id || Date.now()),
+          notificationId: result.inspection_id || Date.now(),
+          title: isService
+            ? `أمر شغل صيانة إطفاء (${result.work_order_id || 'WO-FIRE'}): ${tag}`
+            : `فحص وتفتيش معدة الإطفاء: ${tag}`,
+          body: result.message || 'تم تحديث سجلات معدات وشبكة الإطفاء ومكافحة الحريق بنجاح.',
+          time: 'الآن (مباشر)',
+          color: 'var(--safe)',
+          type: 'FIRE_SAFETY',
+          to: '/fire-equipment',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || `تم تنفيذ عملية معدة الإطفاء (${tag}) بنجاح`, 'ok')
+      }
+
+      // Check if Incident / RCA / Export / Template / Dashboard action was executed
+      const incCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'export_incidents_excel' ||
+          t.name === 'export_incidents_excel' ||
+          t.tool_name === 'generate_external_report_template' ||
+          t.name === 'generate_external_report_template' ||
+          t.tool_name === 'create_incident_rca' ||
+          t.name === 'create_incident_rca' ||
+          t.tool_name === 'create_incident' ||
+          t.name === 'create_incident' ||
+          t.tool_name === 'refresh_dashboard' ||
+          t.name === 'refresh_dashboard'
+      )
+      if (incCall) {
+        const tName = incCall.tool_name || incCall.name || ''
+        const result = incCall.result || incCall.output || {}
+        const isExport = tName.includes('export')
+        const isTmpl = tName.includes('template')
+        const isRca = tName.includes('rca')
+        const isDash = tName.includes('dashboard')
+
+        if (isExport) {
+          window.dispatchEvent(new CustomEvent('hse:export-incidents', { detail: { rows: result.rows, summary: result.summary } }))
+        }
+        if (isTmpl) {
+          window.dispatchEvent(new CustomEvent('hse:open-template-modal', { detail: { templateType: result.template_type, data: result } }))
+        }
+        if (isDash) {
+          window.dispatchEvent(new CustomEvent('hse:refresh-dashboard'))
+        }
+
+        const notifObj = {
+          id: 'NTF-INC-' + (result.incident_id || result.rca_id || Date.now()),
+          notificationId: result.incident_id || result.rca_id || Date.now(),
+          title: isExport
+            ? 'تصدير سجل الحوادث إلى ملف Excel'
+            : isTmpl
+            ? `توليد ${result.title || 'النموذج الرسمي'}`
+            : isRca
+            ? `تحليل السبب الجذري للحادث #${result.incident_id || 'INC'}`
+            : isDash
+            ? 'تحديث لوحة قيادة السلامة الحية'
+            : `تسجيل بلاغ حادث جديد (${result.incident_id || 'INC'})`,
+          body: result.message || 'تم تنفيذ العملية وتحديث سجلات السلامة بنجاح.',
+          time: 'الآن (مباشر)',
+          color: isExport ? 'var(--info)' : isDash ? 'var(--info)' : isRca ? 'var(--warn)' : 'var(--safe)',
+          type: isDash ? 'DASHBOARD' : 'INCIDENT',
+          to: isDash ? '/' : '/incidents',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تنفيذ عملية السلامة بنجاح', 'ok')
+      }
+
+      // Check if Reports & Analytics action was executed
+      const reportCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'export_reports_excel' ||
+          t.name === 'export_reports_excel' ||
+          t.tool_name === 'export_reports_pdf' ||
+          t.name === 'export_reports_pdf' ||
+          t.tool_name === 'send_report_to_management' ||
+          t.name === 'send_report_to_management' ||
+          t.tool_name === 'generate_custom_report' ||
+          t.name === 'generate_custom_report' ||
+          t.tool_name === 'open_ready_report' ||
+          t.name === 'open_ready_report' ||
+          t.tool_name === 'schedule_report' ||
+          t.name === 'schedule_report'
+      )
+      if (reportCall) {
+        const tName = reportCall.tool_name || reportCall.name || ''
+        const result = reportCall.result || reportCall.output || {}
+        const args = reportCall.args || reportCall.arguments || {}
+
+        const isExcel = tName === 'export_reports_excel'
+        const isPdf = tName === 'export_reports_pdf'
+        const isSend = tName === 'send_report_to_management'
+        const isCustom = tName === 'generate_custom_report'
+        const isReady = tName === 'open_ready_report'
+        const isSched = tName === 'schedule_report'
+
+        if (isExcel) {
+          window.dispatchEvent(new CustomEvent('hse:export-reports-excel', { detail: result }))
+        }
+        if (isPdf) {
+          window.dispatchEvent(new CustomEvent('hse:export-reports-pdf', { detail: result }))
+        }
+        if (isSend) {
+          window.dispatchEvent(new CustomEvent('hse:send-management', { detail: { ...args, ...result, autoSubmit: true } }))
+        }
+        if (isCustom) {
+          window.dispatchEvent(new CustomEvent('hse:open-custom-report-builder', { detail: result }))
+        }
+        if (isReady) {
+          window.dispatchEvent(new CustomEvent('hse:open-ready-report', { detail: { reportId: result.report_id || args.report_id } }))
+        }
+        if (isSched) {
+          window.dispatchEvent(new CustomEvent('hse:schedule-report', { detail: result }))
+        }
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+
+        const notifObj = {
+          id: 'NTF-RPT-' + (result.dispatch_id || result.schedule_id || Date.now()),
+          notificationId: result.dispatch_id || Date.now(),
+          title: isExcel
+            ? 'تصدير مصنف تقارير السلامة Excel'
+            : isPdf
+            ? 'تصدير / طباعة التقرير التنفيذي PDF'
+            : isSend
+            ? `إرسال ${result.report_type || 'التقرير التنفيذي'} للإدارة`
+            : isCustom
+            ? `توليد ${result.title || 'تقرير مخصص'}`
+            : isReady
+            ? `فحص ${result.title || 'التقرير الجاهز'}`
+            : 'تفعيل جدولة تقرير السلامة الآلي',
+          body: result.message || 'تمت أتمتة إجراء التقارير بنجاح وتحديث لوحة التحليلات.',
+          time: 'الآن (مباشر)',
+          color: isSend ? 'var(--pri)' : isPdf ? 'var(--info)' : isExcel ? 'var(--safe)' : 'var(--warn)',
+          type: 'REPORTS_ANALYTICS',
+          to: '/reports',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        toast(result.message || 'تمت أتمتة إجراء التقارير بنجاح', 'ok')
       }
 
       const agentMsg = {

@@ -17,29 +17,8 @@ public class WorkflowController {
 
     public WorkflowController(PlatformService service) { this.service = service; }
 
-    @PatchMapping("/permits/{id}/approve")
-    public Map<String, Object> approvePermit(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        if (SecurityUtils.isAuthenticated()) {
-            SecurityUtils.requireAnyRole("HSE_MANAGER", "HSE_OFFICER", "SYSTEM_ADMINISTRATOR");
-        }
-        return service.transition("permits", id, "ACTIVE", body);
-    }
+    // Permit lifecycle transitions are handled by WorkPermitController.java
 
-    @PatchMapping("/permits/{id}/suspend")
-    public Map<String, Object> suspendPermit(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        if (SecurityUtils.isAuthenticated()) {
-            SecurityUtils.requireAnyRole("HSE_MANAGER", "HSE_OFFICER", "SYSTEM_ADMINISTRATOR");
-        }
-        return service.transition("permits", id, "SUSPENDED", body);
-    }
-
-    @PatchMapping("/permits/{id}/close")
-    public Map<String, Object> closePermit(@PathVariable String id) {
-        if (SecurityUtils.isAuthenticated()) {
-            SecurityUtils.requireAnyRole("HSE_MANAGER", "HSE_OFFICER", "SYSTEM_ADMINISTRATOR");
-        }
-        return service.transition("permits", id, "CLOSED", Map.of());
-    }
 
     @PatchMapping("/incidents/{id}/close")
     public Map<String, Object> closeIncident(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {

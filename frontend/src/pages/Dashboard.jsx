@@ -21,9 +21,7 @@ import { dashboard } from '../api/endpoints.js'
 import { useApi, useCan, useToast } from '../hooks.jsx'
 import tc, { scoreColor } from '../themeColors.js'
 import IncidentForm from './parts/IncidentForm.jsx'
-import { useState } from 'react'
-
-
+import { useState, useEffect } from 'react'
 
 export default function Dashboard() {
   const nav = useNavigate()
@@ -38,9 +36,28 @@ export default function Dashboard() {
   const pyramid = useApi(() => dashboard.pyramid(), [])
 
   const refreshAll = () => {
-    ;[summary, zones, alerts, trend, pyramid].forEach((s) => s.reload())
+    ;[summary, zones, alerts, trend, pyramid].forEach((s) => s.reload?.())
     toast('تم تحديث كل البيانات من الخادم')
   }
+
+  useEffect(() => {
+    const handleDataChange = () => {
+      ;[summary, zones, alerts, trend, pyramid].forEach((s) => s.reload?.())
+    }
+    const handleOpenForm = () => setReporting(true)
+
+    window.addEventListener('hse:data-changed', handleDataChange)
+    window.addEventListener('hse:notifications-changed', handleDataChange)
+    window.addEventListener('hse:refresh-dashboard', handleDataChange)
+    window.addEventListener('hse:open-incident-form', handleOpenForm)
+
+    return () => {
+      window.removeEventListener('hse:data-changed', handleDataChange)
+      window.removeEventListener('hse:notifications-changed', handleDataChange)
+      window.removeEventListener('hse:refresh-dashboard', handleDataChange)
+      window.removeEventListener('hse:open-incident-form', handleOpenForm)
+    }
+  }, [])
 
   return (
     <>

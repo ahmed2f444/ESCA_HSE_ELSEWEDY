@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Async,
   Btn,
@@ -178,6 +178,18 @@ export default function Inspections() {
     findings.reload?.()
     templates.reload?.()
   }
+
+  // Subscribe to live database changes from AI Assistant mutations
+  useEffect(() => {
+    const handleDataChanged = (e) => {
+      const entity = e?.detail?.entity || ''
+      if (!entity || entity.includes('inspect') || entity.includes('finding') || entity === 'all') {
+        reloadAll()
+      }
+    }
+    window.addEventListener('hse:data-changed', handleDataChanged)
+    return () => window.removeEventListener('hse:data-changed', handleDataChanged)
+  }, [])
 
   // Combined Schedule (All inspection rounds)
   const displaySchedule = useMemo(() => {
@@ -447,6 +459,22 @@ export default function Inspections() {
   return (
     <>
       <PageHeader title="التفتيش والجولات" meta="inspection & safety walks">
+        <Btn
+          variant="sec"
+          icon="bot"
+          onClick={() => {
+            window.dispatchEvent(
+              new CustomEvent('hse:open-assistant', {
+                detail: {
+                  prompt: 'ما هي إحصائيات ونسبة الامتثال لجولات التفتيش واقتراحات الفحص القادم؟',
+                  autoSend: true,
+                },
+              })
+            )
+          }}
+        >
+          مساعد التفتيش الذكي AI
+        </Btn>
         <Btn icon="calendar" onClick={() => setScheduleOpen(true)}>
           جدولة جولة
         </Btn>

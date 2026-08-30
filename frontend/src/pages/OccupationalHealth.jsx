@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Async,
   Btn,
@@ -76,6 +76,15 @@ export default function OccupationalHealth() {
     exposure.reload?.()
     schedule.reload?.()
   }
+
+  // Auto-reload schedule data every time the modal is opened so AI-created
+  // records (written directly to MySQL by the agent) are always visible.
+  useEffect(() => {
+    if (scheduleOpen) {
+      schedule.reload?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleOpen])
 
   const handleRegisterExam = async (e) => {
     e.preventDefault()
@@ -324,6 +333,14 @@ export default function OccupationalHealth() {
           <div className="flex items-center justify-between w-full">
             <span className="text-xs text-txt-3">إجمالي السجلات: {filteredSchedule.length} فحص</span>
             <div className="flex gap-2">
+              <Btn
+                variant="ghost"
+                size="sm"
+                icon="refresh"
+                onClick={() => schedule.reload?.()}
+              >
+                تحديث
+              </Btn>
               <Btn
                 variant="pri"
                 size="sm"

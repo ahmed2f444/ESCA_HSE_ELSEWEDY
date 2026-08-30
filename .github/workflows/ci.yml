@@ -19,13 +19,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install and Build Frontend
-        run: |
-          npm install --legacy-peer-deps
-          npm run build
+      - name: Install Frontend Dependencies
+        run: npm ci --legacy-peer-deps
+      - name: Lint Frontend
+        run: npm run lint
+      - name: Test Frontend API Integration
+        run: npm test
+      - name: Build Frontend
+        run: npm run build
 
   build-backend:
-    name: Compile Backend (Spring Boot + Java 17)
+    name: Test Backend (Spring Boot + Java 17)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,10 +38,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Validate Maven Compilation
+      - name: Run Backend Test Suite
         run: |
           cd backend
-          mvn clean test-compile -DskipTests
+          mvn clean test
 
   check-ai-agent:
     name: Lint & Validate AI Agent (Python 3.12)

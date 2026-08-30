@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src --ext js,jsx"
+    "lint": "eslint src --ext js,jsx",
+    "test": "node --test tests/api-smoke.test.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.1",
@@ -28,5 +29,9 @@
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.21.5",
     "@rollup/rollup-linux-x64-gnu": "^4.22.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-plugin-react-hooks": "^5.2.0"
   }
 }

@@ -10,6 +10,7 @@ import { api, agent } from './client.js'
 
 const get = (url, params) => api.get(url, { params }).then((r) => r.data)
 const post = (url, body) => api.post(url, body).then((r) => r.data)
+const put = (url, body) => api.put(url, body).then((r) => r.data)
 const del = (url) => api.delete(url).then((r) => r.data)
 
 export const auth = {

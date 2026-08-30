@@ -553,22 +553,108 @@ public class HseDataController {
 
                 result.add(item);
             }
-        } catch (Exception e) {
-            List<Map<String, Object>> fallback = getDefaultIncidents();
-            for (Map<String, Object> item : fallback) {
-                String rawStatus = String.valueOf(item.getOrDefault("status", ""));
-                if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
-                    if (status.equalsIgnoreCase("open") && !rawStatus.contains("مفتوح")) continue;
-                    if (status.equalsIgnoreCase("investigating") && !rawStatus.contains("التحقيق")) continue;
-                    if (status.equalsIgnoreCase("closed") && !rawStatus.contains("مغلق")) continue;
+        } catch (Exception normalizedSchemaError) {
+            try {
+                result.addAll(portableIncidentsList(status, q));
+            } catch (Exception portableSchemaError) {
+                log.warn("incident_list_database_unavailable");
+                List<Map<String, Object>> fallback = getDefaultIncidents();
+                for (Map<String, Object> item : fallback) {
+                    String rawStatus = String.valueOf(item.getOrDefault("status", ""));
+                    if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
+                        if (status.equalsIgnoreCase("open") && !rawStatus.contains("مفتوح")) continue;
+                        if (status.equalsIgnoreCase("investigating") && !rawStatus.contains("التحقيق")) continue;
+                        if (status.equalsIgnoreCase("closed") && !rawStatus.contains("مغلق")) continue;
+                    }
+                    if (q != null && !q.isBlank()) {
+                        String qNorm = q.trim().toLowerCase();
+                        String haystack = item.values().toString().toLowerCase();
+                        if (!haystack.contains(qNorm)) continue;
+                    }
+                    result.add(item);
                 }
-                if (q != null && !q.isBlank()) {
-                    String qNorm = q.trim().toLowerCase();
-                    String haystack = item.values().toString().toLowerCase();
-                    if (!haystack.contains(qNorm)) continue;
-                }
-                result.add(item);
             }
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> portableIncidentsList(String status, String q) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT incident_id, incident_type, title, description, zone_id, reported_by, occurred_at, severity, status " +
+                        "FROM incidents ORDER BY occurred_at DESC, incident_id DESC",
+                Map.of()
+        );
+        for (Map<String, Object> row : rows) {
+            String id = String.valueOf(row.get("incident_id"));
+            String rawStatus = String.valueOf(row.getOrDefault("status", "OPEN")).toUpperCase(Locale.ROOT);
+            String displayStatus = rawStatus.contains("CLOSED") ? "مغلق" :
+                    (rawStatus.contains("INVESTIGAT") ? "تحت التحقيق" : "مفتوح");
+            String statusTone = rawStatus.contains("CLOSED") ? "safe" :
+                    (rawStatus.contains("INVESTIGAT") ? "wn" : "cr");
+
+            String rawSeverity = String.valueOf(row.getOrDefault("severity", "MEDIUM")).toUpperCase(Locale.ROOT);
+            String displaySeverity = rawSeverity.contains("CRIT") ? "حرج" :
+                    (rawSeverity.contains("HIGH") || rawSeverity.contains("MAJ")) ? "عالي" :
+                            (rawSeverity.contains("LOW") || rawSeverity.contains("MIN")) ? "منخفض" : "متوسط";
+            String severityTone = rawSeverity.contains("CRIT") || rawSeverity.contains("HIGH") || rawSeverity.contains("MAJ") ? "crit" :
+                    (rawSeverity.contains("LOW") || rawSeverity.contains("MIN")) ? "in" : "wn";
+
+            String rawType = String.valueOf(row.getOrDefault("incident_type", "NEAR_MISS")).toUpperCase(Locale.ROOT);
+            String displayType = rawType.contains("FIRST_AID") ? "First Aid" :
+                    rawType.contains("LTI") ? "Lost Time Injury (LTI)" :
+                            rawType.contains("NEAR") ? "Near Miss" :
+                                    rawType.contains("PROPERTY") ? "Property Damage" :
+                                            rawType.contains("UNSAFE_ACT") ? "Unsafe Act" :
+                                                    rawType.contains("UNSAFE_COND") ? "Unsafe Condition" : rawType;
+
+            Object occurredAtValue = row.get("occurred_at");
+            String date = "";
+            String time = "";
+            if (occurredAtValue instanceof java.sql.Timestamp timestamp) {
+                LocalDateTime occurredAt = timestamp.toLocalDateTime();
+                date = occurredAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                time = occurredAt.format(DateTimeFormatter.ofPattern("HH:mm"));
+            } else if (occurredAtValue != null) {
+                String value = occurredAtValue.toString();
+                date = value.length() >= 10 ? value.substring(0, 10) : value;
+            }
+
+            String title = String.valueOf(row.getOrDefault("title", ""));
+            String description = nullableText(row.get("description"));
+            if (description == null) description = title;
+            String zone = nullableText(row.get("zone_id"));
+            if (zone == null) zone = "غير محدد";
+            String owner = nullableText(row.get("reported_by"));
+            if (owner == null) owner = "SYSTEM";
+
+            Map<String, Object> item = map(
+                    "id", id,
+                    "date", date,
+                    "time", time,
+                    "zone", zone,
+                    "type", displayType,
+                    "title", title,
+                    "description", description,
+                    "severity", displaySeverity,
+                    "severityTone", severityTone,
+                    "injured", "لا يوجد",
+                    "status", displayStatus,
+                    "rawStatus", rawStatus,
+                    "statusTone", statusTone,
+                    "owner", owner
+            );
+
+            if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all") &&
+                    !rawStatus.equalsIgnoreCase(status.trim())) {
+                continue;
+            }
+            if (q != null && !q.isBlank()) {
+                String query = q.trim().toLowerCase(Locale.ROOT);
+                String haystack = item.values().toString().toLowerCase(Locale.ROOT);
+                if (!haystack.contains(query)) continue;
+            }
+            result.add(item);
         }
         return result;
     }
@@ -590,7 +676,7 @@ public class HseDataController {
         if (title.length() > 250) title = title.substring(0, 247) + "...";
         String desc = String.valueOf(body.getOrDefault("description", ""));
         String rawSev = String.valueOf(body.getOrDefault("severity", "متوسطة")).toUpperCase();
-        String rawType = String.valueOf(body.getOrDefault("type", "Near Miss")).toUpperCase();
+        String rawType = String.valueOf(body.getOrDefault("incidentType", body.getOrDefault("type", "Near Miss"))).toUpperCase();
         String zoneStr = String.valueOf(body.getOrDefault("zone", ""));
         String occurredAtStr = String.valueOf(body.getOrDefault("occurredAt", ""));
         String injuredStr = String.valueOf(body.getOrDefault("injured", "")).trim();
@@ -638,46 +724,33 @@ public class HseDataController {
             } catch (Exception ignored) {}
         }
 
-        Integer generatedId = null;
+        String newId;
         try {
-            GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-            MapSqlParameterSource params = new MapSqlParameterSource()
-                    .addValue("reported_at", java.sql.Timestamp.valueOf(occurredAt))
-                    .addValue("zone_id", zoneId)
-                    .addValue("reported_by", 1)
-                    .addValue("incident_type_id", typeId)
-                    .addValue("severity_id", sevId)
-                    .addValue("title", title)
-                    .addValue("description", desc)
-                    .addValue("injured_employee_id", injuredEmpId)
-                    .addValue("lost_days", 0)
-                    .addValue("status_id", 1) // REPORTED / OPEN
-                    .addValue("investigation_owner_id", 1)
-                    .addValue("target_close_date", java.sql.Date.valueOf(LocalDate.now().plusDays(7)))
-                    .addValue("source_id", 1);
-
-            jdbc.update(
-                    "INSERT INTO incidents (reported_at, zone_id, reported_by, incident_type_id, severity_id, title, description, injured_employee_id, lost_days, status_id, investigation_owner_id, target_close_date, source_id) " +
-                    "VALUES (:reported_at, :zone_id, :reported_by, :incident_type_id, :severity_id, :title, :description, :injured_employee_id, :lost_days, :status_id, :investigation_owner_id, :target_close_date, :source_id)",
-                    params,
-                    keyHolder
-            );
-            if (keyHolder.getKey() != null) {
-                generatedId = keyHolder.getKey().intValue();
+            if (usesPortableIncidentSchema()) {
+                newId = insertPortableIncident(body, occurredAt, rawType, rawSev, title, desc);
+            } else {
+                newId = insertNormalizedIncident(
+                        occurredAt, zoneId, typeId, sevId, title, desc, injuredEmpId
+                );
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception createError) {
+            log.error("incident_create_failed");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map(
+                    "success", false,
+                    "code", "INCIDENT_CREATE_FAILED",
+                    "message", "تعذر حفظ البلاغ في قاعدة البيانات"
+            ));
         }
 
-        String newId = generatedId != null ? ("INC-" + String.format("%03d", generatedId)) : ("INC-00" + (count("incidents") + 1));
-        
         try {
             jdbc.update(
                     "INSERT INTO audit_log (audit_id, actor_type, actor_id, action, entity_type, entity_id, details_json) " +
                     "VALUES (:audit_id, 'USER', 'SYSTEM', 'CREATE', 'INCIDENTS', :entity_id, :details)",
                     Map.of("audit_id", "AUD-" + UUID.randomUUID().toString().substring(0, 8), "entity_id", newId, "details", "{}")
             );
-        } catch (Exception ignored) {}
+        } catch (Exception auditError) {
+            log.warn("incident_audit_failed incidentId={}", newId);
+        }
 
         Map<String, Object> resp = map(
                 "success", true,
@@ -689,6 +762,120 @@ public class HseDataController {
                 "createdAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+    }
+
+    private boolean usesPortableIncidentSchema() {
+        try {
+            Number count = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.columns " +
+                            "WHERE LOWER(table_name) = 'incidents' " +
+                            "AND LOWER(column_name) = 'incident_type' " +
+                            "AND LOWER(table_schema) = LOWER(SCHEMA())",
+                    Map.of(),
+                    Number.class
+            );
+            return count != null && count.intValue() > 0;
+        } catch (Exception metadataError) {
+            return false;
+        }
+    }
+
+    private String insertNormalizedIncident(
+            LocalDateTime occurredAt,
+            int zoneId,
+            int typeId,
+            int severityId,
+            String title,
+            String description,
+            Integer injuredEmployeeId) {
+        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("reported_at", java.sql.Timestamp.valueOf(occurredAt))
+                .addValue("zone_id", zoneId)
+                .addValue("reported_by", 1)
+                .addValue("incident_type_id", typeId)
+                .addValue("severity_id", severityId)
+                .addValue("title", title)
+                .addValue("description", description)
+                .addValue("injured_employee_id", injuredEmployeeId)
+                .addValue("lost_days", 0)
+                .addValue("status_id", 1)
+                .addValue("investigation_owner_id", 1)
+                .addValue("target_close_date", java.sql.Date.valueOf(LocalDate.now().plusDays(7)))
+                .addValue("source_id", 1);
+
+        int inserted = jdbc.update(
+                "INSERT INTO incidents (reported_at, zone_id, reported_by, incident_type_id, severity_id, title, description, injured_employee_id, lost_days, status_id, investigation_owner_id, target_close_date, source_id) " +
+                        "VALUES (:reported_at, :zone_id, :reported_by, :incident_type_id, :severity_id, :title, :description, :injured_employee_id, :lost_days, :status_id, :investigation_owner_id, :target_close_date, :source_id)",
+                params,
+                keyHolder,
+                new String[]{"incident_id"}
+        );
+        if (inserted != 1 || keyHolder.getKey() == null) {
+            throw new IllegalStateException("Incident insert did not return an identifier");
+        }
+        return "INC-" + String.format("%03d", keyHolder.getKey().intValue());
+    }
+
+    private String insertPortableIncident(
+            Map<String, Object> body,
+            LocalDateTime occurredAt,
+            String rawType,
+            String rawSeverity,
+            String title,
+            String description) {
+        String incidentId = "INC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
+        String incidentType = portableIncidentType(rawType);
+        String severity = portableIncidentSeverity(rawSeverity);
+        String zoneId = nullableText(body.getOrDefault("zoneId", body.get("zone_id")));
+        String departmentId = nullableText(body.getOrDefault("departmentId", body.get("department_id")));
+        String reportedBy = nullableText(body.getOrDefault("reportedBy", body.get("reported_by")));
+        if (reportedBy == null) reportedBy = "SYSTEM";
+
+        int inserted = jdbc.update(
+                "INSERT INTO incidents (incident_id, incident_type, title, description, department_id, zone_id, reported_by, occurred_at, severity, status, immediate_action, lost_time_days) " +
+                        "VALUES (:incident_id, :incident_type, :title, :description, :department_id, :zone_id, :reported_by, :occurred_at, :severity, 'OPEN', :immediate_action, 0)",
+                new MapSqlParameterSource()
+                        .addValue("incident_id", incidentId)
+                        .addValue("incident_type", incidentType)
+                        .addValue("title", title)
+                        .addValue("description", description)
+                        .addValue("department_id", departmentId)
+                        .addValue("zone_id", zoneId)
+                        .addValue("reported_by", reportedBy)
+                        .addValue("occurred_at", java.sql.Timestamp.valueOf(occurredAt))
+                        .addValue("severity", severity)
+                        .addValue("immediate_action", nullableText(body.get("immediateAction")))
+        );
+        if (inserted != 1) {
+            throw new IllegalStateException("Incident insert affected an unexpected number of rows");
+        }
+        return incidentId;
+    }
+
+    private static String portableIncidentType(String rawType) {
+        if (rawType.contains("FIRST") || rawType.contains("إسعاف") || rawType.contains("إصابة")) return "FIRST_AID";
+        if (rawType.contains("LTI") || rawType.contains("جسيمة")) return "LTI";
+        if (rawType.contains("COND") || rawType.contains("وضع")) return "UNSAFE_CONDITION";
+        if (rawType.contains("ACT") || rawType.contains("سلوك")) return "UNSAFE_ACT";
+        if (rawType.contains("PROP") || rawType.contains("ضرر")) return "PROPERTY_DAMAGE";
+        if (rawType.contains("حريق")) return "FIRE";
+        if (rawType.contains("انسكاب") || rawType.contains("تسرب")) return "ENVIRONMENTAL_SPILL";
+        if (rawType.contains("OBSERVATION")) return "OBSERVATION";
+        return "NEAR_MISS";
+    }
+
+    private static String portableIncidentSeverity(String rawSeverity) {
+        if (rawSeverity.contains("CRIT") || rawSeverity.contains("حرج")) return "CRITICAL";
+        if (rawSeverity.contains("MAJ") || rawSeverity.contains("HIGH") || rawSeverity.contains("عال")) return "HIGH";
+        if (rawSeverity.contains("MIN") || rawSeverity.contains("LOW") || rawSeverity.contains("منخفض")) return "LOW";
+        return "MEDIUM";
+    }
+
+    private static String nullableText(Object value) {
+        if (value == null) return null;
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
     }
 
     @GetMapping("/incidents/{id}/rca")

@@ -20,7 +20,6 @@ from app.security import (
 # ── Fallback table formatter (used when LLM synthesis fails) ──────────────────
 _ARABIC_HEADERS = {
     "incident_id": "رقم الحادث", "incident_status_id": "رقم الحالة", "name": "الاسم/الحالة",
-    "incident_id": "رقم الحادث", "incident_status_id": "رقم الحالة", "name": "الاسم/الحالة",
     "status": "الحالة", "status_ar": "الحالة المعتمدة", "severity": "الخطورة", "title": "العنوان", "description": "الوصف",
     "reported_at": "تاريخ البلاغ", "zone_id": "المنطقة", "zone_name": "اسم المنطقة", "lost_days": "أيام الفقد",
     "employee_id": "رقم الموظف", "display_name": "اسم الموظف", "employee_name": "اسم الموظف",

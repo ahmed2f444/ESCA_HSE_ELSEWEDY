@@ -218,7 +218,8 @@ class TestPermitLiveDatabaseCrud:
     """Test full permit CRUD cycle and SIMOPS detection on live MySQL database."""
 
     @pytest.fixture(scope="class")
-    def db_session(self):
+    @classmethod
+    def db_session(cls):
         from app.database import SessionLocal
         db = SessionLocal()
         yield db

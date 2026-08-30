@@ -29,9 +29,21 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+WRITE_PRIVILEGES = (
+    "ALL PRIVILEGES",
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "CREATE",
+    "DROP",
+    "ALTER",
+    "GRANT OPTION",
+)
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+

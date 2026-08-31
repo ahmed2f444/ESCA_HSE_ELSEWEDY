@@ -2262,16 +2262,15 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "trade_name": {"type": "string", "description": "Commercial product trade name"},
-                    "chemical_name": {"type": "string", "description": "Scientific chemical formula/name"},
-                    "cas_number": {"type": "string", "description": "Chemical Abstracts Service (CAS) number (e.g. 67-64-1)"},
-                    "supplier": {"type": "string", "description": "Supplier/Manufacturer name"},
-                    "quantity": {"type": "number", "description": "Initial stock quantity", "default": 100.0},
-                    "unit": {"type": "string", "description": "Unit (Liters, KG, Drums, Cylinders)", "default": "Liters"},
-                    "ghs_classes": {"type": "string", "description": "GHS Hazard classes (e.g. Flammable Liquid, Corrosive, Toxic)", "default": "Flammable Liquid"},
-                    "zone_id": {"type": "integer", "description": "Storage Zone ID", "default": 4}
-                },
-                "required": ["trade_name", "chemical_name"]
+                    "trade_name": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Commercial product trade name"},
+                    "chemical_name": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Scientific chemical formula/name"},
+                    "cas_number": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Chemical Abstracts Service (CAS) number (e.g. 67-64-1)"},
+                    "supplier": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Supplier/Manufacturer name"},
+                    "quantity": {"anyOf": [{"type": "number"}, {"type": "null"}], "description": "Initial stock quantity", "default": 100.0},
+                    "unit": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Unit (Liters, KG, Drums, Cylinders)", "default": "Liters"},
+                    "ghs_classes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "GHS Hazard classes (e.g. Flammable Liquid, Corrosive, Toxic)", "default": "Flammable Liquid"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "Storage Zone ID", "default": 4}
+                }
             }
         }
     },
@@ -2312,7 +2311,7 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "chemical_id": {"type": "integer", "description": "Chemical ID"},
+                    "chemical_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Chemical ID or trade/scientific name"},
                     "quantity": {"type": "number", "description": "Updated stock quantity"}
                 },
                 "required": ["chemical_id", "quantity"]
@@ -2327,7 +2326,7 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "chemical_id": {"type": "integer", "description": "Chemical ID"},
+                    "chemical_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Chemical ID or trade/scientific name"},
                     "trade_name": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                     "ghs_classes": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                     "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}]}
@@ -2388,6 +2387,33 @@ TOOLS = [
                     "query": {"type": "string", "description": "Chemical trade name, scientific name, or CAS number"}
                 },
                 "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_chemical_emergency_guide",
+            "description": "Automate Emergency Safety Guide: Immediate first aid, eye-wash protocols, firefighting, required PPE, and spill response for a hazardous chemical.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "chemical_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Chemical ID or name"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_sds_records",
+            "description": "List and audit SDS (Safety Data Sheets) archive: view versions, issue dates, expiry status, and emergency files.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Filter by chemical name, code, or CAS"},
+                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Filter by CURRENT or EXPIRED"}
+                }
             }
         }
     },

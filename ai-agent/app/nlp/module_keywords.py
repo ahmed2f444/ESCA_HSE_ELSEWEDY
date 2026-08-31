@@ -1027,10 +1027,12 @@ INTENT_TO_TOOL_MAP: Dict[str, List[str]] = {
     # Module 12: Chemicals
     "ADD_CHEMICAL": ["add_chemical", "list_chemicals"],
     "LIST_CHEMICALS": ["list_chemicals", "get_chemical_details", "get_chemical_compatibility"],
-    "GET_CHEMICAL_DETAILS": ["get_chemical_details", "list_chemicals", "get_msds_sheet"],
+    "GET_CHEMICAL_DETAILS": ["get_chemical_details", "get_chemical_emergency_guide", "list_chemicals", "get_msds_sheet"],
     "DELETE_CHEMICAL": ["delete_chemical", "list_chemicals"],
     "CHECK_CHEMICAL_STORAGE": ["check_chemical_storage_safety", "get_chemical_compatibility", "list_chemicals"],
-    "GET_MSDS": ["get_msds_sheet", "get_chemical_details"],
+    "GET_MSDS": ["get_msds_sheet", "list_sds_records", "get_chemical_emergency_guide", "get_chemical_details"],
+    "EMERGENCY_GUIDE": ["get_chemical_emergency_guide", "get_msds_sheet", "get_chemical_details"],
+    "SDS_ARCHIVE": ["list_sds_records", "get_msds_sheet", "list_chemicals"],
 
     # Module 13: Medical
     "RECORD_MEDICAL_EXAM": ["record_medical_exam", "schedule_medical_exam", "list_medical_exams", "get_employee_info", "update_medical_exam"],

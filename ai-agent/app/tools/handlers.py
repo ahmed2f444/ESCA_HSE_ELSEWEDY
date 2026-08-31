@@ -6757,39 +6757,91 @@ def get_chemical_compatibility(db: Session, chemical_a: Optional[str] = None, ch
     return {"compatibility_matrix": compat_rules, "tested_pair": f"{chemical_a or 'Class A'} vs {chemical_b or 'Class B'}", "source": "chemical_safety_standard"}
 
 
-def update_chemical_stock(db: Session, chemical_id: int, quantity: float, **kwargs) -> dict:
+def update_chemical_stock(db: Session, chemical_id: int | str, quantity: float, **kwargs) -> dict:
     """CRUD UPDATE: Updates chemical stock."""
     try:
-        db.execute(text("UPDATE chemicals SET quantity = :q WHERE chemical_id = :id"), {"q": float(quantity), "id": chemical_id})
+        cid = int(chemical_id) if str(chemical_id).isdigit() else None
+        if not cid:
+            r = db.execute(text("SELECT chemical_id, trade_name FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q LIMIT 1"), {"q": f"%{chemical_id}%"}).fetchone()
+            if r:
+                cid = r[0]
+            else:
+                return {"error": f"Chemical '{chemical_id}' not found in inventory."}
+
+        db.execute(text("UPDATE chemicals SET quantity = :q WHERE chemical_id = :id"), {"q": float(quantity), "id": cid})
         db.commit()
-        _log_audit_event(db, "UPDATE_CHEMICAL_STOCK", "chemicals", chemical_id, details={"quantity": quantity})
-        return {"success": True, "chemical_id": chemical_id, "quantity": quantity, "message": f"Chemical #{chemical_id} quantity updated to {quantity}."}
+        _log_audit_event(db, "UPDATE_CHEMICAL_STOCK", "chemicals", cid, details={"quantity": quantity})
+        return {"success": True, "chemical_id": cid, "quantity": quantity, "message": f"Chemical #{cid} quantity updated to {quantity}."}
     except Exception as exc:
         db.rollback()
-        return {"error": f"Failed to update chemical: {str(exc)}"}
+        return {"error": f"Failed to update chemical stock: {str(exc)}"}
 
 
-def update_chemical(db: Session, chemical_id: int, trade_name: Optional[str] = None, ghs_classes: Optional[str] = None, zone_id: Optional[int] = None, **kwargs) -> dict:
-    """CRUD UPDATE: Updates chemical details."""
+def update_chemical(
+    db: Session,
+    chemical_id: int | str,
+    trade_name: Optional[str] = None,
+    chemical_name: Optional[str] = None,
+    cas_number: Optional[str] = None,
+    supplier: Optional[str] = None,
+    quantity: Optional[float] = None,
+    unit: Optional[str] = None,
+    ghs_classes: Optional[str] = None,
+    zone_id: Optional[int | str] = None,
+    storage_class: Optional[str] = None,
+    **kwargs
+) -> dict:
+    """CRUD UPDATE: Updates chemical metadata, quantity, zone, or GHS classes."""
     try:
-        updates, params = [], {"id": chemical_id}
+        cid = int(chemical_id) if str(chemical_id).isdigit() else None
+        if not cid:
+            r = db.execute(text("SELECT chemical_id FROM chemicals WHERE trade_name LIKE :q LIMIT 1"), {"q": f"%{chemical_id}%"}).fetchone()
+            if r:
+                cid = r[0]
+            else:
+                return {"error": f"Chemical '{chemical_id}' not found."}
+
+        updates, params = [], {"id": cid}
         if trade_name:
             updates.append("trade_name = :tn")
             params["tn"] = trade_name.strip()
+        if chemical_name:
+            updates.append("chemical_name = :cn")
+            params["cn"] = chemical_name.strip()
+        if cas_number:
+            updates.append("cas_number = :cas")
+            params["cas"] = cas_number.strip()
+        if supplier:
+            updates.append("supplier = :supp")
+            params["supp"] = supplier.strip()
+        if quantity is not None:
+            updates.append("quantity = :qty")
+            params["qty"] = float(quantity)
+        if unit:
+            updates.append("unit = :u")
+            params["u"] = unit.strip()
         if ghs_classes:
             updates.append("ghs_classes = :ghs")
             params["ghs"] = ghs_classes.strip()
         if zone_id:
             updates.append("zone_id = :zid")
             params["zid"] = _resolve_zone_id(db, zone_id)
+        if storage_class:
+            updates.append("storage_class = :st_class")
+            params["st_class"] = storage_class.strip()
 
         if not updates:
             return {"error": "No update fields provided."}
 
         db.execute(text(f"UPDATE chemicals SET {', '.join(updates)} WHERE chemical_id = :id"), params)
         db.commit()
-        _log_audit_event(db, "UPDATE_CHEMICAL", "chemicals", chemical_id, details=params)
-        return {"success": True, "chemical_id": chemical_id, "message": f"Chemical #{chemical_id} updated successfully."}
+        _log_audit_event(db, "UPDATE_CHEMICAL", "chemicals", cid, details=params)
+        return {
+            "success": True,
+            "chemical_id": cid,
+            "updated_fields": list(params.keys()),
+            "message": f"Chemical #{cid} updated successfully in HazMat inventory."
+        }
     except Exception as exc:
         db.rollback()
         return {"error": f"Failed to update chemical: {str(exc)}"}
@@ -6819,9 +6871,17 @@ def get_chemical_details(db: Session, chemical_id: int | str, **kwargs) -> dict:
             return {"error": f"Chemical #{cid} not found."}
 
         chem = rows[0]
+        ghs_str = str(chem.get("ghs_classes", ""))
         return {
             "chemical": chem,
-            "ghs_pictograms": ["GHS02_FLAMMABLE", "GHS07_HARMFUL"] if "Flammable" in str(chem.get("ghs_classes")) else ["GHS05_CORROSIVE"],
+            "chemical_id": cid,
+            "trade_name": chem.get("trade_name"),
+            "chemical_name": chem.get("chemical_name"),
+            "cas_number": chem.get("cas_number"),
+            "quantity": chem.get("quantity"),
+            "unit": chem.get("unit"),
+            "storage_zone": chem.get("storage_zone_name"),
+            "ghs_pictograms": ["GHS02_FLAMMABLE", "GHS07_HARMFUL"] if "Flammable" in ghs_str else ["GHS05_CORROSIVE"] if "Corrosive" in ghs_str else ["GHS03_OXIDIZER"],
             "emergency_measures": "Eye wash: 15 mins flush. Inhalation: Fresh air immediately. Fire: Dry Chemical Powder or CO2.",
             "source": "mysql"
         }
@@ -6909,6 +6969,103 @@ def get_msds_sheet(db: Session, query: str, **kwargs) -> dict:
         "section_10_stability_reactivity": "Stable under recommended storage conditions. Avoid open flames, sparks, and strong oxidizers.",
         "source": "msds_database"
     }
+
+
+def get_chemical_emergency_guide(db: Session, chemical_id: Optional[int | str] = None, chemical_name: Optional[str] = None, **kwargs) -> dict:
+    """Automates Emergency Safety Guide: Immediate spill control, firefighting, PPE, and first aid for a chemical."""
+    target = chemical_name or chemical_id or "Hazardous Chemical"
+    chem_info = None
+    if chemical_id or chemical_name:
+        try:
+            cid = int(chemical_id) if str(chemical_id).isdigit() else None
+            q_filter = "chemical_id = :id" if cid else "(trade_name LIKE :q OR chemical_name LIKE :q OR cas_number LIKE :q)"
+            q_param = {"id": cid} if cid else {"q": f"%{str(target).strip()}%"}
+            chem_info = db.execute(text(f"SELECT chemical_id, trade_name, chemical_name, cas_number, ghs_classes, storage_class FROM chemicals WHERE {q_filter} LIMIT 1"), q_param).mappings().first()
+        except Exception:
+            pass
+
+    c_name = chem_info.get("trade_name") if chem_info else str(target)
+    ghs = (chem_info.get("ghs_classes") if chem_info else "FLAMMABLE").upper()
+
+    is_flamm = "FLAMMABLE" in ghs or "SOLVENT" in ghs
+    is_corros = "CORROSIVE" in ghs or "ACID" in ghs or "ALKALI" in ghs
+    is_oxid = "OXID" in ghs or "5.1" in ghs
+
+    return {
+        "success": True,
+        "chemical_name": c_name,
+        "emergency_guide": {
+            "first_aid": {
+                "inhalation": "نقل المصاب فوراً إلى الهواء النقي وطلب الرعاية الطبية إذا استمر ضيق التنفس.",
+                "skin_contact": "خلع الملابس الملوثة وغسل الجلد فوراً بكميات وفيرة من الماء لمدة 15 دقيقة.",
+                "eye_contact": "غسل العينين فوراً بمحطة غسيل العيون (Eye Wash) لمدة لا تقل عن 15 دقيقة مع إبقاء الجفون مفتوحة.",
+                "ingestion": "لا تحث على القيء، شطف الفم بالماء وطلب الإسعاف الفوري (خط الطوارئ 111)."
+            },
+            "firefighting": {
+                "extinguishing_media": "استخدام رغوة مقاومة للكحول، مسحوق جاف (Dry Chemical)، أو ثاني أكسيد الكربون (CO2).",
+                "prohibited_media": "تجنب توجيه تيار مائي مباشر عالي الضغط على السوائل المشتعلة لمنع انتشار الحريق.",
+                "special_hazards": "قد تنتج أبخرة سامة وغازات خانقة عند الاحتراق."
+            },
+            "spill_response": {
+                "small_spill": "عزل المنطقة، استخدام أطقم مكافحة الانسكاب (Spill Kits) وامتصاص المادة بالفيرميكوليت أو الرمل الجاف.",
+                "large_spill": "إخلاء العنبر، قطع مصادر الإشعال، التهوية القسرية، وإبلاغ مسؤول السلامة والطوارئ فوراً."
+            },
+            "required_ppe": [
+                "نظارات واقية مانعة لتطاير المواد الكيميائية (Chemical Splash Goggles)",
+                "قفازات النتريل المقاومة للمواد الكيميائية (EN 374)",
+                "مريلة حماية كيميائية مقاومة للأحماض والمذيبات",
+                "قناع تنفس نصفي مزود بفلتر أبخرة عضوية وغازات حمضية (A1B1E1)"
+            ]
+        },
+        "hotline": "Elsewedy HSE Emergency Line: Ext. 2222 / Clinic: Ext. 111"
+    }
+
+
+def list_sds_records(db: Session, query: Optional[str] = None, status: Optional[str] = None, limit: int = 20, **kwargs) -> dict:
+    """Lists Safety Data Sheets (SDS) archive records with expiry tracking and versions."""
+    try:
+        sql = """
+            SELECT 
+                s.sds_id,
+                s.chemical_id,
+                s.version_no,
+                s.issue_date,
+                s.expiry_date,
+                s.language,
+                s.file_ref,
+                s.emergency_summary,
+                s.days_to_expiry,
+                c.trade_name,
+                c.chemical_name,
+                c.cas_number,
+                c.supplier,
+                CASE WHEN s.status_id = 1 THEN 'CURRENT' ELSE 'EXPIRED' END AS status
+            FROM sds_records s
+            LEFT JOIN chemicals c ON s.chemical_id = c.chemical_id
+            WHERE 1=1
+        """
+        params = {}
+        if query:
+            sql += " AND (c.trade_name LIKE :q OR c.chemical_name LIKE :q OR c.cas_number LIKE :q OR s.file_ref LIKE :q)"
+            params["q"] = f"%{query.strip()}%"
+        if status and status != "ALL":
+            if status == "EXPIRED":
+                sql += " AND (s.status_id = 2 OR s.expiry_date < CURDATE())"
+            else:
+                sql += " AND (s.status_id = 1 AND s.expiry_date >= CURDATE())"
+
+        sql += " ORDER BY s.sds_id ASC LIMIT :lim"
+        params["lim"] = int(limit or 20)
+
+        rows = db.execute(text(sql), params).mappings().fetchall()
+        formatted = [dict(r) for r in rows]
+        return {
+            "success": True,
+            "count": len(formatted),
+            "sds_records": formatted
+        }
+    except Exception as exc:
+        return {"error": f"Failed to list SDS records: {str(exc)}"}
 
 
 # ── 14. Occupational Health & Industrial Hygiene Handlers ────────────────────
@@ -8022,6 +8179,8 @@ HANDLERS = {
     "get_chemical_compatibility": get_chemical_compatibility,
     "update_chemical_stock": update_chemical_stock,
     "update_chemical": update_chemical,
+    "get_chemical_emergency_guide": get_chemical_emergency_guide,
+    "list_sds_records": list_sds_records,
 
     # 14. Occupational Health & Industrial Hygiene
     "record_medical_exam": record_medical_exam,

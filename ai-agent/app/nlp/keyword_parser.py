@@ -204,10 +204,55 @@ def parse_user_hse_prompt(text: str, base_date: Optional[date] = None) -> Parsed
         "حطلي مادة", "حط مادة", "سجل مادة", "تسجيل مادة", "مخزون المواد الخطرة",
         "new chemical", "add chemical", "hazardous chemical", "hazmat chemical", "register chemical",
         "new hazmat", "create chemical", "insert chemical", "store chemical"
-    ]):
+    ]) and any(w in norm for w in ["اضف", "أضف", "إضافة", "اضافة", "حط", "سجل", "add", "new", "create", "register", "insert", "store"]):
         primary_intent = "ADD_CHEMICAL"
         if "ADD_CHEMICAL" not in all_intents:
             all_intents.insert(0, "ADD_CHEMICAL")
+
+    elif any(w in norm for w in [
+        "تعليمات الطوارئ", "مكافحة الانسكاب", "طوارئ المواد", "طوارئ مادة", "إسعافات أولية لمادة",
+        "اسعافات اولية لمادة", "مهمات الوقاية لمادة", "emergency guide", "chemical emergency", "spill response"
+    ]):
+        primary_intent = "EMERGENCY_GUIDE"
+        if "EMERGENCY_GUIDE" not in all_intents:
+            all_intents.insert(0, "EMERGENCY_GUIDE")
+
+    elif any(w in norm for w in [
+        "أرشيف صحائف السلامة", "ارشيف صحائف السلامة", "صحائف السلامة", "صحائف بيانات السلامة",
+        "سجل sds", "أرشيف sds", "ارشيف sds", "sds archive", "list sds", "sds records"
+    ]):
+        primary_intent = "SDS_ARCHIVE"
+        if "SDS_ARCHIVE" not in all_intents:
+            all_intents.insert(0, "SDS_ARCHIVE")
+
+    elif any(w in norm for w in [
+        "صوديوم", "أسيتون", "اسيتون", "كلورين", "إيثانول", "ايثانول", "كيميائي", "كيميائية",
+        "المادة الكيميائية", "تفاصيل مادة", "بيانات مادة", "معلومات مادة", "كارت مادة",
+        "chemical details", "chemical profile"
+    ]) and any(w in norm for w in ["تفاصيل", "بيانات", "معلومات", "كارت", "اعرض", "عرض", "show", "get", "view", "details"]):
+        primary_intent = "GET_CHEMICAL_DETAILS"
+        if "GET_CHEMICAL_DETAILS" not in all_intents:
+            all_intents.insert(0, "GET_CHEMICAL_DETAILS")
+
+    elif any(w in norm for w in ["عدل كمية", "تعديل كمية", "تعديل مادة", "تحديث مخزون", "تعديل بيانات مادة", "update chemical", "change quantity"]) and any(w in norm for w in ["مادة", "ماده", "chemical", "كجم", "لتر", "صوديوم", "أسيتون", "اسيتون", "كلورين"]):
+        primary_intent = "UPDATE_CHEMICAL"
+        if "UPDATE_CHEMICAL" not in all_intents:
+            all_intents.insert(0, "UPDATE_CHEMICAL")
+
+    elif any(w in norm for w in ["احذف مادة", "إحذف مادة", "امسح مادة", "حذف مادة", "delete chemical", "remove chemical"]):
+        primary_intent = "DELETE_CHEMICAL"
+        if "DELETE_CHEMICAL" not in all_intents:
+            all_intents.insert(0, "DELETE_CHEMICAL")
+
+    elif any(w in norm for w in ["فحص التوافق", "توافق المواد", "أمان التخزين", "امان التخزين", "تخزين الكيماويات", "chemical compatibility", "storage safety"]):
+        primary_intent = "CHECK_CHEMICAL_STORAGE"
+        if "CHECK_CHEMICAL_STORAGE" not in all_intents:
+            all_intents.insert(0, "CHECK_CHEMICAL_STORAGE")
+
+    elif any(w in norm for w in ["المواد القابلة للاشتعال", "المواد المؤكسدة", "المواد الأكالة", "المواد السامة", "سجل المواد الخطرة", "المواد المسجلة", "قائمة المواد", "list chemicals", "flammable chemicals"]):
+        primary_intent = "LIST_CHEMICALS"
+        if "LIST_CHEMICALS" not in all_intents:
+            all_intents.insert(0, "LIST_CHEMICALS")
 
     elif any(w in norm for w in [
         "close all", "اغلق كافة", "إغلاق كافة", "اغلق جميع", "إغلاق جميع", "اغلق كل", "إغلاق كل",

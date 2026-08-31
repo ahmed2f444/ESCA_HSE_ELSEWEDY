@@ -94,6 +94,58 @@ let dynamicSdsList = [
 /* ---------------- route table ---------------- */
 /* [method, path pattern, handler(params, query, body)] */
 
+/**
+ * Automation rule: scan all training certificates and mark expired ones,
+ * injecting a live alert into dynamicAlerts if not already present.
+ * Called on every notification/dashboard/training fetch and automation trigger.
+ */
+function evaluateCertificateExpirations() {
+  const now = new Date()
+  dynamicTrainingSchedule = dynamicTrainingSchedule.map((item) => {
+    if (item.status && item.status.includes('منتهية')) return item
+
+    const expDate = item.expiryDate || '2099-12-31'
+    let expTime = item.expiryTime || ''
+    if (!expTime && item.evidenceRef && item.evidenceRef.includes('@')) {
+      expTime = item.evidenceRef.split('@')[1].trim()
+    }
+    if (!expTime) expTime = '23:59'
+    const targetDt = new Date(`${expDate}T${expTime.length === 5 ? expTime + ':00' : expTime}`)
+
+    if (!isNaN(targetDt.getTime()) && targetDt <= now) {
+      const updatedItem = {
+        ...item,
+        status: 'منتهية الصلاحية (EXPIRED)',
+        statusTone: 'cr',
+      }
+
+      const alreadyAlerted = dynamicAlerts.some(
+        (a) =>
+          a.type === 'AUTOMATION_CERTIFICATE_EXPIRY' &&
+          a.body &&
+          a.body.includes(item.employee) &&
+          a.body.includes(item.course)
+      )
+      if (!alreadyAlerted) {
+        const alertItem = {
+          id: 'NTF-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+          notificationId: Date.now(),
+          title: `تنبيه أتمتة السلامة: انتهاء صلاحية شهادة ${item.employee}`,
+          body: `انتهت صلاحية شهادة تدريب الموظف ${item.employee} لدورة (${item.course}) في ${item.fullExpiry || expDate} — تم تفعيل تنبيه السلامة الآلي (AUT-002).`,
+          time: 'الآن (مباشر)',
+          color: 'var(--crit)',
+          type: 'AUTOMATION_CERTIFICATE_EXPIRY',
+          to: '/training',
+          unread: true,
+        }
+        dynamicAlerts = [alertItem, ...dynamicAlerts]
+      }
+      return updatedItem
+    }
+    return item
+  })
+}
+
 const routes = [
   ['post', '/auth/login', (_p, _q, body) => {
     // Usernames are case-insensitive and whitespace-tolerant: phone keyboards
@@ -240,53 +292,6 @@ const routes = [
     departments: db.departments.flatMap((s) => s.zones),
     zoneCount: db.departments.reduce((n, s) => n + s.zones.reduce((m, z) => m + z.zoneCount, 0), 0),
   })],
-
-  function evaluateCertificateExpirations() {
-    const now = new Date()
-    dynamicTrainingSchedule = dynamicTrainingSchedule.map((item) => {
-      if (item.status && item.status.includes('منتهية')) return item
-
-      const expDate = item.expiryDate || '2099-12-31'
-      let expTime = item.expiryTime || ''
-      if (!expTime && item.evidenceRef && item.evidenceRef.includes('@')) {
-        expTime = item.evidenceRef.split('@')[1].trim()
-      }
-      if (!expTime) expTime = '23:59'
-      const targetDt = new Date(`${expDate}T${expTime.length === 5 ? expTime + ':00' : expTime}`)
-
-      if (!isNaN(targetDt.getTime()) && targetDt <= now) {
-        const updatedItem = {
-          ...item,
-          status: 'منتهية الصلاحية (EXPIRED)',
-          statusTone: 'cr',
-        }
-
-        const alreadyAlerted = dynamicAlerts.some(
-          (a) =>
-            a.type === 'AUTOMATION_CERTIFICATE_EXPIRY' &&
-            a.body &&
-            a.body.includes(item.employee) &&
-            a.body.includes(item.course)
-        )
-        if (!alreadyAlerted) {
-          const alertItem = {
-            id: 'NTF-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-            notificationId: Date.now(),
-            title: `تنبيه أتمتة السلامة: انتهاء صلاحية شهادة ${item.employee}`,
-            body: `انتهت صلاحية شهادة تدريب الموظف ${item.employee} لدورة (${item.course}) في ${item.fullExpiry || expDate} — تم تفعيل تنبيه السلامة الآلي (AUT-002).`,
-            time: 'الآن (مباشر)',
-            color: 'var(--crit)',
-            type: 'AUTOMATION_CERTIFICATE_EXPIRY',
-            to: '/training',
-            unread: true,
-          }
-          dynamicAlerts = [alertItem, ...dynamicAlerts]
-        }
-        return updatedItem
-      }
-      return item
-    })
-  }
 
   /* dashboard & notifications */
   ['get', '/dashboard/summary', () => db.dashboardSummary],

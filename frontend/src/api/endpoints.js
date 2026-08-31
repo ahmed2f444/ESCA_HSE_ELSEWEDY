@@ -16,6 +16,41 @@ export const auth = {
   me: () => get('/auth/me'),
 }
 
+const profilePath = '/users/me'
+const profileShape = (data) => ({
+  user_id: data.userId,
+  username: data.username,
+  full_name: data.fullName || '',
+  email: data.email || '',
+  phone: data.phone || '',
+  job_title: data.jobTitle || '',
+  avatar_path: data.avatarPath || null,
+  zone_name: data.zoneName || '',
+  department_name: data.departmentName || '',
+})
+
+export const profile = {
+  get: () => get(profilePath).then(profileShape),
+  update: (fields) => api.patch(profilePath, {
+    fullName: fields.full_name,
+    username: fields.username,
+  }).then((r) => profileShape(r.data)),
+  uploadAvatar: (file) => {
+    const body = new FormData()
+    body.append('avatar', file)
+    return api.post(`${profilePath}/avatar`, body, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => profileShape(r.data))
+  },
+  deleteAvatar: () => api.delete(`${profilePath}/avatar`).then((r) => profileShape(r.data)),
+  requestPasswordCode: () => post(`${profilePath}/password/mfa/request`, {}),
+  verifyPasswordCode: (code, newPassword) =>
+    api.post(`${profilePath}/password/mfa/verify`, { code, newPassword }).then(() => ({ success: true })),
+  requestEmailCode: () => post(`${profilePath}/email/mfa/request`, {}),
+  verifyEmailCode: (code, newEmail) =>
+    api.post(`${profilePath}/email/mfa/verify`, { code, newEmail }).then((r) => profileShape(r.data)),
+}
+
 /* ---- reference data loaded from the plant's workbooks ---- */
 export const masterData = {
   summary: () => get('/master-data/summary'),

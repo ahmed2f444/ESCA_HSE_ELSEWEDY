@@ -4,6 +4,9 @@ CREATE TABLE IF NOT EXISTS employees (employee_id VARCHAR(30) PRIMARY KEY, emplo
 CREATE TABLE IF NOT EXISTS users (user_id INT PRIMARY KEY AUTO_INCREMENT, employee_id VARCHAR(30), username VARCHAR(255) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, status_id INT NOT NULL DEFAULT 1, mfa_enabled TINYINT(1) DEFAULT 0, last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS roles (role_id INT PRIMARY KEY AUTO_INCREMENT, role_name VARCHAR(60) NOT NULL, description VARCHAR(255), scope_level VARCHAR(60));
 CREATE TABLE IF NOT EXISTS user_roles (assignment_id INT PRIMARY KEY AUTO_INCREMENT, user_id INT, role_id INT, scope_type_id INT, scope_id VARCHAR(40), valid_from DATE, valid_to DATE, status_id INT DEFAULT 1);
+CREATE TABLE IF NOT EXISTS mfa_codes (mfa_code_id INT PRIMARY KEY AUTO_INCREMENT, user_id INT NOT NULL, code_hash VARCHAR(64) NOT NULL, created_at TIMESTAMP NOT NULL, expires_at TIMESTAMP NOT NULL, used_flag BOOLEAN DEFAULT FALSE, attempt_count INT DEFAULT 0);
+CREATE TABLE IF NOT EXISTS user_avatars (user_id INT PRIMARY KEY, file_name VARCHAR(255) NOT NULL, file_path VARCHAR(500) NOT NULL, created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL);
+CREATE TABLE IF NOT EXISTS profile_edit_history (history_id INT PRIMARY KEY AUTO_INCREMENT, user_id INT NOT NULL, field_name VARCHAR(80) NOT NULL, old_value VARCHAR(1000), new_value VARCHAR(1000), modified_at TIMESTAMP NOT NULL);
 
 
 CREATE TABLE IF NOT EXISTS incidents (incident_id VARCHAR(40) PRIMARY KEY, incident_type VARCHAR(40), title VARCHAR(200), description CLOB, department_id VARCHAR(30), zone_id VARCHAR(30), reported_by VARCHAR(30), occurred_at TIMESTAMP, severity VARCHAR(20), status VARCHAR(30), immediate_action CLOB, root_cause CLOB, lost_time_days INT DEFAULT 0, closed_at TIMESTAMP, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);

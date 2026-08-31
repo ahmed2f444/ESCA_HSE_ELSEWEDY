@@ -431,6 +431,16 @@ function UserChip() {
           >
             <Icon name="logout" size={14} /> تسجيل الخروج
           </button>
+          <button
+            role="menuitem"
+            className="w-full text-start px-3.5 py-2.5 text-[12.5px] flex items-center gap-2 hover:bg-steel-3"
+            onClick={() => {
+              setOpen(false)
+              nav('/profile')
+            }}
+          >
+            <Icon name="user" size={14} /> الملف الشخصي
+          </button>
         </div>
       )}
     </div>

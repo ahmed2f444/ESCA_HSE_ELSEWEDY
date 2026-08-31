@@ -84,6 +84,73 @@ const routes = [
     return JSON.parse(raw)
   }],
 
+  ['get', '/users/me', () => {
+    const user = JSON.parse(localStorage.getItem('esca.hse.user') || '{}')
+    return {
+      userId: user.id || user.user_id || 'mock-user',
+      username: user.username || 'local-demo',
+      fullName: user.displayName || user.name || user.username || 'Local User',
+      email: user.email || '',
+      phone: '',
+      jobTitle: user.roleLabel || user.role || '',
+      zoneName: '',
+      departmentName: '',
+      avatarPath: null,
+    }
+  }],
+  ['patch', '/users/me', (_p, _q, body) => {
+    const user = JSON.parse(localStorage.getItem('esca.hse.user') || '{}')
+    const next = { ...user, username: body?.username || user.username, displayName: body?.fullName || user.displayName }
+    localStorage.setItem('esca.hse.user', JSON.stringify(next))
+    return {
+      userId: next.id || next.user_id || 'mock-user',
+      username: next.username,
+      fullName: next.displayName || next.name || next.username,
+      email: next.email || '',
+      phone: '',
+      jobTitle: next.roleLabel || next.role || '',
+      zoneName: '',
+      departmentName: '',
+      avatarPath: null,
+    }
+  }],
+  ['post', '/users/me/avatar', () => ({
+    userId: 'mock-user',
+    username: 'local-demo',
+    fullName: 'Local User',
+    email: '',
+    phone: '',
+    jobTitle: '',
+    zoneName: '',
+    departmentName: '',
+    avatarPath: null,
+  })],
+  ['delete', '/users/me/avatar', () => ({
+    userId: 'mock-user',
+    username: 'local-demo',
+    fullName: 'Local User',
+    email: '',
+    phone: '',
+    jobTitle: '',
+    zoneName: '',
+    departmentName: '',
+    avatarPath: null,
+  })],
+  ['post', '/users/me/password/mfa/request', () => ({ codeSent: true, expiresInSeconds: 120 })],
+  ['post', '/users/me/password/mfa/verify', () => null],
+  ['post', '/users/me/email/mfa/request', () => ({ codeSent: true, expiresInSeconds: 120 })],
+  ['post', '/users/me/email/mfa/verify', (_p, _q, body) => ({
+    userId: 'mock-user',
+    username: 'local-demo',
+    fullName: 'Local User',
+    email: body?.newEmail || '',
+    phone: '',
+    jobTitle: '',
+    zoneName: '',
+    departmentName: '',
+    avatarPath: null,
+  })],
+
   /* master data — the reference-data coverage sheet */
   ['get', '/master-data/summary', () => ({
     ...db.masterSummary,

@@ -1,0 +1,300 @@
+/*
+  Shared, theme-agnostic layout rules for the profile page.
+  This file controls profile structure and consumes the app's theme variables.
+*/
+
+.profile-page {
+  direction: rtl;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 96px 16px 64px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  background: rgb(var(--c-steel));
+  color: rgb(var(--c-txt));
+}
+
+/* ---------- top bar: logo + theme switcher ---------- */
+
+.profile-topbar {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+  width: auto;
+  display: flex;
+  align-items: center;
+  direction: rtl;
+}
+
+.profile-logo {
+  width: 160px;
+  height: 54px;
+  object-fit: contain;
+  object-position: right center;
+}
+
+.profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.profile-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.profile-heading-divider {
+  width: 1px;
+  height: 42px;
+  background-color: currentColor;
+  opacity: 0.35;
+}
+
+.theme-switcher {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 10;
+  font-size: 28px;
+}
+
+/* ---------- card that holds the whole form ---------- */
+
+.profile-card {
+  width: 100%;
+  max-width: 720px;
+  border-radius: 16px;
+  padding: 32px;
+  border-width: 1px;
+  border-style: solid;
+  background: rgb(var(--c-steel2));
+  border-color: rgb(var(--c-line));
+}
+
+/* ---------- avatar block ---------- */
+
+.avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.avatar-frame {
+  width: 128px;
+  height: 128px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-width: 2px;
+  border-style: solid;
+  background: rgb(var(--c-steel3));
+  border-color: rgb(var(--c-line));
+}
+
+.avatar-frame img {
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  image-rendering: auto;
+  display: block;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 2px;
+  left: calc(50% - 64px - 4px); /* sits on the lower-left edge of the circle in RTL */
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 1px;
+  border-style: solid;
+  cursor: pointer;
+  background: rgb(var(--c-hi));
+  color: rgb(var(--c-hi-txt));
+  font-size: 14px;
+}
+
+.avatar-remove-btn {
+  margin-top: 10px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---------- full-width row (email) ---------- */
+
+.profile-page .field-row-full {
+  margin-bottom: 20px;
+}
+
+/* ---------- two-column grid (rest of the fields) ---------- */
+
+.profile-page .field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 24px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 560px) {
+  .profile-page {
+    padding-top: 78px;
+  }
+
+  .profile-topbar {
+    top: 12px;
+    right: 16px;
+  }
+
+  .profile-logo {
+    width: 120px;
+    height: 42px;
+  }
+
+  .profile-heading {
+    gap: 10px;
+  }
+
+  .profile-title {
+    font-size: 16px;
+  }
+
+  .profile-heading-divider {
+    height: 32px;
+  }
+
+  .theme-switcher {
+    top: 16px;
+    left: 16px;
+  }
+
+  .profile-page .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- a single field ---------- */
+
+.profile-page .field {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-page .field-label {
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: rgb(var(--c-txt2));
+}
+
+.profile-page .field-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 10px 14px;
+  border-color: rgb(var(--c-line));
+  background: rgb(var(--c-steel3));
+  border-width: 1px;
+  border-style: solid;
+}
+
+.profile-page .field-value-row.readonly {
+  opacity: 0.75;
+}
+
+.profile-page .field-value-text {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgb(var(--c-txt));
+}
+
+.profile-page .field-input {
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.profile-page .field-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  color: rgb(var(--c-hi2));
+}
+
+/* ---------- dedicated password verification flow ---------- */
+
+.profile-page .password-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 10px 14px;
+  border-color: rgb(var(--c-line));
+}
+
+.profile-page .password-flow-input {
+  padding: 0;
+}
+
+.profile-page .password-countdown {
+  font-size: 12px;
+}
+
+/* ---------- save button ---------- */
+
+.profile-page .save-btn-row {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-page .save-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-page .save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- toast / status message ---------- */
+
+.profile-page .status-msg {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 12px;
+}

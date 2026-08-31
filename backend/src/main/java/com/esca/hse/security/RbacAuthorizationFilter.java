@@ -59,6 +59,10 @@ public class RbacAuthorizationFilter extends OncePerRequestFilter {
 
     private static Decision classify(HttpServletRequest request) {
         String path = request.getRequestURI().toLowerCase(Locale.ROOT);
+        if (path.contains("/users/me")) {
+            return new Decision(Module.DASHBOARD,
+                    HttpMethod.GET.matches(request.getMethod()) ? Action.READ : Action.UPDATE);
+        }
         Action action = actionFor(request.getMethod(), path);
 
         if (containsAny(path, "/dashboard", "/notifications", "/field/")) {

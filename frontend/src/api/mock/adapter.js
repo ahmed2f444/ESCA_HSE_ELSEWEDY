@@ -76,6 +76,7 @@ let dynamicJsaSteps = {
 }
 
 let dynamicChemicals = [
+  { id: 41, chemicalId: 41, code: 'CHM-041', name: 'صوديوم بنتا أوكسايد (Sodium Pentaoxide)', tradeName: 'صوديوم بنتا أوكسايد (Sodium Pentaoxide)', chemicalName: 'Sodium Pentaoxide (Na2O5)', cas: '12034-11-6', casNumber: '12034-11-6', supplier: 'Elsewedy Chemical Supply', quantity: 50.0, unit: 'KG', qty: '50 KG', ghsClasses: 'OXIDIZER', ghs: 'GHS03 مادة مؤكسدة', tone: 'crit', class: 'Class 5.1', storageClass: 'Class 5.1 Oxidizer', zoneId: 9, location: 'مخزن المواد الكيميائية الرئيسي', status: 'ACTIVE', statusId: 1, statusAr: 'نشط ومصرح به', sds: '2027-01', sdsId: 6, sdsVersion: 'Rev 1', sdsExpiryDate: '2027-01-10', sdsStatus: 'CURRENT', fileRef: 'SDS-ESCA-041.pdf', emergencySummary: 'مادة مؤكسدة وأكالة — عزل المصدر واستخدام قناع واقي وقفازات مطاطية مقاومة.' },
   { id: 1, chemicalId: 1, code: 'CHM-001', name: 'DURACLEAN 200', tradeName: 'DURACLEAN 200', chemicalName: 'Alkaline Cleaner', cas: '1310-73-2', casNumber: '1310-73-2', supplier: 'EgyChem', quantity: 180.0, unit: 'L', qty: '180 L', ghsClasses: 'CORROSIVE', ghs: 'GHS05 مادة أكالة', tone: 'warn', class: 'Class 8', storageClass: 'Class 8', zoneId: 9, location: 'مخزن المواد الكيميائية', status: 'ACTIVE', statusId: 1, statusAr: 'نشط ومصرح به', sds: '2027-01', sdsId: 1, sdsVersion: 'Rev 1', sdsExpiryDate: '2027-01-10', sdsStatus: 'CURRENT', fileRef: 'SDS-ESCA-001.pdf', emergencySummary: 'Isolate source, use required PPE, ventilate the area and contact HSE for spill or exposure response.' },
   { id: 2, chemicalId: 2, code: 'CHM-002', name: 'WELD-ANTI SP', tradeName: 'WELD-ANTI SP', chemicalName: 'Anti-Spatter Compound', cas: '9003-39-8', casNumber: '9003-39-8', supplier: 'Nile Chemicals', quantity: 75.0, unit: 'kg', qty: '75 kg', ghsClasses: 'IRRITANT', ghs: 'GHS07 مخرش / تنبيه', tone: 'wn', class: 'Class 8', storageClass: 'Class 8', zoneId: 9, location: 'مخزن المواد الكيميائية', status: 'ACTIVE', statusId: 1, statusAr: 'نشط ومصرح به', sds: '2027-01', sdsId: 2, sdsVersion: 'Rev 2', sdsExpiryDate: '2027-01-30', sdsStatus: 'CURRENT', fileRef: 'SDS-ESCA-002.pdf', emergencySummary: 'Isolate source, use required PPE, ventilate the area and contact HSE for spill or exposure response.' },
   { id: 3, chemicalId: 3, code: 'CHM-003', name: 'CUTSAFE 46', tradeName: 'CUTSAFE 46', chemicalName: 'Hydraulic Oil', cas: '64742-54-7', casNumber: '64742-54-7', supplier: 'Delta Industrial', quantity: 240.0, unit: 'L', qty: '240 L', ghsClasses: 'ASPIRATION_HAZARD', ghs: 'GHS08 خطر صحي', tone: 'warn', class: 'Class 3', storageClass: 'Class 3', zoneId: 9, location: 'مخزن المواد الكيميائية', status: 'ACTIVE', statusId: 1, statusAr: 'نشط ومصرح به', sds: '2027-02', sdsId: 3, sdsVersion: 'Rev 3', sdsExpiryDate: '2027-02-19', sdsStatus: 'CURRENT', fileRef: 'SDS-ESCA-003.pdf', emergencySummary: 'Isolate source, use required PPE, ventilate the area and contact HSE for spill or exposure response.' },
@@ -993,6 +994,21 @@ const routes = [
     dynamicAlerts.forEach(a => a.unread = false)
     return { success: true }
   }],
+  ['get', '/api/v1/hazmat/chemicals', (_p, q) => {
+    let list = [...dynamicChemicals]
+    if (q.query || q.q) {
+      const s = (q.query || q.q).toLowerCase()
+      list = list.filter(c => (c.name || '').toLowerCase().includes(s) || (c.tradeName || '').toLowerCase().includes(s) || (c.cas || '').includes(s))
+    }
+    if (q.ghs && q.ghs !== 'ALL') {
+      list = list.filter(c => (c.ghsClasses || '').toUpperCase().includes(q.ghs.toUpperCase()))
+    }
+    if (q.status && q.status !== 'ALL') {
+      list = list.filter(c => c.status === q.status || String(c.statusId) === q.status)
+    }
+    return list
+  }],
+  ['get', '/api/v1/hazmat/stats', () => db.hazmatStats || ({ totalChemicals: dynamicChemicals.length, activeChemicals: dynamicChemicals.length, flammableCount: 12, corrosiveCount: 6, toxicCount: 5, totalVolumeLiters: 1540.0, sdsCurrentCount: dynamicChemicals.length, sdsExpiredCount: 0, complianceRate: 100 })],
   ['get', '/health', () => ({ status: 'ok', service: 'esca-agent' })],
 ]
 

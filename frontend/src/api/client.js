@@ -27,14 +27,14 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(TOKEN_KEY),
 }
 
-function build(baseURL, timeout = 20000) {
+function build(baseURL, timeout = 20000, useMockByDefault = true) {
   const instance = axios.create({
     baseURL,
     timeout,
     headers: { 'Content-Type': 'application/json' },
   })
 
-  if (USE_MOCK) instance.defaults.adapter = mockAdapter
+  if (USE_MOCK && useMockByDefault) instance.defaults.adapter = mockAdapter
 
   instance.interceptors.request.use((config) => {
     const t = tokenStore.get()
@@ -71,5 +71,5 @@ function build(baseURL, timeout = 20000) {
   return instance
 }
 
-export const api = build(viteEnv.VITE_API_BASE_URL || '/api', 25000)
-export const agent = build(viteEnv.VITE_AGENT_BASE_URL || '/agent', 120000)
+export const api = build(viteEnv.VITE_API_BASE_URL || '/api', 25000, true)
+export const agent = build(viteEnv.VITE_AGENT_BASE_URL || '/agent', 120000, false)

@@ -6,6 +6,7 @@ export default function EmailChangeFlow({ value, activeEditor, onActivate, onCha
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [code, setCode] = useState('')
   const [newEmail, setNewEmail] = useState(value || '')
+  const [developmentCode, setDevelopmentCode] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -14,6 +15,7 @@ export default function EmailChangeFlow({ value, activeEditor, onActivate, onCha
       setCode('')
       setNewEmail(value || '')
       setSecondsLeft(0)
+      setDevelopmentCode('')
     }
   }, [activeEditor, step, value])
 
@@ -36,8 +38,11 @@ export default function EmailChangeFlow({ value, activeEditor, onActivate, onCha
     try {
       const response = await profileApi.requestEmailCode()
       setSecondsLeft(response.expiresInSeconds || 120)
+      setDevelopmentCode(response.developmentCode || '')
       setStep('verify')
-      onSuccess('تم إرسال رمز تحقق جديد')
+      onSuccess(response.developmentCode
+        ? `رمز التحقق للتجربة: ${response.developmentCode}`
+        : 'تم إرسال رمز تحقق جديد')
     } catch {
       onError('تعذر إرسال رمز التحقق')
     } finally {
@@ -63,6 +68,7 @@ export default function EmailChangeFlow({ value, activeEditor, onActivate, onCha
       setStep('locked')
       setCode('')
       setSecondsLeft(0)
+      setDevelopmentCode('')
       onSuccess('تم تغيير البريد الإلكتروني بنجاح')
     } catch (error) {
       onError(error.message || 'تعذر تغيير البريد الإلكتروني')
@@ -103,6 +109,9 @@ export default function EmailChangeFlow({ value, activeEditor, onActivate, onCha
       {step === 'verify' && (
         <form className="password-flow" onSubmit={verifyCode}>
           <span className="password-countdown">الوقت المتبقي: {secondsLeft} ثانية</span>
+          {developmentCode && (
+            <span className="development-code">رمز التحقق: {developmentCode}</span>
+          )}
           <input
             className="field-input password-flow-input"
             value={code}

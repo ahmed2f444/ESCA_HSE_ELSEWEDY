@@ -7,6 +7,7 @@ export default function PasswordChangeFlow({ fullName, activeEditor, onActivate,
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [code, setCode] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [developmentCode, setDevelopmentCode] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -14,6 +15,7 @@ export default function PasswordChangeFlow({ fullName, activeEditor, onActivate,
       setStep('locked')
       setCode('')
       setNewPassword('')
+      setDevelopmentCode('')
       setSecondsLeft(0)
     }
   }, [activeEditor, step])
@@ -37,8 +39,11 @@ export default function PasswordChangeFlow({ fullName, activeEditor, onActivate,
     try {
       const response = await profileApi.requestPasswordCode()
       setSecondsLeft(response.expiresInSeconds || 120)
+      setDevelopmentCode(response.developmentCode || '')
       setStep('verify')
-      onSuccess('تم إرسال رمز تحقق جديد')
+      onSuccess(response.developmentCode
+        ? `رمز التحقق للتجربة: ${response.developmentCode}`
+        : 'تم إرسال رمز تحقق جديد')
     } catch {
       onError('تعذر إرسال رمز التحقق')
     } finally {
@@ -62,6 +67,7 @@ export default function PasswordChangeFlow({ fullName, activeEditor, onActivate,
       setStep('locked')
       setCode('')
       setNewPassword('')
+      setDevelopmentCode('')
       setSecondsLeft(0)
       onSuccess('تم تغيير كلمة المرور بنجاح')
     } catch (error) {
@@ -97,6 +103,9 @@ export default function PasswordChangeFlow({ fullName, activeEditor, onActivate,
       {step === 'verify' && (
         <form className="password-flow" onSubmit={verifyCode}>
           <span className="password-countdown">الوقت المتبقي: {secondsLeft} ثانية</span>
+          {developmentCode && (
+            <span className="development-code">رمز التحقق: {developmentCode}</span>
+          )}
           <input
             className="field-input password-flow-input"
             value={code}

@@ -126,7 +126,7 @@ public class UserProfileService {
                         + "VALUES (?, ?, ?, ?, FALSE, 0)",
                 profile.getUserId(), codeHash, Timestamp.from(Instant.now()),
                 Timestamp.from(Instant.now().plusSeconds(MFA_EXPIRY_SECONDS)));
-        return new MfaRequestResponse(true, MFA_EXPIRY_SECONDS);
+        return new MfaRequestResponse(true, MFA_EXPIRY_SECONDS, code);
     }
 
     @Transactional

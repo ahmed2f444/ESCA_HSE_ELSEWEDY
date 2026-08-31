@@ -27,11 +27,13 @@ export default function AgentDock() {
   const bodyRef = useRef(null)
   const textareaRef = useRef(null)
 
+  const [showVoiceLangMenu, setShowVoiceLangMenu] = useState(false)
+
   const voice = useVoiceAssistant({
     onTranscript: (t) => {
-      setDraft(t)
+      setDraft((prev) => (prev ? `${prev.trim()} ${t}` : t))
     },
-    defaultLang: 'ar-EG',
+    defaultLang: 'auto',
   })
 
   useEffect(() => {
@@ -906,35 +908,105 @@ export default function AgentDock() {
             <div className="px-3.5 py-1.5 bg-crit/10 border-t border-crit/30 flex items-center justify-between text-xs text-crit animate-pulse">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-crit animate-ping" />
-                <span className="font-semibold text-[11.5px]">جارٍ الاستماع لصوتك...</span>
+                <span className="font-semibold text-[11px]">
+                  جارٍ الاستماع... (
+                  {voice.availableLanguages?.find((l) => l.id === voice.langMode)?.short || '🌐 تلقائي'}
+                  )
+                </span>
                 <VoiceSoundWave isListening={true} size="sm" />
               </div>
-              <span className="text-[10px] text-txt-3 font-mono">تحدث الآن بالعربية أو الإنجليزية</span>
+              <span className="text-[10px] text-txt-3 font-mono">تحدث ثم اضغط الميكروفون للإنهاء</span>
+            </div>
+          )}
+
+          {/* Live Transcribing Banner */}
+          {voice.isTranscribing && (
+            <div className="px-3.5 py-1.5 bg-hi/10 border-t border-hi/30 flex items-center justify-between text-xs text-hi animate-fade">
+              <div className="flex items-center gap-2">
+                <Icon name="chat" size={12} className="animate-spin text-hi" />
+                <span className="font-semibold text-[11px]">تفريغ الصوت عبر Whisper AI...</span>
+              </div>
+              <span className="text-[10px] text-txt-3 font-mono">يدعم اللهجات والمزج</span>
             </div>
           )}
 
           {/* Input Footer with Auto-Expanding Textarea & Voice Mic */}
           <div className="border-t border-line p-3 bg-steel-3/80">
-            <div className="flex items-end gap-1.5 bg-steel-2 border border-line focus-within:border-hi/70 rounded-xl p-1.5 transition-all">
+            <div className="flex items-end gap-1.5 bg-steel-2 border border-line focus-within:border-hi/70 rounded-xl p-1.5 transition-all relative">
+              {/* Dialect / Language Selector Popover */}
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowVoiceLangMenu((prev) => !prev)}
+                  title="تغيير لغة / لهجة الصوت"
+                  className="w-7 h-8 rounded-lg bg-steel-3 hover:bg-steel border border-line hover:border-hi/40 text-txt-2 hover:text-hi flex items-center justify-center text-xs transition-colors"
+                >
+                  <span>{voice.availableLanguages?.find((l) => l.id === voice.langMode)?.flag || '🌐'}</span>
+                </button>
+
+                {showVoiceLangMenu && (
+                  <div className="absolute bottom-10 right-0 w-56 bg-steel-3 border border-line rounded-xl p-1 shadow-2xl z-50 animate-scale-in">
+                    <div className="px-2.5 py-1 text-[10px] font-semibold text-txt-3 border-b border-line mb-1">
+                      لغة / لهجة التحدث:
+                    </div>
+                    {voice.availableLanguages?.map((lang) => (
+                      <button
+                        key={lang.id}
+                        type="button"
+                        onClick={() => {
+                          voice.changeLangMode(lang.id)
+                          setShowVoiceLangMenu(false)
+                        }}
+                        className={`w-full text-right px-2.5 py-1.5 rounded-lg text-[11px] flex items-center justify-between transition-colors ${
+                          voice.langMode === lang.id
+                            ? 'bg-hi/15 text-hi font-semibold border border-hi/30'
+                            : 'text-txt-2 hover:text-txt hover:bg-steel-2'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>{lang.flag}</span>
+                          <span>{lang.label}</span>
+                        </span>
+                        {voice.langMode === lang.id && <Icon name="check" size={12} className="text-hi" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Mic Button */}
               <button
                 type="button"
                 onClick={voice.toggleListening}
-                title={voice.isListening ? 'إيقاف التسجيل الصوتي' : 'تحدث بالصوت (Voice Assistant)'}
+                disabled={voice.isTranscribing}
+                title={voice.isListening ? 'إيقاف التسجيل وتفريغ الصوت' : 'تحدث بالصوت (Multilingual Voice Assistant)'}
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
                   voice.isListening
-                    ? 'mic-btn-active text-white'
+                    ? 'mic-btn-active text-white animate-pulse'
+                    : voice.isTranscribing
+                    ? 'bg-hi/20 text-hi cursor-wait'
                     : 'bg-steel-3 text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
                 }`}
                 aria-label="تسجيل صوتي"
               >
-                <Icon name="mic" size={15} />
+                {voice.isTranscribing ? (
+                  <Icon name="chat" size={14} className="animate-spin text-hi" />
+                ) : (
+                  <Icon name="mic" size={15} />
+                )}
               </button>
 
               <textarea
                 ref={textareaRef}
                 className="flex-1 bg-transparent text-xs text-txt placeholder:text-txt-3 focus:outline-none resize-none px-2 py-1 leading-relaxed max-h-[120px]"
                 style={{ minHeight: '38px' }}
-                placeholder={voice.isListening ? 'جارٍ الاستماع والتفريغ الصوتي…' : 'اكتب سؤالك أو استخدم الميكروفون… (Shift+Enter لسطر جديد)'}
+                placeholder={
+                  voice.isListening
+                    ? 'جارٍ الاستماع... اضغط زر الميكروفون للإنهاء'
+                    : voice.isTranscribing
+                    ? 'تفريغ عبر Whisper AI...'
+                    : 'اكتب سؤالك أو تحدث بالصوت… (عربي / English / لهجات)'
+                }
                 value={voice.interimTranscript ? (draft ? `${draft} ${voice.interimTranscript}` : voice.interimTranscript) : draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -945,11 +1017,11 @@ export default function AgentDock() {
                 type="button"
                 onClick={() => send()}
                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-                  draft.trim() && !busy
+                  draft.trim() && !busy && !voice.isTranscribing
                     ? 'bg-hi text-white hover:bg-hi2 active:scale-95 shadow-sm'
                     : 'bg-steel-3 text-txt-3 opacity-60 cursor-not-allowed'
                 }`}
-                disabled={busy || !draft.trim()}
+                disabled={busy || !draft.trim() || voice.isTranscribing}
                 aria-label="إرسال"
               >
                 <Icon name="send" size={14} />

@@ -62,28 +62,33 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
     """
-    Blocks abnormally large request payloads (default max 64 KB) to protect against memory exhaustion.
+    Blocks abnormally large request payloads (default max 64 KB for JSON, 15 MB for audio uploads) to protect against memory exhaustion.
     """
     def __init__(self, app, max_body_bytes: int = 65536):
         super().__init__(app)
         self.max_body_bytes = max_body_bytes
+        self.audio_max_bytes = 15 * 1024 * 1024  # 15 MB for audio transcription
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         content_length = request.headers.get("content-length")
+        is_audio_route = request.url.path in ("/transcribe", "/api/transcribe", "/agent/transcribe")
+        limit = self.audio_max_bytes if is_audio_route else self.max_body_bytes
+
         if content_length:
             try:
-                if int(content_length) > self.max_body_bytes:
+                if int(content_length) > limit:
                     logger.warning(
-                        "request_body_too_large client_ip=%s size=%s limit=%s",
+                        "request_body_too_large client_ip=%s size=%s limit=%s path=%s",
                         request.client.host if request.client else "unknown",
                         content_length,
-                        self.max_body_bytes,
+                        limit,
+                        request.url.path,
                     )
                     return JSONResponse(
                         status_code=413,
                         content={
-                            "detail": "Request payload too large. Maximum permitted size is 64 KB.",
-                            "max_bytes": self.max_body_bytes,
+                            "detail": f"Request payload too large. Maximum permitted size is {limit // 1024} KB.",
+                            "max_bytes": limit,
                         },
                     )
             except ValueError:

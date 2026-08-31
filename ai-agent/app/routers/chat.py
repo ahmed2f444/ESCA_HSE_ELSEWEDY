@@ -1,6 +1,7 @@
 import logging
 import uuid
-from fastapi import APIRouter, Depends
+from typing import Optional
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import AskRequest, AskResponse
@@ -89,3 +90,62 @@ def ask_agent(req: AskRequest, db: Session = Depends(get_db)):
 def get_suggestions():
     """Returns sample prompt questions for the frontend assistant dock."""
     return SUGGESTIONS
+
+
+@router.post("/transcribe")
+@router.post("/api/transcribe")
+async def transcribe_audio(
+    file: UploadFile = File(...),
+    language: Optional[str] = Form(None),
+):
+    """
+    Enterprise Multilingual Whisper Speech-to-Text endpoint.
+    Handles Egyptian Arabic (ar-EG), Gulf/MSA (ar-SA), English (en-US),
+    and mixed English + Arabic technical code-switching.
+    """
+    try:
+        content = await file.read()
+        if not content:
+            return {"text": "", "success": False, "error": "Empty audio payload"}
+
+        from openai import OpenAI
+        from app.config import settings
+
+        client = OpenAI(api_key=settings.groq_api_key, base_url=settings.groq_base_url)
+
+        # Contextual prompt biasing to accurately capture HSE technical terms and Egyptian names
+        hse_prompt = (
+            "Elsewedy Cables ESCA HSE safety ePTW SIMOPS JSA HIRA OSHA ISO PPE CAPA "
+            "مستودع كابلات تصريح عمل حادث وشيك فحص طبي هبة فؤاد محمود عبدالله أحمد سامي "
+            "medical examination audiometry hearing test spirometry chemical hazard fire extinguisher"
+        )
+
+        filename = file.filename or "recording.webm"
+        content_type = file.content_type or "audio/webm"
+
+        kwargs = {
+            "model": "whisper-large-v3-turbo",
+            "file": (filename, content, content_type),
+            "prompt": hse_prompt,
+        }
+
+        if language and language not in ("auto", "multilingual", "mixed", ""):
+            lang_code = language.split("-")[0].lower()
+            if lang_code in ("ar", "en", "fr"):
+                kwargs["language"] = lang_code
+
+        res = client.audio.transcriptions.create(**kwargs)
+        transcribed_text = res.text.strip() if hasattr(res, "text") else str(res).strip()
+        logger.info("whisper_transcription_success chars=%d", len(transcribed_text))
+        return {
+            "text": transcribed_text,
+            "success": True,
+            "model": "whisper-large-v3-turbo",
+        }
+    except Exception as exc:
+        logger.error("whisper_transcription_failed error=%s", str(exc))
+        return {
+            "text": "",
+            "success": False,
+            "error": str(exc),
+        }

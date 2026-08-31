@@ -439,5 +439,23 @@ export const assistant = {
         'احسب مؤشرات TRIR و LTIFR لشهر يوليو 2026',
         'ما هي القواعد الذهبية للسلامة (ESCA Golden Rules)؟',
       ]),
+
+  /**
+   * High-accuracy multilingual speech transcription via Whisper Large v3.
+   * Handles Egyptian Arabic (ar-EG), Gulf/MSA (ar-SA), English (en-US), and mixed language queries.
+   */
+  transcribe: async (audioBlob, language = 'auto') => {
+    const formData = new FormData()
+    formData.append('file', audioBlob, 'voice_input.webm')
+    if (language && language !== 'auto' && language !== 'multilingual' && language !== 'mixed') {
+      formData.append('language', language)
+    }
+    const res = await agent.post('/transcribe', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 35000,
+    })
+    return res.data
+  },
 }
+
 

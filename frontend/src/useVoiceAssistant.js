@@ -215,9 +215,12 @@ export function useVoiceAssistant({
     setActiveSpeakingId(null)
   }, [])
 
+  const webSpeechFallbackRef = useRef('')
+
   // Start MediaRecorder for Whisper AI
   const startWhisperRecording = useCallback(async () => {
     try {
+      webSpeechFallbackRef.current = ''
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
       audioChunksRef.current = []
@@ -245,13 +248,15 @@ export function useVoiceAssistant({
           streamRef.current = null
         }
 
-        if (audioBlob.size > 2000) {
+        let transcribed = false
+        if (audioBlob && audioBlob.size > 50) {
           setIsTranscribing(true)
           try {
             const data = await assistant.transcribe(audioBlob, langMode)
-            if (data && data.text) {
-              setTranscript(data.text)
-              if (onTranscript) onTranscript(data.text)
+            if (data && data.text && data.text.trim()) {
+              setTranscript(data.text.trim())
+              if (onTranscript) onTranscript(data.text.trim())
+              transcribed = true
             }
           } catch (err) {
             console.warn('[VoiceAssistant] Whisper API fallback to WebSpeech or error:', err)
@@ -259,11 +264,46 @@ export function useVoiceAssistant({
             setIsTranscribing(false)
           }
         }
+
+        // If Whisper returned empty or errored, fallback to browser WebSpeech if captured
+        if (!transcribed && webSpeechFallbackRef.current && webSpeechFallbackRef.current.trim()) {
+          const fallbackText = webSpeechFallbackRef.current.trim()
+          setTranscript(fallbackText)
+          if (onTranscript) onTranscript(fallbackText)
+        }
+
         setIsListening(false)
         if (onSpeechEnd) onSpeechEnd()
       }
 
-      mediaRecorder.start(250)
+      // Concurrently run Web Speech recognition if supported as live preview and robust fallback
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (SpeechRecognition) {
+        try {
+          const recognizer = new SpeechRecognition()
+          recognizer.continuous = true
+          recognizer.interimResults = true
+          recognizer.lang = langMode === 'auto' ? 'ar-EG' : langMode
+          recognizer.onresult = (event) => {
+            let fullStr = ''
+            for (let i = 0; i < event.results.length; ++i) {
+              fullStr += event.results[i][0].transcript + ' '
+            }
+            if (fullStr.trim()) {
+              webSpeechFallbackRef.current = fullStr.trim()
+              setInterimTranscript(fullStr.trim())
+            }
+          }
+          recognizer.onerror = () => {}
+          recognizer.onend = () => {}
+          recognitionRef.current = recognizer
+          recognizer.start()
+        } catch (e) {
+          // Ignore WebSpeech init error if already active
+        }
+      }
+
+      mediaRecorder.start(200)
       setIsListening(true)
       setError(null)
     } catch (err) {
@@ -343,11 +383,17 @@ export function useVoiceAssistant({
   // Unified stop listening
   const stopListening = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try {
+        mediaRecorderRef.current.requestData()
+      } catch (e) {}
       mediaRecorderRef.current.stop()
     }
     if (recognitionRef.current) {
-      recognitionRef.current.stop()
+      try {
+        recognitionRef.current.stop()
+      } catch (e) {}
     }
+    setInterimTranscript('')
     setIsListening(false)
   }, [])
 

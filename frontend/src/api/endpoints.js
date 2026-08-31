@@ -470,7 +470,8 @@ export const assistant = {
    */
   transcribe: async (audioBlob, language = 'auto') => {
     const formData = new FormData()
-    formData.append('file', audioBlob, 'voice_input.webm')
+    const ext = audioBlob.type?.includes('ogg') ? 'ogg' : audioBlob.type?.includes('mp4') ? 'm4a' : 'webm'
+    formData.append('file', audioBlob, `voice_input.${ext}`)
     if (language && language !== 'auto' && language !== 'multilingual' && language !== 'mixed') {
       formData.append('language', language)
     }

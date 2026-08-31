@@ -183,6 +183,21 @@ def parse_user_hse_prompt(text: str, base_date: Optional[date] = None) -> Parsed
             all_intents.insert(0, "REFRESH_DASHBOARD")
 
     elif any(w in norm for w in [
+        "medical exam", "medical examination", "health exam", "health examination",
+        "audiometry", "spirometry", "hearing exam", "hearing check", "hearing test",
+        "lung function", "fitness for duty", "fitness exam", "create medical",
+        "record medical", "schedule medical", "record exam", "schedule exam",
+        "فحص طبي", "كشف طبي", "فحص سمع", "كشف سمع", "فحص السمع", "كشف اللياقة",
+        "جدولة كشف", "تسجيل فحص", "إنشاء سجل طبي", "سجل طبي",
+    ]) and any(w in norm for w in [
+        "create", "add", "record", "schedule", "register", "make", "new", "log",
+        "أنشئ", "سجل", "أضف", "اضف", "جدول", "كشف", "فحص", "أنشئ",
+    ]):
+        primary_intent = "RECORD_MEDICAL_EXAM"
+        if "RECORD_MEDICAL_EXAM" not in all_intents:
+            all_intents.insert(0, "RECORD_MEDICAL_EXAM")
+
+    elif any(w in norm for w in [
         "close all", "اغلق كافة", "إغلاق كافة", "اغلق جميع", "إغلاق جميع", "اغلق كل", "إغلاق كل",
         "إنهاء كافة", "انهاء كافة", "إنهاء جميع", "انهاء جميع"
     ]):

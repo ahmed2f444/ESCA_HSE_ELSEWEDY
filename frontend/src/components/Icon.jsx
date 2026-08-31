@@ -92,6 +92,7 @@ const P = {
   'volume-off': 'M11 5L6 9H2v6h4l5 4V5z M23 9l-6 6 M17 9l6 6',
   play: 'M5 3l14 9-14 9V3z',
   stop: 'M6 6h12v12H6z',
+  globe: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z M2 12h20 M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
 }
 
 export default function Icon({ name, size = 16, className = '', strokeWidth = 1.6, ...rest }) {

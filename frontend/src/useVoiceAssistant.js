@@ -49,10 +49,10 @@ export function detectLanguage(text = '') {
 }
 
 export const VOICE_LANGUAGES = [
-  { id: 'auto', label: 'تلقائي ذكي (مختلط عربي + English)', short: '🌐 تلقائي (AI)', flag: '🌐', speechLang: 'ar-EG' },
-  { id: 'ar-EG', label: 'العربية (اللهجة المصرية)', short: '🇪🇬 مصري', flag: '🇪🇬', speechLang: 'ar-EG' },
-  { id: 'ar-SA', label: 'العربية (الفصحى والخليج)', short: '🇸🇦 خليجي/فصحى', flag: '🇸🇦', speechLang: 'ar-SA' },
-  { id: 'en-US', label: 'English (US / Global)', short: '🇬🇧 English', flag: '🇬🇧', speechLang: 'en-US' },
+  { id: 'auto', label: 'تلقائي (عربي وإنجليزي مختلط)', short: 'تلقائي (Auto)', code: 'AUTO', speechLang: 'ar-EG' },
+  { id: 'ar-EG', label: 'العربية (لهجة مصرية)', short: 'مصري', code: 'EG', speechLang: 'ar-EG' },
+  { id: 'ar-SA', label: 'العربية (فصحى وخليجي)', short: 'خليجي / فصحى', code: 'SA', speechLang: 'ar-SA' },
+  { id: 'en-US', label: 'English (US / Global)', short: 'English', code: 'EN', speechLang: 'en-US' },
 ]
 
 /**

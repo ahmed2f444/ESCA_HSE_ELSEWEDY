@@ -909,13 +909,11 @@ export default function AgentDock() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-crit animate-ping" />
                 <span className="font-semibold text-[11px]">
-                  جارٍ الاستماع... (
-                  {voice.availableLanguages?.find((l) => l.id === voice.langMode)?.short || '🌐 تلقائي'}
-                  )
+                  جارٍ الاستماع للصوت ({voice.availableLanguages?.find((l) => l.id === voice.langMode)?.label || 'تلقائي'})
                 </span>
                 <VoiceSoundWave isListening={true} size="sm" />
               </div>
-              <span className="text-[10px] text-txt-3 font-mono">تحدث ثم اضغط الميكروفون للإنهاء</span>
+              <span className="text-[10px] text-txt-3 font-mono">اضغط الميكروفون للإرسال</span>
             </div>
           )}
 
@@ -923,31 +921,55 @@ export default function AgentDock() {
           {voice.isTranscribing && (
             <div className="px-3.5 py-1.5 bg-hi/10 border-t border-hi/30 flex items-center justify-between text-xs text-hi animate-fade">
               <div className="flex items-center gap-2">
-                <Icon name="chat" size={12} className="animate-spin text-hi" />
-                <span className="font-semibold text-[11px]">تفريغ الصوت عبر Whisper AI...</span>
+                <Icon name="refresh" size={12} className="animate-spin text-hi" />
+                <span className="font-semibold text-[11px]">معالجة الصوت عبر Whisper...</span>
               </div>
-              <span className="text-[10px] text-txt-3 font-mono">يدعم اللهجات والمزج</span>
+              <span className="text-[10px] text-txt-3 font-mono">دقة متقدمة</span>
             </div>
           )}
 
           {/* Input Footer with Auto-Expanding Textarea & Voice Mic */}
           <div className="border-t border-line p-3 bg-steel-3/80">
             <div className="flex items-end gap-1.5 bg-steel-2 border border-line focus-within:border-hi/70 rounded-xl p-1.5 transition-all relative">
-              {/* Dialect / Language Selector Popover */}
-              <div className="relative shrink-0">
+              {/* Unified Voice Control Group */}
+              <div className="relative inline-flex items-center rounded-lg bg-steel-3 border border-line p-0.5 shrink-0 shadow-sm focus-within:border-hi/50">
+                <button
+                  type="button"
+                  onClick={voice.toggleListening}
+                  disabled={voice.isTranscribing}
+                  title={voice.isListening ? 'إيقاف التسجيل الصوتي' : 'تحدث بالصوت'}
+                  className={`h-7 px-2 rounded flex items-center gap-1 transition-all ${
+                    voice.isListening
+                      ? 'mic-btn-active text-white animate-pulse'
+                      : voice.isTranscribing
+                      ? 'bg-hi/20 text-hi cursor-wait'
+                      : 'text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
+                  }`}
+                  aria-label="تسجيل صوتي"
+                >
+                  {voice.isTranscribing ? (
+                    <Icon name="refresh" size={13} className="animate-spin text-hi" />
+                  ) : (
+                    <Icon name="mic" size={13} />
+                  )}
+                </button>
+
+                <div className="w-px h-4 bg-line mx-0.5" />
+
                 <button
                   type="button"
                   onClick={() => setShowVoiceLangMenu((prev) => !prev)}
-                  title="تغيير لغة / لهجة الصوت"
-                  className="w-7 h-8 rounded-lg bg-steel-3 hover:bg-steel border border-line hover:border-hi/40 text-txt-2 hover:text-hi flex items-center justify-center text-xs transition-colors"
+                  title="اختيار لغة أو لهجة التحدث"
+                  className="h-7 px-1.5 rounded text-[10px] font-mono text-txt-3 hover:text-txt hover:bg-steel flex items-center gap-0.5 transition-colors"
                 >
-                  <span>{voice.availableLanguages?.find((l) => l.id === voice.langMode)?.flag || '🌐'}</span>
+                  <span className="font-semibold">{voice.availableLanguages?.find((l) => l.id === voice.langMode)?.code || 'AUTO'}</span>
+                  <Icon name="caret" size={8} className="text-txt-3" />
                 </button>
 
                 {showVoiceLangMenu && (
-                  <div className="absolute bottom-10 right-0 w-56 bg-steel-3 border border-line rounded-xl p-1 shadow-2xl z-50 animate-scale-in">
+                  <div className="absolute bottom-9 right-0 w-56 bg-steel-3 border border-line rounded-xl p-1 shadow-2xl z-50 animate-scale-in">
                     <div className="px-2.5 py-1 text-[10px] font-semibold text-txt-3 border-b border-line mb-1">
-                      لغة / لهجة التحدث:
+                      لغة ولهجة الصوت
                     </div>
                     {voice.availableLanguages?.map((lang) => (
                       <button
@@ -964,7 +986,7 @@ export default function AgentDock() {
                         }`}
                       >
                         <span className="flex items-center gap-1.5">
-                          <span>{lang.flag}</span>
+                          <span className="font-mono text-[9px] px-1 py-0.5 rounded bg-steel border border-line text-txt-3 font-semibold">{lang.code}</span>
                           <span>{lang.label}</span>
                         </span>
                         {voice.langMode === lang.id && <Icon name="check" size={12} className="text-hi" />}
@@ -973,28 +995,6 @@ export default function AgentDock() {
                   </div>
                 )}
               </div>
-
-              {/* Mic Button */}
-              <button
-                type="button"
-                onClick={voice.toggleListening}
-                disabled={voice.isTranscribing}
-                title={voice.isListening ? 'إيقاف التسجيل وتفريغ الصوت' : 'تحدث بالصوت (Multilingual Voice Assistant)'}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
-                  voice.isListening
-                    ? 'mic-btn-active text-white animate-pulse'
-                    : voice.isTranscribing
-                    ? 'bg-hi/20 text-hi cursor-wait'
-                    : 'bg-steel-3 text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
-                }`}
-                aria-label="تسجيل صوتي"
-              >
-                {voice.isTranscribing ? (
-                  <Icon name="chat" size={14} className="animate-spin text-hi" />
-                ) : (
-                  <Icon name="mic" size={15} />
-                )}
-              </button>
 
               <textarea
                 ref={textareaRef}

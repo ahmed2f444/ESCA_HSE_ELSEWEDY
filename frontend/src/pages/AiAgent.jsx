@@ -1338,13 +1338,11 @@ export default function AiAgent() {
                 <div className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-crit animate-ping" />
                   <span className="font-semibold text-xs">
-                    جارٍ الاستماع... (
-                    {voice.availableLanguages?.find((l) => l.id === voice.langMode)?.short || '🌐 تلقائي ذكي'}
-                    )
+                    جارٍ الاستماع للصوت ({voice.availableLanguages?.find((l) => l.id === voice.langMode)?.label || 'تلقائي'})
                   </span>
                   <VoiceSoundWave isListening={true} size="md" />
                 </div>
-                <span className="text-[11px] text-txt-3 font-mono">تحدث الآن (عربي / English / لهجات) ثم اضغط الميكروفون للإنهاء</span>
+                <span className="text-[11px] text-txt-3 font-mono">تحدث ثم اضغط الميكروفون مجدداً للإرسال</span>
               </div>
             )}
 
@@ -1352,35 +1350,58 @@ export default function AiAgent() {
             {voice.isTranscribing && (
               <div className="px-4 py-2 bg-hi/10 border border-hi/30 rounded-xl flex items-center justify-between text-xs text-hi animate-fade shadow-md">
                 <div className="flex items-center gap-2.5">
-                  <Icon name="chat" size={14} className="animate-spin text-hi" />
-                  <span className="font-semibold text-xs">جارٍ التفريغ الصوتي العصبي عالي الدقة (Whisper AI)...</span>
+                  <Icon name="refresh" size={13} className="animate-spin text-hi" />
+                  <span className="font-semibold text-xs">جارٍ معالجة الصوت عبر محرك Whisper العصبي...</span>
                 </div>
-                <span className="text-[11px] text-txt-3 font-mono">يدعم المزج اللغوي واللهجات</span>
+                <span className="text-[11px] text-txt-3 font-mono">دقة متقدمة للمصطلحات واللهجات</span>
               </div>
             )}
 
             {/* Input Box Wrapper */}
             <div className="relative flex items-end gap-2 bg-steel-3/90 border border-line focus-within:border-hi/70 focus-within:ring-2 focus-within:ring-hi/20 rounded-2xl p-2 sm:p-2.5 transition-all shadow-lg">
-              {/* Voice Language Selector Popover / Button */}
-              <div className="relative shrink-0 mb-0.5">
+              {/* Unified Clean Microphone & Language Control */}
+              <div className="relative inline-flex items-center rounded-xl bg-steel-2 border border-line p-0.5 mb-0.5 shrink-0 shadow-sm focus-within:border-hi/50">
                 <button
                   type="button"
-                  onClick={() => setShowVoiceLangMenu((prev) => !prev)}
-                  title="تغيير لغة / لهجة الصوت"
-                  className="h-9 sm:h-10 px-2 rounded-xl bg-steel-2 hover:bg-steel border border-line hover:border-hi/40 text-txt-2 hover:text-hi flex items-center gap-1 text-xs transition-colors shadow-sm"
+                  onClick={voice.toggleListening}
+                  disabled={voice.isTranscribing}
+                  title={voice.isListening ? 'إيقاف التسجيل الصوتي' : 'تحدث بالصوت (Voice Input)'}
+                  className={`h-9 px-2.5 rounded-lg flex items-center gap-1.5 transition-all duration-200 ${
+                    voice.isListening
+                      ? 'mic-btn-active text-white animate-pulse'
+                      : voice.isTranscribing
+                      ? 'bg-hi/20 text-hi cursor-wait'
+                      : 'text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
+                  }`}
+                  aria-label="تسجيل صوتي"
                 >
-                  <span className="text-sm">
-                    {voice.availableLanguages?.find((l) => l.id === voice.langMode)?.flag || '🌐'}
-                  </span>
-                  <span className="text-[11px] font-medium hidden md:inline">
-                    {voice.availableLanguages?.find((l) => l.id === voice.langMode)?.short || 'تلقائي'}
+                  {voice.isTranscribing ? (
+                    <Icon name="refresh" size={14} className="animate-spin text-hi" />
+                  ) : (
+                    <Icon name="mic" size={15} />
+                  )}
+                  <span className="text-[11px] font-medium hidden sm:inline">
+                    {voice.isListening ? 'تسجيل...' : 'صوت'}
                   </span>
                 </button>
 
+                <div className="w-px h-5 bg-line/80 mx-0.5" />
+
+                <button
+                  type="button"
+                  onClick={() => setShowVoiceLangMenu((prev) => !prev)}
+                  title="اختيار لغة أو لهجة التحدث"
+                  className="h-9 px-2 rounded-lg text-[10.5px] font-mono text-txt-3 hover:text-txt hover:bg-steel flex items-center gap-1 transition-colors"
+                >
+                  <Icon name="globe" size={12} />
+                  <span className="font-semibold">{voice.availableLanguages?.find((l) => l.id === voice.langMode)?.code || 'AUTO'}</span>
+                  <Icon name="caret" size={10} className="text-txt-3" />
+                </button>
+
                 {showVoiceLangMenu && (
-                  <div className="absolute bottom-12 right-0 w-64 bg-steel-3 border border-line rounded-2xl p-1.5 shadow-2xl z-50 animate-scale-in">
-                    <div className="px-3 py-1.5 text-[11px] font-semibold text-txt-3 border-b border-line mb-1">
-                      اختر لغة أو لهجة التحدث:
+                  <div className="absolute bottom-11 right-0 w-64 bg-steel-3 border border-line rounded-xl p-1 shadow-xl z-50 animate-scale-in">
+                    <div className="px-2.5 py-1 text-[10.5px] font-semibold text-txt-3 border-b border-line mb-1">
+                      لغة ولهجة التحدث
                     </div>
                     {voice.availableLanguages?.map((lang) => (
                       <button
@@ -1390,44 +1411,22 @@ export default function AiAgent() {
                           voice.changeLangMode(lang.id)
                           setShowVoiceLangMenu(false)
                         }}
-                        className={`w-full text-right px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
+                        className={`w-full text-right px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
                           voice.langMode === lang.id
                             ? 'bg-hi/15 text-hi font-semibold border border-hi/30'
                             : 'text-txt-2 hover:text-txt hover:bg-steel-2'
                         }`}
                       >
                         <span className="flex items-center gap-2">
-                          <span>{lang.flag}</span>
+                          <span className="font-mono text-[10px] px-1 py-0.5 rounded bg-steel border border-line text-txt-3 font-semibold">{lang.code}</span>
                           <span>{lang.label}</span>
                         </span>
-                        {voice.langMode === lang.id && <Icon name="check" size={13} className="text-hi" />}
+                        {voice.langMode === lang.id && <Icon name="check" size={12} className="text-hi" />}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Mic Voice Assistant Button */}
-              <button
-                type="button"
-                onClick={voice.toggleListening}
-                disabled={voice.isTranscribing}
-                title={voice.isListening ? 'إيقاف التسجيل وتفريغ الصوت' : 'تحدث بالصوت (Multilingual Voice Assistant)'}
-                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 mb-0.5 shadow-md ${
-                  voice.isListening
-                    ? 'mic-btn-active text-white animate-pulse'
-                    : voice.isTranscribing
-                    ? 'bg-hi/20 text-hi cursor-wait'
-                    : 'bg-steel-2 text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
-                }`}
-                aria-label="تسجيل صوتي"
-              >
-                {voice.isTranscribing ? (
-                  <Icon name="chat" size={16} className="animate-spin text-hi" />
-                ) : (
-                  <Icon name="mic" size={16} />
-                )}
-              </button>
 
               {/* Dynamic Auto-Expanding Textarea */}
               <textarea
@@ -1439,10 +1438,10 @@ export default function AiAgent() {
                 rows={1}
                 placeholder={
                   voice.isListening
-                    ? 'جارٍ الاستماع والتسجيل الصوتي... اضغط زر الميكروفون مجدداً للإنهاء'
+                    ? 'جارٍ الاستماع والتسجيل... اضغط زر الميكروفون مجدداً للإرسال'
                     : voice.isTranscribing
-                    ? 'جارٍ تفريغ الكلام بدقة عبر Whisper AI...'
-                    : 'اسأل باللغة العربية، اللهجة المصرية، الخليجية، الإنجليزية، أو تحدث بالصوت…'
+                    ? 'جارٍ معالجة الصوت...'
+                    : 'اسأل عن معايير السلامة، أو تحدث بالصوت… (Shift+Enter لسطر جديد)'
                 }
                 className="flex-1 bg-transparent text-xs sm:text-[13px] text-txt placeholder:text-txt-3 focus:outline-none resize-none px-2 py-1.5 max-h-[180px] leading-relaxed"
                 style={{ minHeight: '44px' }}

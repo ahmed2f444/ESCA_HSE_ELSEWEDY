@@ -198,6 +198,18 @@ def parse_user_hse_prompt(text: str, base_date: Optional[date] = None) -> Parsed
             all_intents.insert(0, "RECORD_MEDICAL_EXAM")
 
     elif any(w in norm for w in [
+        "مادة جديدة", "ماده جديده", "مادة خطرة", "ماده خطره", "المواد الخطرة", "المواد الخطره",
+        "مادة كيميائية", "ماده كيميائيه", "المواد الكيميائية", "المواد الكيميائيه",
+        "كيميائية جديدة", "كيميائيه جديده", "اضافة مادة", "إضافة مادة", "اضف مادة", "أضف مادة",
+        "حطلي مادة", "حط مادة", "سجل مادة", "تسجيل مادة", "مخزون المواد الخطرة",
+        "new chemical", "add chemical", "hazardous chemical", "hazmat chemical", "register chemical",
+        "new hazmat", "create chemical", "insert chemical", "store chemical"
+    ]):
+        primary_intent = "ADD_CHEMICAL"
+        if "ADD_CHEMICAL" not in all_intents:
+            all_intents.insert(0, "ADD_CHEMICAL")
+
+    elif any(w in norm for w in [
         "close all", "اغلق كافة", "إغلاق كافة", "اغلق جميع", "إغلاق جميع", "اغلق كل", "إغلاق كل",
         "إنهاء كافة", "انهاء كافة", "إنهاء جميع", "انهاء جميع"
     ]):
@@ -297,7 +309,7 @@ def get_recommended_tools_for_prompt(text: str, all_tools: List[Dict[str, Any]])
             if fn in tool_map and tool_map[fn] not in selected:
                 selected.append(tool_map[fn])
 
-    return selected
+    return selected[:6]
 
 
 # Export all public components

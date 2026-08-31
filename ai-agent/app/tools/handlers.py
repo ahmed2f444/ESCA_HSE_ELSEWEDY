@@ -6654,54 +6654,68 @@ def delete_fixed_safety_asset(db: Session, asset_summary_id: int | str, **kwargs
 # ── 13. HazMat & Chemicals Management Handlers ──────────────────────────────
 def add_chemical(
     db: Session,
-    trade_name: str,
-    chemical_name: str,
-    cas_number: str = "64-17-5",
-    supplier: str = "Standard Chemicals Ltd",
-    quantity: float = 100.0,
-    unit: str = "Liters",
-    ghs_classes: str = "Flammable Liquid",
-    zone_id: int = 4,
+    trade_name: Optional[str] = None,
+    chemical_name: Optional[str] = None,
+    cas_number: Optional[str] = None,
+    supplier: Optional[str] = None,
+    quantity: Optional[float] = None,
+    unit: Optional[str] = None,
+    ghs_classes: Optional[str] = None,
+    zone_id: Optional[int | str] = None,
+    storage_class: Optional[str] = None,
     **kwargs
 ) -> dict:
-    """CRUD CREATE: Registers a hazardous chemical in HazMat inventory."""
+    """CRUD CREATE: Registers a hazardous chemical product in HazMat inventory."""
     try:
-        zid = _resolve_zone_id(db, zone_id)
+        from datetime import datetime
+        zid = _resolve_zone_id(db, zone_id or 9)  # Zone 9 is Chemical Storage by default
+        
+        trade = (trade_name or chemical_name or f"CHEM-PROD-{datetime.now().strftime('%m%d%H%M')}").strip()
+        chem = (chemical_name or trade_name or "Hazardous Industrial Chemical").strip()
+        cas = (cas_number or "64-17-5").strip()
+        supp = (supplier or "Standard Chemicals Supplier").strip()
+        qty = float(quantity if quantity is not None else 100.0)
+        u = (unit or "Liters").strip()
+        ghs = (ghs_classes or "Flammable Liquid").strip()
+        st_class = (storage_class or ("Class 8 Corrosive" if "CORROSIVE" in ghs.upper() else "Class 3 Flammable")).strip()
+
         db.execute(text("""
             INSERT INTO chemicals (
                 trade_name, chemical_name, cas_number, supplier,
                 quantity, unit, ghs_classes, storage_class, zone_id, status_id
             ) VALUES (
                 :trade, :chem, :cas, :supp,
-                :qty, :unit, :ghs, 'Class 3 Flammable', :zid, 1
+                :qty, :unit, :ghs, :st_class, :zid, 1
             )
         """), {
-            "trade": trade_name.strip(),
-            "chem": chemical_name.strip(),
-            "cas": cas_number.strip(),
-            "supp": supplier.strip(),
-            "qty": float(quantity or 100.0),
-            "unit": unit.strip(),
-            "ghs": ghs_classes.strip(),
+            "trade": trade,
+            "chem": chem,
+            "cas": cas,
+            "supp": supp,
+            "qty": qty,
+            "unit": u,
+            "ghs": ghs,
+            "st_class": st_class,
             "zid": zid
         })
         new_id = db.execute(text("SELECT LAST_INSERT_ID()")).scalar()
         db.commit()
 
-        _log_audit_event(db, "ADD_CHEMICAL", "chemicals", new_id, details={"trade": trade_name, "cas": cas_number})
+        _log_audit_event(db, "ADD_CHEMICAL", "chemicals", new_id, details={"trade": trade, "cas": cas})
 
         return {
             "success": True,
             "operation": "CREATE",
             "entity": "chemical",
             "chemical_id": new_id,
-            "trade_name": trade_name,
-            "chemical_name": chemical_name,
-            "cas_number": cas_number,
-            "quantity": quantity,
-            "unit": unit,
+            "trade_name": trade,
+            "chemical_name": chem,
+            "cas_number": cas,
+            "quantity": qty,
+            "unit": u,
             "zone_id": zid,
-            "message": f"Chemical #{new_id} ('{trade_name}') added to HazMat registry in Zone {zid}."
+            "status": "ACTIVE",
+            "message": f"Chemical #{new_id} ('{trade}') registered successfully in HazMat inventory under Zone {zid} (ACTIVE status)."
         }
     except Exception as exc:
         db.rollback()

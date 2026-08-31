@@ -333,7 +333,7 @@ CORE RULES:
 4. Inspections & Safety Walks: use schedule_safety_inspection, submit_inspection_walk, list_inspections, get_inspection_details, get_inspection_stats, update_inspection_status, update_inspection, delete_inspection, create_inspection_finding, list_inspection_findings, update_inspection_finding, delete_inspection_finding, list_inspection_templates, generate_inspection_checklist.
 5. Risk Assessment (HIRA): use create_risk_assessment, list_risk_register, get_risk_assessment_details, update_risk_assessment, delete_risk_assessment, calculate_residual_risk, get_high_risk_hazards, get_risk_matrix.
 6. Job Safety Analysis (JSA): use create_jsa, list_jsas, get_jsa_details, update_jsa, delete_jsa, add_jsa_step, update_jsa_step, delete_jsa_step, link_jsa_permit, unlink_jsa_permit, list_available_permits_for_jsa.
-7. HazMat & Chemicals: use add_chemical, list_chemicals, get_chemical_details, delete_chemical, check_chemical_storage_safety, get_msds_sheet, get_chemical_compatibility, update_chemical_stock, update_chemical.
+7. HazMat & Chemicals: use add_chemical, list_chemicals, get_chemical_details, delete_chemical, check_chemical_storage_safety, get_msds_sheet, get_chemical_compatibility, update_chemical_stock, update_chemical for adding, managing, or querying hazardous substances — ALWAYS call add_chemical to register chemicals, default missing fields appropriately, NEVER refuse or say status is unavailable.
 8. Fire Safety & Emergency Assets: use log_fire_inspection, list_fire_equipment, get_fire_equipment_detail, add_fire_equipment, service_fire_equipment, get_fire_readiness_report, get_fire_inspection_schedule, get_fire_attention_list, get_fire_coverage_by_zone, get_fire_equipment_stats, record_fixed_safety_asset_inspection, add_fixed_safety_asset, list_fixed_safety_assets, update_fixed_safety_asset, delete_fixed_safety_asset.
 9. PPE Management: use create_ppe_supply_order, create_ppe_transaction, add_ppe_item, update_ppe_item, delete_ppe_item, list_ppe_inventory, get_ppe_stock_status, list_ppe_matrix, update_ppe_matrix, delete_ppe_matrix_rule, update_ppe_stock.
 10. Training & Certifications: use create_training_course, create_certificate, list_certificates, list_training_courses, get_overdue_training, update_certificate_status, update_training_course.
@@ -1326,6 +1326,55 @@ def _detect_and_execute_uncalled_mutation(
                 query_summary=f"generate_custom_report (Source: {source_match})",
                 rows_returned=len(result.get("rows", [])),
                 args={"source": source_match},
+                result=result,
+            ))
+    # 17.6 HazMat Chemical Creation Fast-Path Safeguard
+    is_add_chemical = (classified_intent == "ADD_CHEMICAL") or any(w in question.lower() for w in [
+        "مادة جديدة", "ماده جديده", "مادة خطرة", "ماده خطره", "مادة كيميائية", "ماده كيميائيه",
+        "اضافة مادة", "إضافة مادة", "اضف مادة", "أضف مادة", "حطلي مادة", "حط مادة", "سجل مادة", "تسجيل مادة",
+        "add chemical", "new chemical", "register chemical", "create chemical", "store chemical"
+    ]) and any(w in question.lower() for w in ["اضف", "أضف", "إضافة", "اضافة", "حط", "سجل", "add", "new", "create", "register", "insert", "store"])
+
+    if is_add_chemical and not any(t.tool_name == "add_chemical" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "add_chemical")
+        if is_auth:
+            # Extract possible CAS, quantity, or name from question
+            m_cas = re.search(r'\b(\d{2,7}-\d{2}-\d)\b', question)
+            cas_val = m_cas.group(1) if m_cas else "64-17-5"
+
+            m_qty = re.search(r'(\d+(?:\.\d+)?)\s*(?:liter|litre|liters|litres|l|kg|لتر|كجم|كيلو|برميل|براميل)', question, re.IGNORECASE)
+            qty_val = float(m_qty.group(1)) if m_qty else 100.0
+
+            # Extract chemical name if mentioned after keyword
+            trade_val = None
+            for pat in [
+                r'(?:مادة|ماده|chemical|name)\s*(?:جديدة|جديده)?\s*[:\-=]\s*([^\s,;]+(?:\s+[^\s,;]+)?)',
+                r'(?:أضف|اضف|سجل|حطلي|add)\s*(?:مادة|ماده|chemical)?\s*[:\s]*([^\s,;]+(?:\s+[^\s,;]+)?)',
+            ]:
+                m_name = re.search(pat, question, re.IGNORECASE)
+                if m_name and m_name.group(1).strip() not in ("جديدة", "جديده", "خطرة", "خطره", "كيميائية", "كيميائيه", "في", "المواد", "المواد الخطرة", "المواد الخطره"):
+                    trade_val = m_name.group(1).strip()
+                    break
+
+            if not trade_val:
+                trade_val = "مادة كيميائية صناعية"
+
+            handler = HANDLERS["add_chemical"]
+            result = handler(
+                db=db,
+                trade_name=trade_val,
+                chemical_name=trade_val,
+                cas_number=cas_val,
+                quantity=qty_val,
+                unit="Liters",
+                ghs_classes="Flammable Liquid",
+                zone_id=9,
+            )
+            traces.append(ToolCallTrace(
+                tool_name="add_chemical",
+                query_summary=f"add_chemical ({trade_val}, CAS: {cas_val}, Qty: {qty_val} L, Zone: 9)",
+                rows_returned=1 if result.get("success") else 0,
+                args={"trade_name": trade_val, "cas_number": cas_val, "quantity": qty_val, "zone_id": 9},
                 result=result,
             ))
             return result

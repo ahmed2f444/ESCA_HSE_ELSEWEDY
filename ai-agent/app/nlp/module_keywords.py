@@ -731,29 +731,59 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
     # ══════════════════════════════════════════════════════════════════════════
     "ADD_CHEMICAL": [
         "add chemical", "register chemical", "new hazardous material", "cas number", "add sds sheet",
-        "register new chemical", "new chemical", "add new chemical",
+        "register new chemical", "new chemical", "add new chemical", "add hazardous material", "add hazardous materials",
+        "add to hazardous materials", "add to hazmat", "add calcuim cianade to the hazardous materials",
+        "add calcium cyanide", "add cyanide", "register hazardous chemical", "new hazmat chemical", "create chemical",
+        "insert chemical", "store chemical in hazmat", "record chemical in hazmat inventory", "new chemical product",
+        "add to chemical register", "add substance to hazmat", "store hazardous material",
         "اضافة مادة كيميائية", "إضافة مادة", "تسجيل مادة خطرة", "بيانات السلامة الكيميائية", "مادة كيميائية جديدة", "تسجيل خام كيميائي",
-        "تسجيل مادة كيميائية جديدة", "اضافة مادة جديدة"
+        "تسجيل مادة كيميائية جديدة", "اضافة مادة جديدة", "اضافة سيانيد الكالسيوم الى المواد الخطرة",
+        "أضف سيانيد الكالسيوم إلى المواد الخطرة", "أضف إلى المواد الخطرة", "اضف للمواد الخطرة",
+        "تسجيل مادة في المواد الخطرة", "حط في المواد الخطرة", "حط مادة خطرة", "إضافة مادة للمخزون الكيميائي",
+        "سجل مادة خطرة جديدة", "إضافة مادة كيميائية جديدة", "اضافة سيانيد الكالسيوم", "أضف سيانيد الكالسيوم",
+        "سجل سيانيد الكالسيوم", "تسجيل سيانيد الكالسيوم", "حطلي سيانيد الكالسيوم", "حط سيانيد الكالسيوم"
     ],
     "LIST_CHEMICALS": [
-        "list chemicals", "chemical inventory", "ghs classes", "hazmat", "chemical compatibility", "chemicals", "sds library", "all chemicals",
-        "قائمة المواد الكيميائية", "المواد الخطرة", "توافق المواد الكيميائية", "تصنيفات ghs", "المواد الكيميائية", "سجل الكيماويات", "المواد الكيميائية الخطرة", "المواد الكيميائية الخطرة المسجلة", "سجل المواد الخطرة"
+        "list chemicals", "chemical inventory", "ghs classes", "hazmat", "hazardous materials", "hazmat materials",
+        "hazmat inventory", "chemical compatibility", "chemicals", "sds library", "all chemicals",
+        "show hazardous materials", "list hazardous chemicals", "chemical stock", "hazmat register",
+        "قائمة المواد الكيميائية", "المواد الخطرة", "المواد الخطره", "المواد الخطرة والكيماويات", "سجل المواد الخطرة",
+        "سجل الكيماويات والمخزون", "مخزون المواد الخطرة", "توافق المواد الكيميائية", "تصنيفات ghs", "المواد الكيميائية",
+        "سجل الكيماويات", "المواد الكيميائية الخطرة", "المواد الكيميائية الخطرة المسجلة", "عرض المواد الخطرة",
+        "استعراض الكيماويات", "استعراض المواد الخطرة", "قائمة المواد الخطرة"
     ],
     "GET_CHEMICAL_DETAILS": [
         "chemical details", "sds sheet", "ghs hazards", "chemical profile", "cas number lookup",
-        "تفاصيل المادة الكيميائية", "بيانات المادة", "بطاقة السلامة الكيميائية", "معلومات المادة الكيميائية"
+        "hazardous material profile", "substance info", "calcium cyanide details", "chemical card",
+        "تفاصيل المادة الكيميائية", "بيانات المادة", "بطاقة السلامة الكيميائية", "معلومات المادة الكيميائية",
+        "كارت المادة الخطرة", "تفاصيل سيانيد الكالسيوم", "معلومات سيانيد الكالسيوم", "بيانات سيانيد الكالسيوم",
+        "بطاقة مادة خطرة", "تفاصيل المادة"
     ],
     "CHECK_CHEMICAL_STORAGE": [
         "check chemical storage", "chemical storage safety", "nfpa 400 audit", "segregation safety", "storage compliance",
-        "سلامة تخزين الكيماويات", "فحص مستودع الكيماويات", "توافق التخزين الكيميائي", "مطابقة تخزين المواد الخطرة"
+        "chemical compatibility audit", "hazmat segregation", "storage safety check",
+        "سلامة تخزين الكيماويات", "فحص مستودع الكيماويات", "توافق التخزين الكيميائي", "مطابقة تخزين المواد الخطرة",
+        "توافق المواد الخطرة", "فصل المواد الكيميائية", "فحص أمان تخزين المواد الخطرة", "أمان تخزين الكيماويات"
+    ],
+    "UPDATE_CHEMICAL": [
+        "update chemical", "update chemical stock", "change chemical quantity", "modify chemical", "adjust hazmat stock", "update hazmat record",
+        "تعديل مادة كيميائية", "تحديث مخزون الكيماويات", "تعديل كمية مادة", "تحديث رصيد المادة", "تعديل بيانات مادة خطرة", "تحديث كمية مادة"
     ],
     "GET_MSDS": [
-        "msds", "sds", "safety data sheet", "msds sheet", "chemical sds",
-        "صحيفة بيانات السلامة", "نشرة السلامة", "ملف msds", "ورقة msds", "بيانات msds"
+        "msds", "sds", "safety data sheet", "msds sheet", "chemical sds", "msds report", "sds document",
+        "صحيفة بيانات السلامة", "نشرة السلامة", "ملف msds", "ورقة msds", "بيانات msds", "صحيفة sds", "وثيقة sds"
+    ],
+    "EMERGENCY_GUIDE": [
+        "chemical emergency guide", "spill response guide", "first aid chemical", "emergency response hazmat", "chemical spill kit",
+        "دليل طوارئ المواد الخطرة", "مكافحة انسكاب المواد", "إسعافات أولية للمواد الكيميائية", "طوارئ الكيماويات", "إرشادات الانسكاب الكيميائي"
+    ],
+    "SDS_ARCHIVE": [
+        "sds archive", "sds records", "sds library", "safety data sheet archive", "expired sds", "current sds",
+        "أرشيف صحائف السلامة", "ارشيف صحائف السلامة", "سجل sds", "أرشيف sds", "ارشيف sds", "صحائف السلامة المعتمدة"
     ],
     "DELETE_CHEMICAL": [
-        "delete chemical", "remove chemical", "purge hazmat",
-        "حذف مادة كيميائية", "مسح المادة من السجل"
+        "delete chemical", "remove chemical", "purge hazmat", "delete hazardous material", "remove from hazmat register",
+        "حذف مادة كيميائية", "مسح المادة من السجل", "حذف مادة خطرة", "إلغاء مادة من المواد الخطرة", "حذف من المواد الخطرة"
     ],
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -1025,13 +1055,14 @@ INTENT_TO_TOOL_MAP: Dict[str, List[str]] = {
     "DELETE_FIXED_SAFETY_ASSET": ["delete_fixed_safety_asset", "list_fixed_safety_assets"],
 
     # Module 12: Chemicals
-    "ADD_CHEMICAL": ["add_chemical", "list_chemicals"],
-    "LIST_CHEMICALS": ["list_chemicals", "get_chemical_details", "get_chemical_compatibility"],
-    "GET_CHEMICAL_DETAILS": ["get_chemical_details", "get_chemical_emergency_guide", "list_chemicals", "get_msds_sheet"],
+    "ADD_CHEMICAL": ["add_chemical", "list_chemicals", "get_chemical_details"],
+    "LIST_CHEMICALS": ["list_chemicals", "get_chemical_details", "get_chemical_compatibility", "check_chemical_storage_safety"],
+    "GET_CHEMICAL_DETAILS": ["get_chemical_details", "get_chemical_emergency_guide", "get_msds_sheet", "list_chemicals"],
+    "UPDATE_CHEMICAL": ["update_chemical", "update_chemical_stock", "get_chemical_details", "list_chemicals"],
     "DELETE_CHEMICAL": ["delete_chemical", "list_chemicals"],
     "CHECK_CHEMICAL_STORAGE": ["check_chemical_storage_safety", "get_chemical_compatibility", "list_chemicals"],
     "GET_MSDS": ["get_msds_sheet", "list_sds_records", "get_chemical_emergency_guide", "get_chemical_details"],
-    "EMERGENCY_GUIDE": ["get_chemical_emergency_guide", "get_msds_sheet", "get_chemical_details"],
+    "EMERGENCY_GUIDE": ["get_chemical_emergency_guide", "get_msds_sheet", "get_chemical_details", "list_chemicals"],
     "SDS_ARCHIVE": ["list_sds_records", "get_msds_sheet", "list_chemicals"],
 
     # Module 13: Medical

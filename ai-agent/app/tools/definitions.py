@@ -605,6 +605,21 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "export_incidents",
+            "description": "EXPORT: Alias for export_incidents_excel to export incident register records to Excel.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "status": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Optional filter: ALL, OPEN, INVESTIGATING, CLOSED"},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Optional zone filter"},
+                    "severity": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Optional severity filter: MINOR, MODERATE, MAJOR, CRITICAL"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "generate_external_report_template",
             "description": "COMPLIANCE & LEGAL TEMPLATES: Generate official statutory external reporting documents for government, insurance, and environmental bodies. Supports: 'LABOR_OFFICE' (نموذج مكتب العمل - إخطار إصابة عمل حسب قانون العمل 12 لسنة 2003), 'SOCIAL_INSURANCE' (نموذج التأمينات الاجتماعية - إخطار عن وقوع إصابة عمل حسب قانون 148 لسنة 2019), 'INSURANCE_CLAIM' (مطالبة شركة التأمين للتعويض عن أضرار/إصابة), 'ENVIRONMENTAL_AGENCY' (إخطار جهاز شؤون البيئة EEAA عن حوادث التسريب والانبعاثات حسب قانون البيئة 4 لسنة 1994). (Arabic: توليد نموذج مكتب العمل, نموذج التأمينات الاجتماعية, مطالبة شركة التأمين, إخطار جهاز شؤون البيئة, قوالب الإبلاغ الخارجي).",
             "parameters": {
@@ -843,6 +858,72 @@ TOOLS = [
                     }
                 },
                 "required": ["permit_id", "status"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "approve_permit",
+            "description": "CRUD UPDATE / APPROVAL: Approve an Electronic Permit to Work (ePTW) by authorized manager.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit ID or code to approve (e.g. 10 or 'PTW-010')"
+                    },
+                    "reason_or_note": {
+                        "type": "string",
+                        "description": "Approval authorization note and safety prerequisites sign-off",
+                        "default": "Approved by Authorized Manager"
+                    }
+                },
+                "required": ["permit_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "activate_permit",
+            "description": "CRUD UPDATE: Activate an approved Electronic Permit to Work (ePTW) for immediate field execution.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit ID or code to activate"
+                    },
+                    "reason_or_note": {
+                        "type": "string",
+                        "description": "Activation note and toolbox talk confirmation",
+                        "default": "Activated for work execution"
+                    }
+                },
+                "required": ["permit_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "close_permit",
+            "description": "CRUD UPDATE / CLOSURE: Safely close and sign-off an active permit upon job completion and site housekeeping.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "permit_id": {
+                        "anyOf": [{"type": "integer"}, {"type": "string"}],
+                        "description": "Permit ID or code to close"
+                    },
+                    "reason_or_note": {
+                        "type": "string",
+                        "description": "Work completion and site handover sign-off note",
+                        "default": "Work completed and site left safe and clean"
+                    }
+                },
+                "required": ["permit_id"]
             }
         }
     },
@@ -2031,6 +2112,23 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "test_fixed_safety_asset",
+            "description": "CRUD LOG: Alias for record_fixed_safety_asset_inspection to test and inspect fixed safety assets.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "asset_summary_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Fixed safety asset ID or name"},
+                    "test_result": {"type": "string", "description": "PASS or FAIL", "default": "PASS"},
+                    "operational_qty": {"anyOf": [{"type": "integer"}, {"type": "null"}], "description": "Operational working units count"},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Inspection notes"}
+                },
+                "required": ["asset_summary_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_fire_equipment",
             "description": "List fire safety equipment (extinguishers, hydrants, detectors) and their inspection dates.",
             "parameters": {
@@ -2145,6 +2243,23 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "create_fire_service_order",
+            "description": "CRUD SERVICE & WORK ORDER: Alias for service_fire_equipment to create a maintenance/refill/repair work order for fire equipment.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "equipment_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Equipment ID or code"},
+                    "action_type": {"type": "string", "description": "REFILL or REPLACE or MAINTENANCE", "default": "REFILL"},
+                    "technician_name": {"type": "string", "description": "Technician name", "default": "Maintenance Team"},
+                    "notes": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Service notes"}
+                },
+                "required": ["equipment_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "get_fire_equipment_detail",
             "description": "READ: Inspect full technical profile, location, capacity, zone, status, expiry date, field QR scan code, and recent inspection history for a fire equipment unit (Arabic: تفاصيل معدة الإطفاء, كود المسح الميداني, بيانات الطفاية).",
             "parameters": {
@@ -2161,6 +2276,19 @@ TOOLS = [
         "function": {
             "name": "get_fire_readiness_report",
             "description": "READ/REPORT: Generate comprehensive readiness report for all fire equipment, suppression systems, hydrants (pressure 8.5 bar), smoke detectors (62/64 operational), zone readiness percentages, and compliance with NFPA 10/13 and Civil Defense codes (Arabic: تقرير الجاهزية, تقرير جاهزية معدات الحريق, نسبة الجاهزية).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}], "description": "Optional zone filter"}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "export_fire_readiness_report",
+            "description": "EXPORT: Alias for get_fire_readiness_report to export the complete Fire Readiness Report.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -2933,6 +3061,2767 @@ TOOLS = [
             }
         }
     }
+,
+{
+    "type": "function",
+    "function": {
+        "name": "export_incidents_to_excel",
+        "description": "Automated tool for export incidents to excel. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_statutory_incident_report",
+        "description": "Automated tool for generate statutory incident report. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "export_hazmat_sds_pdf",
+        "description": "Automated tool for export hazmat sds pdf. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_jsa_pdf",
+        "description": "Automated tool for generate jsa pdf. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "export_ppe_stock_report",
+        "description": "Automated tool for export ppe stock report. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_inspection_walk_report",
+        "description": "Automated tool for generate inspection walk report. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "export_risk_register_excel",
+        "description": "Automated tool for export risk register excel. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_monthly_hse_report_pdf",
+        "description": "Automated tool for generate monthly hse report pdf. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_root_cause_analysis_report",
+        "description": "Automated tool for generate root cause analysis report. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "download_iso45001_compliance_report",
+        "description": "Automated tool for download iso45001 compliance report. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "export_simops_conflict_report",
+        "description": "Automated tool for export simops conflict report. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "generate_occupational_health_summary",
+        "description": "Automated tool for generate occupational health summary. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "export_fire_equipment_maintenance_schedule",
+        "description": "Automated tool for export fire equipment maintenance schedule. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "download_audit_log_csv",
+        "description": "Automated tool for download audit log csv. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "export_safety_dashboard_pdf",
+        "description": "Automated tool for export safety dashboard pdf. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "send_report_to_management",
+        "description": "Automated tool for send report to management. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "download_training_certificates",
+        "description": "Automated tool for download training certificates. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "send_email_notification_to_manager",
+        "description": "Automated tool for send email notification to manager. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "schedule_recurring_inspection",
+        "description": "Automated tool for schedule recurring inspection. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "trigger_site_wide_evacuation_alarm",
+        "description": "Automated tool for trigger site wide evacuation alarm. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_ppe_record",
+        "description": "Automated tool for sync ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_ppe_record",
+        "description": "Automated tool for validate ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_ppe_record",
+        "description": "Automated tool for archive ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_ppe_record",
+        "description": "Automated tool for restore ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_ppe_record",
+        "description": "Automated tool for approve ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_ppe_record",
+        "description": "Automated tool for reject ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_ppe_record",
+        "description": "Automated tool for lock ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_ppe_record",
+        "description": "Automated tool for unlock ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_ppe_record",
+        "description": "Automated tool for escalate ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_ppe_record",
+        "description": "Automated tool for summarize ppe record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_incidents_record",
+        "description": "Automated tool for sync incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_incidents_record",
+        "description": "Automated tool for validate incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_incidents_record",
+        "description": "Automated tool for archive incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_incidents_record",
+        "description": "Automated tool for restore incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_incidents_record",
+        "description": "Automated tool for approve incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_incidents_record",
+        "description": "Automated tool for reject incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_incidents_record",
+        "description": "Automated tool for lock incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_incidents_record",
+        "description": "Automated tool for unlock incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_incidents_record",
+        "description": "Automated tool for escalate incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_incidents_record",
+        "description": "Automated tool for summarize incidents record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_hazmat_record",
+        "description": "Automated tool for sync hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_hazmat_record",
+        "description": "Automated tool for validate hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_hazmat_record",
+        "description": "Automated tool for archive hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_hazmat_record",
+        "description": "Automated tool for restore hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_hazmat_record",
+        "description": "Automated tool for approve hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_hazmat_record",
+        "description": "Automated tool for reject hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_hazmat_record",
+        "description": "Automated tool for lock hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_hazmat_record",
+        "description": "Automated tool for unlock hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_hazmat_record",
+        "description": "Automated tool for escalate hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_hazmat_record",
+        "description": "Automated tool for summarize hazmat record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_fire_equipment_record",
+        "description": "Automated tool for sync fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_fire_equipment_record",
+        "description": "Automated tool for validate fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_fire_equipment_record",
+        "description": "Automated tool for archive fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_fire_equipment_record",
+        "description": "Automated tool for restore fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_fire_equipment_record",
+        "description": "Automated tool for approve fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_fire_equipment_record",
+        "description": "Automated tool for reject fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_fire_equipment_record",
+        "description": "Automated tool for lock fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_fire_equipment_record",
+        "description": "Automated tool for unlock fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_fire_equipment_record",
+        "description": "Automated tool for escalate fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_fire_equipment_record",
+        "description": "Automated tool for summarize fire equipment record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_jsa_record",
+        "description": "Automated tool for sync jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_jsa_record",
+        "description": "Automated tool for validate jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_jsa_record",
+        "description": "Automated tool for archive jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_jsa_record",
+        "description": "Automated tool for restore jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_jsa_record",
+        "description": "Automated tool for approve jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_jsa_record",
+        "description": "Automated tool for reject jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_jsa_record",
+        "description": "Automated tool for lock jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_jsa_record",
+        "description": "Automated tool for unlock jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_jsa_record",
+        "description": "Automated tool for escalate jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_jsa_record",
+        "description": "Automated tool for summarize jsa record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_inspections_record",
+        "description": "Automated tool for sync inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_inspections_record",
+        "description": "Automated tool for validate inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_inspections_record",
+        "description": "Automated tool for archive inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_inspections_record",
+        "description": "Automated tool for restore inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_inspections_record",
+        "description": "Automated tool for approve inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_inspections_record",
+        "description": "Automated tool for reject inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_inspections_record",
+        "description": "Automated tool for lock inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_inspections_record",
+        "description": "Automated tool for unlock inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_inspections_record",
+        "description": "Automated tool for escalate inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_inspections_record",
+        "description": "Automated tool for summarize inspections record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_training_record",
+        "description": "Automated tool for sync training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_training_record",
+        "description": "Automated tool for validate training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_training_record",
+        "description": "Automated tool for archive training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_training_record",
+        "description": "Automated tool for restore training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_training_record",
+        "description": "Automated tool for approve training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_training_record",
+        "description": "Automated tool for reject training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_training_record",
+        "description": "Automated tool for lock training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_training_record",
+        "description": "Automated tool for unlock training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_training_record",
+        "description": "Automated tool for escalate training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_training_record",
+        "description": "Automated tool for summarize training record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_reports_record",
+        "description": "Automated tool for sync reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_reports_record",
+        "description": "Automated tool for validate reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_reports_record",
+        "description": "Automated tool for archive reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_reports_record",
+        "description": "Automated tool for restore reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_reports_record",
+        "description": "Automated tool for approve reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_reports_record",
+        "description": "Automated tool for reject reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_reports_record",
+        "description": "Automated tool for lock reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_reports_record",
+        "description": "Automated tool for unlock reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_reports_record",
+        "description": "Automated tool for escalate reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_reports_record",
+        "description": "Automated tool for summarize reports record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_iot_record",
+        "description": "Automated tool for sync iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_iot_record",
+        "description": "Automated tool for validate iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_iot_record",
+        "description": "Automated tool for archive iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_iot_record",
+        "description": "Automated tool for restore iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_iot_record",
+        "description": "Automated tool for approve iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_iot_record",
+        "description": "Automated tool for reject iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_iot_record",
+        "description": "Automated tool for lock iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_iot_record",
+        "description": "Automated tool for unlock iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_iot_record",
+        "description": "Automated tool for escalate iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_iot_record",
+        "description": "Automated tool for summarize iot record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "sync_security_record",
+        "description": "Automated tool for sync security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "validate_security_record",
+        "description": "Automated tool for validate security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "archive_security_record",
+        "description": "Automated tool for archive security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "restore_security_record",
+        "description": "Automated tool for restore security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "approve_security_record",
+        "description": "Automated tool for approve security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "reject_security_record",
+        "description": "Automated tool for reject security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "lock_security_record",
+        "description": "Automated tool for lock security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "unlock_security_record",
+        "description": "Automated tool for unlock security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "escalate_security_record",
+        "description": "Automated tool for escalate security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "summarize_security_record",
+        "description": "Automated tool for summarize security record. Fully covers front-end API capability.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "ID of the record to process."
+                },
+                "options": {
+                    "type": "string",
+                    "description": "Additional JSON string options."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        }
+    }
+}
 ]
 
 # For local Ollama models (optimized for rapid function calling on RTX 3050)

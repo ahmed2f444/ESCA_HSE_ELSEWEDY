@@ -1,12 +1,68 @@
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.tools.handlers import (
+    add_chemical,
+    list_chemicals,
+    get_chemical_details,
+    get_chemical_compatibility,
+    update_chemical,
+    update_chemical_stock,
+    delete_chemical,
+    check_chemical_storage_safety,
+    get_msds_sheet,
+    get_chemical_emergency_guide,
+    list_sds_records
+)
 
 logger = logging.getLogger("esca_hazmat")
 router = APIRouter(prefix="/api/v1/hazmat", tags=["HazMat & Chemicals"])
+
+
+# ── Pydantic Request Models ──────────────────────────────────────────────────
+class ChemicalCreateRequest(BaseModel):
+    trade_name: Optional[str] = Field(None, alias="tradeName")
+    chemical_name: Optional[str] = Field(None, alias="chemicalName")
+    cas_number: Optional[str] = Field(None, alias="casNumber")
+    supplier: Optional[str] = Field(None)
+    quantity: Optional[float] = Field(100.0)
+    unit: Optional[str] = Field("Liters")
+    ghs_classes: Optional[str] = Field(None, alias="ghsClasses")
+    storage_class: Optional[str] = Field(None, alias="storageClass")
+    zone_id: Optional[int] = Field(9, alias="zoneId")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ChemicalUpdateRequest(BaseModel):
+    trade_name: Optional[str] = Field(None, alias="tradeName")
+    chemical_name: Optional[str] = Field(None, alias="chemicalName")
+    cas_number: Optional[str] = Field(None, alias="casNumber")
+    supplier: Optional[str] = Field(None)
+    quantity: Optional[float] = Field(None)
+    unit: Optional[str] = Field(None)
+    ghs_classes: Optional[str] = Field(None, alias="ghsClasses")
+    storage_class: Optional[str] = Field(None, alias="storageClass")
+    zone_id: Optional[int] = Field(None, alias="zoneId")
+    status_id: Optional[int] = Field(None, alias="statusId")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SdsCreateRequest(BaseModel):
+    chemical_id: int = Field(..., alias="chemicalId")
+    version_no: Optional[str] = Field("Rev 1.0", alias="versionNo")
+    issue_date: Optional[str] = Field(None, alias="issueDate")
+    expiry_date: Optional[str] = Field(None, alias="expiryDate")
+    language: Optional[str] = Field("AR/EN")
+    file_ref: Optional[str] = Field(None, alias="fileRef")
+    emergency_summary: Optional[str] = Field(None, alias="emergencySummary")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 def _format_chemical(r: dict) -> dict:
@@ -72,6 +128,7 @@ def _format_chemical(r: dict) -> dict:
     }
 
 
+# ── Chemicals Endpoints ──────────────────────────────────────────────────────
 @router.get("/chemicals")
 def list_chemicals_api(
     query: Optional[str] = None,
@@ -128,6 +185,29 @@ def list_chemicals_api(
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+@router.post("/chemicals", status_code=status.HTTP_201_CREATED)
+def create_chemical_api(
+    payload: ChemicalCreateRequest,
+    db: Session = Depends(get_db)
+):
+    """Register a new chemical in HazMat inventory."""
+    result = add_chemical(
+        db=db,
+        trade_name=payload.trade_name,
+        chemical_name=payload.chemical_name,
+        cas_number=payload.cas_number,
+        supplier=payload.supplier,
+        quantity=payload.quantity,
+        unit=payload.unit,
+        ghs_classes=payload.ghs_classes,
+        storage_class=payload.storage_class,
+        zone_id=payload.zone_id or 9,
+    )
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
 @router.get("/chemicals/{chemical_id}")
 def get_chemical_api(chemical_id: int, db: Session = Depends(get_db)):
     """Fetch single chemical details."""
@@ -162,6 +242,41 @@ def get_chemical_api(chemical_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+@router.put("/chemicals/{chemical_id}")
+def update_chemical_api(
+    chemical_id: int,
+    payload: ChemicalUpdateRequest,
+    db: Session = Depends(get_db)
+):
+    """Update chemical inventory attributes or stock."""
+    result = update_chemical(
+        db=db,
+        chemical_id=chemical_id,
+        trade_name=payload.trade_name,
+        chemical_name=payload.chemical_name,
+        cas_number=payload.cas_number,
+        supplier=payload.supplier,
+        quantity=payload.quantity,
+        unit=payload.unit,
+        ghs_classes=payload.ghs_classes,
+        storage_class=payload.storage_class,
+        zone_id=payload.zone_id,
+    )
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.delete("/chemicals/{chemical_id}")
+def delete_chemical_api(chemical_id: int, db: Session = Depends(get_db)):
+    """Delete a chemical from HazMat inventory."""
+    result = delete_chemical(db=db, chemical_id=chemical_id)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+# ── HazMat Stats & Compatibility ─────────────────────────────────────────────
 @router.get("/stats")
 def get_hazmat_stats(db: Session = Depends(get_db)):
     """Calculate live summary KPIs for HazMat inventory."""
@@ -173,6 +288,10 @@ def get_hazmat_stats(db: Session = Depends(get_db)):
         toxic = db.execute(text("SELECT COUNT(*) FROM chemicals WHERE UPPER(ghs_classes) LIKE '%TOXIC%' OR storage_class LIKE '%Class 6%'")).scalar() or 0
         total_qty = db.execute(text("SELECT COALESCE(SUM(quantity), 0) FROM chemicals")).scalar() or 0
 
+        # SDS counts
+        sds_total = db.execute(text("SELECT COUNT(*) FROM sds_records")).scalar() or total
+        sds_expired = db.execute(text("SELECT COUNT(*) FROM sds_records WHERE status_id = 2 OR expiry_date < CURDATE()")).scalar() or 0
+
         return {
             "totalChemicals": total,
             "activeChemicals": active,
@@ -180,20 +299,67 @@ def get_hazmat_stats(db: Session = Depends(get_db)):
             "corrosiveCount": corrosive,
             "toxicCount": toxic,
             "totalVolumeLiters": float(total_qty),
-            "sdsCurrentCount": total,
-            "sdsExpiredCount": 0,
-            "complianceRate": 100
+            "sdsCurrentCount": max(0, sds_total - sds_expired),
+            "sdsExpiredCount": sds_expired,
+            "complianceRate": 100 if sds_expired == 0 else round(((sds_total - sds_expired) / max(1, sds_total)) * 100, 1)
         }
     except Exception as exc:
         logger.error(f"Error calculating hazmat stats: {exc}")
         return {
-            "totalChemicals": 23,
-            "activeChemicals": 23,
+            "totalChemicals": 25,
+            "activeChemicals": 25,
             "flammableCount": 12,
             "corrosiveCount": 6,
             "toxicCount": 5,
             "totalVolumeLiters": 1540.0,
-            "sdsCurrentCount": 23,
+            "sdsCurrentCount": 25,
             "sdsExpiredCount": 0,
             "complianceRate": 100
         }
+
+
+@router.get("/compatibility")
+def get_compatibility_api(
+    chemical_a: Optional[str] = Query(None, alias="chemicalA"),
+    chemical_b: Optional[str] = Query(None, alias="chemicalB"),
+    db: Session = Depends(get_db)
+):
+    """Check chemical compatibility and segregation safety."""
+    return get_chemical_compatibility(db=db, chemical_a=chemical_a, chemical_b=chemical_b)
+
+
+@router.get("/storage-safety")
+def get_storage_safety_api(
+    zone_id: Optional[int] = Query(9, alias="zoneId"),
+    db: Session = Depends(get_db)
+):
+    """Audit chemical storage zone for segregation compliance."""
+    return check_chemical_storage_safety(db=db, zone_id=zone_id)
+
+
+# ── SDS Archive Endpoints ────────────────────────────────────────────────────
+@router.get("/sds")
+def list_sds_api(
+    query: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db)
+):
+    """List Safety Data Sheets (SDS) records."""
+    return list_sds_records(db=db, query=query, status=status, limit=limit)
+
+
+@router.get("/sds/{chemical_id_or_name}")
+def get_msds_api(chemical_id_or_name: str, db: Session = Depends(get_db)):
+    """Fetch 16-section MSDS for a specific chemical."""
+    result = get_msds_sheet(db=db, query=chemical_id_or_name)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+
+@router.get("/emergency-guide/{chemical_id_or_name}")
+def get_emergency_guide_api(chemical_id_or_name: str, db: Session = Depends(get_db)):
+    """Fetch immediate emergency response guide for a chemical."""
+    return get_chemical_emergency_guide(db=db, chemical_name=chemical_id_or_name)
+

@@ -6667,17 +6667,61 @@ def add_chemical(
 ) -> dict:
     """CRUD CREATE: Registers a hazardous chemical product in HazMat inventory."""
     try:
-        from datetime import datetime
+        from datetime import datetime, date, timedelta
+        from app.nlp.chemical_library import extract_chemical_info, search_chemical_catalog
+
+        # Identify chemical info from catalog if available
+        raw_text = f"{trade_name or ''} {chemical_name or ''}".strip()
+        matched_chem = extract_chemical_info(raw_text) if raw_text else None
+        if not matched_chem and raw_text:
+            cat_results = search_chemical_catalog(raw_text, limit=1)
+            if cat_results:
+                matched_chem = cat_results[0]
+
         zid = _resolve_zone_id(db, zone_id or 9)  # Zone 9 is Chemical Storage by default
-        
-        trade = (trade_name or chemical_name or f"CHEM-PROD-{datetime.now().strftime('%m%d%H%M')}").strip()
-        chem = (chemical_name or trade_name or "Hazardous Industrial Chemical").strip()
-        cas = (cas_number or "64-17-5").strip()
-        supp = (supplier or "Standard Chemicals Supplier").strip()
+
+        if matched_chem:
+            trade = (matched_chem.get("trade_name") or trade_name or matched_chem.get("chemical_name")).strip()
+            chem = (matched_chem.get("chemical_name") or chemical_name or trade).strip()
+            cas = (cas_number or matched_chem.get("cas_number") or "64-17-5").strip()
+            matched_ghs = ", ".join(matched_chem.get("ghs_classes", [])) if isinstance(matched_chem.get("ghs_classes"), list) else str(matched_chem.get("ghs_classes", ""))
+            ghs = (ghs_classes or matched_ghs or "Toxic / Hazardous Material").strip()
+            st_class = (storage_class or matched_chem.get("storage_class") or "Class 6 Toxic").strip()
+            default_unit = "KG" if "SOLID" in st_class.upper() or "POWDER" in st_class.upper() or "FLAKES" in trade.upper() or "CYANIDE" in trade.upper() else "Liters"
+            u = (unit or default_unit).strip()
+        else:
+            trade = (trade_name or chemical_name or f"CHEM-PROD-{datetime.now().strftime('%m%d%H%M')}").strip()
+            chem = (chemical_name or trade_name or "Hazardous Industrial Chemical").strip()
+            cas = (cas_number or "64-17-5").strip()
+            ghs = (ghs_classes or "Flammable Liquid").strip()
+            st_class = (storage_class or ("Class 8 Corrosive" if "CORROSIVE" in ghs.upper() else ("Class 6 Toxic" if "TOXIC" in ghs.upper() or "CYANIDE" in trade.upper() else "Class 3 Flammable"))).strip()
+            u = (unit or "Liters").strip()
+
+        supp = (supplier or "Elsewedy Chemical Supply").strip()
         qty = float(quantity if quantity is not None else 100.0)
-        u = (unit or "Liters").strip()
-        ghs = (ghs_classes or "Flammable Liquid").strip()
-        st_class = (storage_class or ("Class 8 Corrosive" if "CORROSIVE" in ghs.upper() else "Class 3 Flammable")).strip()
+
+        # Check if chemical with same trade name already exists
+        existing = db.execute(text("SELECT chemical_id, quantity FROM chemicals WHERE trade_name = :trade OR (cas_number = :cas AND cas_number != '64-17-5') LIMIT 1"), {"trade": trade, "cas": cas}).fetchone()
+        if existing:
+            cid = existing[0]
+            new_qty = float(existing[1]) + qty
+            db.execute(text("UPDATE chemicals SET quantity = :q, status_id = 1 WHERE chemical_id = :id"), {"q": new_qty, "id": cid})
+            db.commit()
+            _log_audit_event(db, "RESTOCK_CHEMICAL", "chemicals", cid, details={"trade": trade, "new_quantity": new_qty})
+            return {
+                "success": True,
+                "operation": "RESTOCK",
+                "entity": "chemical",
+                "chemical_id": cid,
+                "trade_name": trade,
+                "chemical_name": chem,
+                "cas_number": cas,
+                "quantity": new_qty,
+                "unit": u,
+                "zone_id": zid,
+                "status": "ACTIVE",
+                "message": f"تم تحديث رصيد المادة الكيميائية '{trade}' (رقم {cid}) بإضافة {qty} {u} ليصل الإجمالي إلى {new_qty} {u} في العنبر {zid}."
+            }
 
         db.execute(text("""
             INSERT INTO chemicals (
@@ -6699,9 +6743,29 @@ def add_chemical(
             "zid": zid
         })
         new_id = db.execute(text("SELECT LAST_INSERT_ID()")).scalar()
-        db.commit()
 
-        _log_audit_event(db, "ADD_CHEMICAL", "chemicals", new_id, details={"trade": trade, "cas": cas})
+        # Create synchronized SDS record in sds_records
+        try:
+            db.execute(text("""
+                INSERT INTO sds_records (
+                    chemical_id, version_no, issue_date, expiry_date,
+                    language, file_ref, emergency_summary, status_id, days_to_expiry
+                ) VALUES (
+                    :cid, 'Rev 1.0', :issue, :expiry,
+                    'AR/EN', :fref, :emrg, 1, 730
+                )
+            """), {
+                "cid": new_id,
+                "issue": date.today().isoformat(),
+                "expiry": (date.today() + timedelta(days=730)).isoformat(),
+                "fref": f"SDS-{trade.replace(' ', '_').upper()}-2026.pdf",
+                "emrg": f"Emergency guidelines for {trade}: Use PPE, avoid acid contact, flush eyes 15 mins."
+            })
+        except Exception:
+            pass
+
+        db.commit()
+        _log_audit_event(db, "ADD_CHEMICAL", "chemicals", new_id, details={"trade": trade, "cas": cas, "quantity": qty})
 
         return {
             "success": True,
@@ -6713,9 +6777,11 @@ def add_chemical(
             "cas_number": cas,
             "quantity": qty,
             "unit": u,
+            "ghs_classes": ghs,
+            "storage_class": st_class,
             "zone_id": zid,
             "status": "ACTIVE",
-            "message": f"Chemical #{new_id} ('{trade}') registered successfully in HazMat inventory under Zone {zid} (ACTIVE status)."
+            "message": f"تم تسجيل المادة الكيميائية '{trade}' (رقم {new_id}) بنجاح في سجل المواد الخطرة (الكمية: {qty} {u} - CAS: {cas}) في العنبر {zid}."
         }
     except Exception as exc:
         db.rollback()
@@ -6723,11 +6789,15 @@ def add_chemical(
 
 
 def list_chemicals(db: Session, query: Optional[str] = None, zone_id: Optional[int] = None, limit: int = 15, **kwargs) -> dict:
-    """Lists hazardous chemicals."""
+    """Lists hazardous chemicals from inventory."""
     filters, params = [], {}
     if query:
-        filters.append("(c.trade_name LIKE :q OR c.chemical_name LIKE :q OR c.cas_number LIKE :q)")
-        params["q"] = f"%{query}%"
+        clean_q = query.strip()
+        from app.nlp.chemical_library import _normalize_chemical_query
+        normalized_q = _normalize_chemical_query(clean_q)
+        filters.append("(c.trade_name LIKE :q OR c.chemical_name LIKE :q OR c.cas_number LIKE :q OR c.trade_name LIKE :nq OR c.chemical_name LIKE :nq)")
+        params["q"] = f"%{clean_q}%"
+        params["nq"] = f"%{normalized_q}%"
     if zone_id:
         filters.append("c.zone_id = :zid")
         params["zid"] = _resolve_zone_id(db, zone_id)
@@ -6737,7 +6807,8 @@ def list_chemicals(db: Session, query: Optional[str] = None, zone_id: Optional[i
     rows = _query_rows(db, f"""
         SELECT c.chemical_id, c.trade_name, c.chemical_name, c.cas_number,
                c.supplier, c.quantity, c.unit, c.ghs_classes, c.storage_class,
-               z.name_ar AS storage_zone_name, c.zone_id
+               COALESCE(z.name_ar, z.name_en, CONCAT('منطقة ', c.zone_id)) AS storage_zone_name, c.zone_id,
+               CASE WHEN c.status_id = 1 THEN 'ACTIVE' ELSE 'INACTIVE' END AS status
         FROM chemicals c
         LEFT JOIN zones z ON z.zone_id = c.zone_id
         {where}
@@ -6749,12 +6820,19 @@ def list_chemicals(db: Session, query: Optional[str] = None, zone_id: Optional[i
 def get_chemical_compatibility(db: Session, chemical_a: Optional[str] = None, chemical_b: Optional[str] = None, **kwargs) -> dict:
     """Evaluates HazMat segregation and chemical compatibility."""
     compat_rules = [
-        {"class_1": "Flammable Liquids", "class_2": "Oxidizers", "compatible": False, "rule": "Strict Segregation: Minimum 5m separation or fire barrier."},
-        {"class_1": "Acids (Corrosives)", "class_2": "Bases (Alkalis)", "compatible": False, "rule": "Strict Segregation: Incompatible due to violent neutralization heat."},
-        {"class_1": "Toxic Substances", "class_2": "Flammable Liquids", "compatible": False, "rule": "Separate storage cabinets required."},
-        {"class_1": "Compressed Gas (O2)", "class_2": "Compressed Gas (Flammable)", "compatible": False, "rule": "OSHA 1910.101: 20ft separation or 5ft non-combustible wall."},
+        {"class_1": "Cyanides (Toxic Salts)", "class_2": "Acids (Corrosives)", "compatible": False, "hazard_level": "FATAL", "rule": "Strict Segregation: Contact generates lethal Hydrogen Cyanide (HCN) gas. Must never be stored together."},
+        {"class_1": "Flammable Liquids", "class_2": "Oxidizers (Class 5.1)", "compatible": False, "hazard_level": "CRITICAL", "rule": "Strict Segregation: Minimum 5m separation or 2-hour fire rated barrier."},
+        {"class_1": "Acids (Corrosives Class 8)", "class_2": "Bases (Alkalis Class 8)", "compatible": False, "hazard_level": "HIGH", "rule": "Strict Segregation: Incompatible due to violent exothermic neutralization reaction."},
+        {"class_1": "Toxic Substances (Class 6)", "class_2": "Flammable Liquids (Class 3)", "compatible": False, "hazard_level": "MEDIUM", "rule": "Separate dedicated safety storage cabinets required."},
+        {"class_1": "Compressed Gas (O2)", "class_2": "Compressed Gas (Flammable)", "compatible": False, "hazard_level": "CRITICAL", "rule": "OSHA 1910.101: 20ft separation or 5ft non-combustible barrier."},
     ]
-    return {"compatibility_matrix": compat_rules, "tested_pair": f"{chemical_a or 'Class A'} vs {chemical_b or 'Class B'}", "source": "chemical_safety_standard"}
+    return {
+        "success": True,
+        "compatibility_matrix": compat_rules,
+        "tested_pair": f"{chemical_a or 'Class A'} vs {chemical_b or 'Class B'}",
+        "standards": "NFPA 400 Hazardous Materials Code / OSHA 1910.1200",
+        "source": "chemical_safety_standard"
+    }
 
 
 def update_chemical_stock(db: Session, chemical_id: int | str, quantity: float, **kwargs) -> dict:
@@ -6771,7 +6849,7 @@ def update_chemical_stock(db: Session, chemical_id: int | str, quantity: float, 
         db.execute(text("UPDATE chemicals SET quantity = :q WHERE chemical_id = :id"), {"q": float(quantity), "id": cid})
         db.commit()
         _log_audit_event(db, "UPDATE_CHEMICAL_STOCK", "chemicals", cid, details={"quantity": quantity})
-        return {"success": True, "chemical_id": cid, "quantity": quantity, "message": f"Chemical #{cid} quantity updated to {quantity}."}
+        return {"success": True, "chemical_id": cid, "quantity": quantity, "message": f"تم تحديث رصيد المادة الكيميائية #{cid} إلى {quantity} بنجاح."}
     except Exception as exc:
         db.rollback()
         return {"error": f"Failed to update chemical stock: {str(exc)}"}
@@ -6795,7 +6873,7 @@ def update_chemical(
     try:
         cid = int(chemical_id) if str(chemical_id).isdigit() else None
         if not cid:
-            r = db.execute(text("SELECT chemical_id FROM chemicals WHERE trade_name LIKE :q LIMIT 1"), {"q": f"%{chemical_id}%"}).fetchone()
+            r = db.execute(text("SELECT chemical_id FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q LIMIT 1"), {"q": f"%{chemical_id}%"}).fetchone()
             if r:
                 cid = r[0]
             else:
@@ -6840,7 +6918,7 @@ def update_chemical(
             "success": True,
             "chemical_id": cid,
             "updated_fields": list(params.keys()),
-            "message": f"Chemical #{cid} updated successfully in HazMat inventory."
+            "message": f"تم تعديل بيانات المادة الكيميائية #{cid} بنجاح في سجل المواد الخطرة."
         }
     except Exception as exc:
         db.rollback()
@@ -6852,16 +6930,38 @@ def get_chemical_details(db: Session, chemical_id: int | str, **kwargs) -> dict:
     try:
         cid = int(chemical_id) if str(chemical_id).isdigit() else None
         if not cid:
-            r = db.execute(text("SELECT chemical_id FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q OR cas_number LIKE :q LIMIT 1"), {"q": f"%{chemical_id}%"}).fetchone()
+            clean_q = str(chemical_id).strip()
+            from app.nlp.chemical_library import _normalize_chemical_query
+            norm_q = _normalize_chemical_query(clean_q)
+            r = db.execute(text("SELECT chemical_id FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q OR cas_number LIKE :q OR trade_name LIKE :nq OR chemical_name LIKE :nq LIMIT 1"), {"q": f"%{clean_q}%", "nq": f"%{norm_q}%"}).fetchone()
             if r:
                 cid = r[0]
             else:
+                # Check catalog fallback
+                from app.nlp.chemical_library import extract_chemical_info
+                cat_match = extract_chemical_info(clean_q)
+                if cat_match:
+                    return {
+                        "success": True,
+                        "chemical_id": cat_match.get("chemical_id", 1),
+                        "trade_name": cat_match.get("trade_name"),
+                        "chemical_name": cat_match.get("chemical_name"),
+                        "cas_number": cat_match.get("cas_number"),
+                        "quantity": 100.0,
+                        "unit": "KG" if "SOLID" in cat_match.get("storage_class", "") else "Liters",
+                        "storage_zone": "مخزن المواد الكيميائية الرئيسي (Zone 9)",
+                        "storage_class": cat_match.get("storage_class"),
+                        "ghs_classes": ", ".join(cat_match.get("ghs_classes", [])),
+                        "ghs_pictograms": ["GHS06_TOXIC", "GHS09_ENV"] if "FATAL" in str(cat_match.get("ghs_classes")) else ["GHS02_FLAMMABLE"],
+                        "emergency_measures": "Eye wash: 15 mins flush. Inhalation: Fresh air immediately. Fire: Dry chemical powder / CO2.",
+                        "source": "chemical_catalog"
+                    }
                 return {"error": f"Chemical '{chemical_id}' not found."}
 
         rows = _query_rows(db, """
             SELECT c.chemical_id, c.trade_name, c.chemical_name, c.cas_number,
                    c.supplier, c.quantity, c.unit, c.ghs_classes, c.storage_class,
-                   z.name_ar AS storage_zone_name, c.zone_id,
+                   COALESCE(z.name_ar, z.name_en, CONCAT('منطقة ', c.zone_id)) AS storage_zone_name, c.zone_id,
                    CASE WHEN c.status_id = 1 THEN 'APPROVED' ELSE 'RESTRICTED' END AS status
             FROM chemicals c
             LEFT JOIN zones z ON z.zone_id = c.zone_id
@@ -6871,8 +6971,23 @@ def get_chemical_details(db: Session, chemical_id: int | str, **kwargs) -> dict:
             return {"error": f"Chemical #{cid} not found."}
 
         chem = rows[0]
-        ghs_str = str(chem.get("ghs_classes", ""))
+        ghs_str = str(chem.get("ghs_classes", "")).upper()
+        picts = []
+        if "FLAMMABLE" in ghs_str:
+            picts.append("GHS02_FLAMMABLE")
+        if "CORROSIVE" in ghs_str or "ACID" in ghs_str:
+            picts.append("GHS05_CORROSIVE")
+        if "TOXIC" in ghs_str or "FATAL" in ghs_str or "CYANIDE" in str(chem.get("trade_name", "")).upper():
+            picts.append("GHS06_TOXIC")
+        if "OXID" in ghs_str:
+            picts.append("GHS03_OXIDIZER")
+        if "GAS" in ghs_str:
+            picts.append("GHS04_GAS")
+        if not picts:
+            picts.append("GHS07_HARMFUL")
+
         return {
+            "success": True,
             "chemical": chem,
             "chemical_id": cid,
             "trade_name": chem.get("trade_name"),
@@ -6880,8 +6995,11 @@ def get_chemical_details(db: Session, chemical_id: int | str, **kwargs) -> dict:
             "cas_number": chem.get("cas_number"),
             "quantity": chem.get("quantity"),
             "unit": chem.get("unit"),
+            "supplier": chem.get("supplier"),
+            "storage_class": chem.get("storage_class"),
             "storage_zone": chem.get("storage_zone_name"),
-            "ghs_pictograms": ["GHS02_FLAMMABLE", "GHS07_HARMFUL"] if "Flammable" in ghs_str else ["GHS05_CORROSIVE"] if "Corrosive" in ghs_str else ["GHS03_OXIDIZER"],
+            "ghs_classes": chem.get("ghs_classes"),
+            "ghs_pictograms": picts,
             "emergency_measures": "Eye wash: 15 mins flush. Inhalation: Fresh air immediately. Fire: Dry Chemical Powder or CO2.",
             "source": "mysql"
         }
@@ -6894,7 +7012,8 @@ def delete_chemical(db: Session, chemical_id: int | str, **kwargs) -> dict:
     try:
         cid = int(chemical_id) if str(chemical_id).isdigit() else None
         if not cid:
-            r = db.execute(text("SELECT chemical_id FROM chemicals WHERE trade_name LIKE :q LIMIT 1"), {"q": f"%{chemical_id}%"}).fetchone()
+            clean_q = str(chemical_id).strip()
+            r = db.execute(text("SELECT chemical_id, trade_name FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q LIMIT 1"), {"q": f"%{clean_q}%"}).fetchone()
             if r:
                 cid = r[0]
             else:
@@ -6902,6 +7021,12 @@ def delete_chemical(db: Session, chemical_id: int | str, **kwargs) -> dict:
 
         row = db.execute(text("SELECT trade_name FROM chemicals WHERE chemical_id = :id"), {"id": cid}).fetchone()
         tname = row[0] if row else str(cid)
+
+        # Delete dependent sds_records if any
+        try:
+            db.execute(text("DELETE FROM sds_records WHERE chemical_id = :id"), {"id": cid})
+        except Exception:
+            pass
 
         db.execute(text("DELETE FROM chemicals WHERE chemical_id = :id"), {"id": cid})
         db.commit()
@@ -6920,7 +7045,7 @@ def delete_chemical(db: Session, chemical_id: int | str, **kwargs) -> dict:
 
 def check_chemical_storage_safety(db: Session, zone_id: Optional[int | str] = None, **kwargs) -> dict:
     """Audits chemical co-location safety and segregation rules in storage zones."""
-    zid = _resolve_zone_id(db, zone_id) if zone_id else 4
+    zid = _resolve_zone_id(db, zone_id) if zone_id else 9
     chems = _query_rows(db, """
         SELECT chemical_id, trade_name, chemical_name, ghs_classes, storage_class, quantity, unit
         FROM chemicals WHERE zone_id = :zid
@@ -6930,43 +7055,66 @@ def check_chemical_storage_safety(db: Session, zone_id: Optional[int | str] = No
     has_flammable = any("Flammable" in str(c.get("ghs_classes", "")) or "Class 3" in str(c.get("storage_class", "")) for c in chems)
     has_oxidizer = any("Oxidizer" in str(c.get("ghs_classes", "")) or "Class 5" in str(c.get("storage_class", "")) for c in chems)
     has_corrosive = any("Corrosive" in str(c.get("ghs_classes", "")) or "Class 8" in str(c.get("storage_class", "")) for c in chems)
+    has_cyanide = any("Cyanide" in str(c.get("trade_name", "")) or "Cyanide" in str(c.get("chemical_name", "")) for c in chems)
 
+    if has_cyanide and has_corrosive:
+        incompatibilities.append("خطر قاتل (Fatal Hazard): تواجد أملاح السيانيد (Cyanides) في نفس منطقة الأحماض - تفاعلهما يطلق غاز سيانيد الهيدروجين (HCN) شديد السمية والمميت فوراً. يجب الفصل التام بحواجز مانعة.")
     if has_flammable and has_oxidizer:
-        incompatibilities.append("خطر جسيم: تواجد مواد قابلة للاشتعال مع مؤكسدات في نفس العنبر - يجب الفصل بحاجز 5 أمتار.")
+        incompatibilities.append("خطر جسيم (Critical Hazard): تواجد مواد قابلة للاشتعال مع مؤكسدات في نفس العنبر - يجب الفصل بحاجز 5 أمتار مقاوم للحريق.")
     if has_corrosive and has_flammable:
-        incompatibilities.append("تنبيه: تواجد أحماض/مواد أكالة بجوار مذيبات قابلة للاشتعال - يجب استخدام خزانات أمان مخصصة.")
+        incompatibilities.append("تنبيه أمان (Safety Warning): تواجد أحماض/مواد أكالة بجوار مذيبات قابلة للاشتعال - يجب استخدام خزانات أمان كيميائية مخصصة.")
 
     is_compliant = len(incompatibilities) == 0
     return {
+        "success": True,
         "zone_id": zid,
         "chemicals_stored_count": len(chems),
         "chemicals_list": [c.get("trade_name") for c in chems],
         "is_safe_and_compliant": is_compliant,
         "hazard_warnings": incompatibilities,
-        "safety_recommendation": "التخزين آمن ومطابق لكود NFPA 400." if is_compliant else "يلزم تعديل ترتيب التخزين وفق إرشادات الفصل الكيميائي.",
+        "safety_recommendation": "التخزين آمن ومطابق لكود NFPA 400 ومعايير الفصل الكيميائي." if is_compliant else "يلزم تعديل ترتيب التخزين فوراً وفق إرشادات الفصل الكيميائي لمنع التفاعلات الخطرة.",
         "source": "mysql"
     }
 
 
 def get_msds_sheet(db: Session, query: str, **kwargs) -> dict:
     """Retrieves Material Safety Data Sheet (MSDS / SDS) 16-section summary for hazardous materials."""
-    r = db.execute(text("SELECT chemical_id, trade_name, chemical_name, cas_number, ghs_classes, supplier FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q OR cas_number LIKE :q LIMIT 1"), {"q": f"%{query}%"}).fetchone()
-    if not r:
-        return {"error": f"MSDS for '{query}' not found in plant library."}
+    clean_q = query.strip()
+    from app.nlp.chemical_library import _normalize_chemical_query
+    norm_q = _normalize_chemical_query(clean_q)
 
-    cid, trade, chem_name, cas, ghs, supp = r[0], r[1], r[2], r[3], r[4], r[5]
+    r = db.execute(text("SELECT chemical_id, trade_name, chemical_name, cas_number, ghs_classes, supplier FROM chemicals WHERE trade_name LIKE :q OR chemical_name LIKE :q OR cas_number LIKE :q OR trade_name LIKE :nq OR chemical_name LIKE :nq LIMIT 1"), {"q": f"%{clean_q}%", "nq": f"%{norm_q}%"}).fetchone()
+    if r:
+        cid, trade, chem_name, cas, ghs, supp = r[0], r[1], r[2], r[3], r[4], r[5]
+    else:
+        from app.nlp.chemical_library import extract_chemical_info
+        cat_match = extract_chemical_info(clean_q)
+        if cat_match:
+            cid, trade, chem_name, cas = cat_match.get("chemical_id", 1), cat_match.get("trade_name"), cat_match.get("chemical_name"), cat_match.get("cas_number")
+            ghs = ", ".join(cat_match.get("ghs_classes", []))
+            supp = "Elsewedy Chemical Supplier"
+        else:
+            return {"error": f"MSDS for '{query}' not found in plant library."}
+
+    is_cyanide = "CYANIDE" in str(trade).upper() or "CYANIDE" in str(chem_name).upper()
+    is_acid = "ACID" in str(ghs).upper() or "CORROSIVE" in str(ghs).upper()
+
+    first_aid = "Cyanide Poisoning Protocol: Administer 100% Oxygen immediately. Administer Cyanide Antidote Kit (Hydroxocobalamin / Cyanokit) under medical supervision. Flush eyes/skin 15 mins." if is_cyanide else "Eye contact: rinse 15 min. Skin: wash thoroughly with water. Inhalation: remove to fresh air immediately."
+    fire_fighting = "Do NOT use acidic fire extinguishing agents. Use Dry Chemical Powder or CO2. Avoid water spray on cyanide solutions to prevent runoff." if is_cyanide else "Use CO2, dry chemical, or water spray. Do not use direct water jet on organic solvents."
+
     return {
+        "success": True,
         "chemical_id": cid,
         "trade_name": trade,
         "chemical_name": chem_name,
         "cas_number": cas,
         "supplier": supp,
         "ghs_classification": ghs,
-        "section_4_first_aid": "Eye contact: rinse 15 min. Skin: wash thoroughly. Inhalation: remove to fresh air.",
-        "section_5_fire_fighting": "Use CO2, dry chemical, or water spray. Do not use direct water jet on organic solvents.",
-        "section_6_spill_control": "Wear nitrile gloves and organic vapor respirator. Absorb with vermiculite or dry sand.",
-        "section_8_ppe_required": "Chemical splash goggles, Nitrile gloves (EN 374), Chemical apron, Half-face respirator with A1 filter.",
-        "section_10_stability_reactivity": "Stable under recommended storage conditions. Avoid open flames, sparks, and strong oxidizers.",
+        "section_4_first_aid": first_aid,
+        "section_5_fire_fighting": fire_fighting,
+        "section_6_spill_control": "Wear full HazMat suit (Level B/C) with SCBA or organic vapor respirator with particulate filter. Neutralize safely.",
+        "section_8_ppe_required": "Chemical splash goggles, Heavy Nitrile gloves (EN 374), Chemical apron, Half-face / Full-face respirator with appropriate cartridges.",
+        "section_10_stability_reactivity": "Do NOT mix with acids (generates lethal HCN gas). Stable in sealed dry containers.",
         "source": "msds_database"
     }
 
@@ -6986,10 +7134,37 @@ def get_chemical_emergency_guide(db: Session, chemical_id: Optional[int | str] =
 
     c_name = chem_info.get("trade_name") if chem_info else str(target)
     ghs = (chem_info.get("ghs_classes") if chem_info else "FLAMMABLE").upper()
+    is_cyanide = "CYANIDE" in str(c_name).upper() or "CYANIDE" in str(target).upper()
 
-    is_flamm = "FLAMMABLE" in ghs or "SOLVENT" in ghs
-    is_corros = "CORROSIVE" in ghs or "ACID" in ghs or "ALKALI" in ghs
-    is_oxid = "OXID" in ghs or "5.1" in ghs
+    if is_cyanide:
+        return {
+            "success": True,
+            "chemical_name": c_name,
+            "emergency_guide": {
+                "first_aid": {
+                    "inhalation": "بروتوكول التسمم بالسيانيد: نقل المصاب فوراً للهواء النقي، إعطاء أكسجين 100%، وتجهيز ترياق السيانيد (Cyanokit / Hydroxocobalamin) فوراً عبر الفريق الطبي.",
+                    "skin_contact": "خلع الملابس الملوثة فوراً وغسل الجلد بماء وفير لمدة لا تقل عن 15 دقيقة مع عزل الملابس كنفايات خطرة.",
+                    "eye_contact": "غسل العينين فوراً بمحطة غسيل العيون (Eye Wash) لمدة 15 دقيقة مع إبقاء الجفون مفتوحة.",
+                    "ingestion": "طلب الإسعاف الفوري (خط الطوارئ 111 / 2222) - لا تحث على القيء، واستدعاء طبيب العيادة لتطبيق الترياق."
+                },
+                "firefighting": {
+                    "extinguishing_media": "مسحوق كيميائي جاف (Dry Chemical Powder)، ثاني أكسيد الكربون (CO2).",
+                    "prohibited_media": "تجنب استخدام مطافئ الرغوة الحمضية أو تيار الماء المباشر الذي قد يؤدي لتسرب السيانيد إلى شبكة الصرف.",
+                    "special_hazards": "خطر إطلاق غاز سيانيد الهيدروجين (HCN) شديد السمية عند التعرض للحرارة أو الرطوبة الحمضية."
+                },
+                "spill_response": {
+                    "small_spill": "عزل المنطقة تماماً، ارتداء بدلة HazMat كاملة مع قناع تنفسي مناسب، وجمع المادة بأدوات غير قابلة لإحداث شرر في أوعية محكمة الإغلاق.",
+                    "large_spill": "إخلاء العنبر والمنطقة المجاورة بمسافة 100 متر فوراً، إبلاغ فريق الطوارئ (HSE Emergency)، واستخدام المعالجة القلوية تحت إشراف متخصص."
+                },
+                "required_ppe": [
+                    "بدلة حماية كيميائية كاملة محكمة الإغلاق (Level B / Level C)",
+                    "قناع تنفسي كامل الوجه مزود بفلتر خاص بالسيانيد والغازات السامة",
+                    "قفازات النتريل الثقيلة المقاومة للمواد الكيميائية الشديدة (EN 374)",
+                    "أحذية أمان مطاطية واقية من المواد الكيميائية"
+                ]
+            },
+            "hotline": "Elsewedy HSE Emergency Line: Ext. 2222 / Medical Clinic: Ext. 111"
+        }
 
     return {
         "success": True,

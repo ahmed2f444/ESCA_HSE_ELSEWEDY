@@ -266,6 +266,95 @@ def _format_fallback_table(result_data: any, question: str = "") -> str:
             ]
             return "\n".join(lines)
 
+        # 10. Specialized Formatter for HazMat Chemical Creation / Restock
+        if result_data.get("entity") == "chemical" and result_data.get("operation") in ("CREATE", "RESTOCK"):
+            cid = result_data.get('chemical_id', 1)
+            cid_str = f"CHM-{cid:03d}" if isinstance(cid, int) else f"CHM-{str(cid).zfill(3)}"
+            lines = [
+                f"### 🧪 تسجيل مادة كيميائية في سجل المواد الخطرة (HazMat Inventory)\n",
+                f"> **{result_data.get('message', 'تم تسجيل المادة الكيميائية بنجاح.')}**\n",
+                f"- **كود المادة بالسجل:** `{cid_str}`",
+                f"- **الاسم التجاري:** **{result_data.get('trade_name', '-')}**",
+                f"- **الاسم الكيميائي / العلمي:** `{result_data.get('chemical_name', '-')}`",
+                f"- **رقم التسجيل الدولي (CAS Number):** `{result_data.get('cas_number', '-')}`",
+                f"- **الكمية والرصيد:** `{result_data.get('quantity', 0)} {result_data.get('unit', 'Liters')}`",
+                f"- **موقع التخزين المعتمد:** `العنبر {result_data.get('zone_id', 9)} (مخزن المواد الكيميائية)`",
+                f"- **تصنيف الخطورة (GHS):** `{result_data.get('ghs_classes', 'خطر كيميائي معتمد')}`",
+                f"- **فئة التخزين (Storage Class):** `{result_data.get('storage_class', 'Class 6 Toxic / Class 3 Flammable')}`",
+                f"- **حالة الامتثال:** `نشط ومصرح به (Active)`\n",
+                f"> ℹ️ *تمت إضافة المادة ومزامنة صحيفة بيانات السلامة (SDS) الخاصة بها في سجل المواد الخطرة.*"
+            ]
+            return "\n".join(lines)
+
+        # 11. Specialized Formatter for MSDS 16-Section Sheet
+        if "ghs_classification" in result_data and "section_4_first_aid" in result_data:
+            lines = [
+                f"### 📄 صحيفة بيانات السلامة للمواد الخطرة (MSDS / SDS Summary)\n",
+                f"> **المادة:** **{result_data.get('trade_name', '')}** ({result_data.get('chemical_name', '')})\n",
+                f"- **رقم CAS:** `{result_data.get('cas_number', '-')}`",
+                f"- **المورد:** `{result_data.get('supplier', 'Elsewedy Chemical Supply')}`",
+                f"- **تصنيف GHS:** `{result_data.get('ghs_classification', '-')}`\n",
+                f"#### 🚑 القسم 4: الإسعافات الأولية (First Aid):",
+                f"- {result_data.get('section_4_first_aid', '-')}\n",
+                f"#### 🧯 القسم 5: مكافحة الحريق (Fire Fighting):",
+                f"- {result_data.get('section_5_fire_fighting', '-')}\n",
+                f"#### 🦺 القسم 8: مهمات الوقاية المطلوبة (Required PPE):",
+                f"- {result_data.get('section_8_ppe_required', '-')}\n",
+                f"#### 🧪 القسم 10: الاستقرار والتفاعلية (Stability & Reactivity):",
+                f"- {result_data.get('section_10_stability_reactivity', '-')}"
+            ]
+            return "\n".join(lines)
+
+        # 12. Specialized Formatter for Emergency Safety Guide
+        if "emergency_guide" in result_data and isinstance(result_data["emergency_guide"], dict):
+            eg = result_data["emergency_guide"]
+            lines = [
+                f"### 🚨 دليل الطوارئ والتدخل السريع: {result_data.get('chemical_name', 'المادة الخطرة')}\n",
+                f"> **خط الطوارئ الداخلي:** `{result_data.get('hotline', 'Ext. 2222 / Clinic: 111')}`\n",
+                "#### 🚑 الإسعافات الأولية (First Aid):"
+            ]
+            fa = eg.get("first_aid", {})
+            for k, v in fa.items():
+                lbl = {"inhalation": "الاستنشاق", "skin_contact": "ملامسة الجلد", "eye_contact": "ملامسة العينين", "ingestion": "البلع"}.get(k, k)
+                lines.append(f"- **{lbl}**: {v}")
+
+            ff = eg.get("firefighting", {})
+            if ff:
+                lines.append("\n#### 🧯 مكافحة الحريق (Firefighting):")
+                for k, v in ff.items():
+                    lbl = {"extinguishing_media": "وسائط الإطفاء المناسبة", "prohibited_media": "الوسائط المحظورة", "special_hazards": "المخاطر الخاصة"}.get(k, k)
+                    lines.append(f"- **{lbl}**: {v}")
+
+            sp = eg.get("spill_response", {})
+            if sp:
+                lines.append("\n#### ⚠️ مكافحة الانسكاب (Spill Response):")
+                for k, v in sp.items():
+                    lbl = {"small_spill": "الانسكاب المحدود", "large_spill": "الانسكاب الكبير"}.get(k, k)
+                    lines.append(f"- **{lbl}**: {v}")
+
+            ppe = eg.get("required_ppe", [])
+            if ppe:
+                lines.append("\n#### 🦺 مهمات الوقاية الإلزامية (Required PPE):")
+                for p in ppe:
+                    lines.append(f"- {p}")
+            return "\n".join(lines)
+
+        # 13. Specialized Formatter for Storage Safety & Compatibility
+        if "hazard_warnings" in result_data and "chemicals_stored_count" in result_data:
+            lines = [
+                f"### 🛡️ تقرير أمان وتوافق تخزين المواد الخطرة (العنبر {result_data.get('zone_id', 9)})\n",
+                f"> **حالة الامتثال:** `{'✅ آمن ومطابق لمعايير NFPA 400' if result_data.get('is_safe_and_compliant') else '⚠️ يتطلب إجراء تصحيحي فوري للفصل'}`\n",
+                f"- **عدد المواد المخزنة:** `{result_data.get('chemicals_stored_count', 0)} مادة كيميائية`",
+                f"- **قائمة المواد:** `{' ، '.join(result_data.get('chemicals_list', []))}`",
+                f"- **التوصية الفنية:** _{result_data.get('safety_recommendation', '-')}_\n"
+            ]
+            warns = result_data.get("hazard_warnings", [])
+            if warns:
+                lines.append("#### ⚠️ تنبيهات عدم التوافق والفصل الكيميائي:")
+                for w in warns:
+                    lines.append(f"- ⛔ {w}")
+            return "\n".join(lines)
+
         if result_data.get("success") or "message" in result_data or "report_title" in result_data:
             lines = []
             header_title = result_data.get("report_title") or ("✅ تم تنفيذ العملية بنجاح" if result_data.get("success") else "نتائج الاستعلام")
@@ -360,9 +449,29 @@ SESSION_HISTORIES: dict[str, list[dict]] = {}
 def _filter_local_tools(question: str, all_local_tools: list[dict], history: list = None) -> list[dict]:
     """Dynamically narrows down tools using the high-performance NLP keyword parser library."""
     from app.nlp.keyword_parser import get_recommended_tools_for_prompt
+    from app.nlp.chemical_library import extract_chemical_info
 
     # Use comprehensive multilingual parser
     matched_tools = get_recommended_tools_for_prompt(question, all_local_tools)
+
+    # Check if question has HazMat / Chemical signals
+    has_hazmat_signal = any(w in question.lower() for w in [
+        "chemical", "chemicals", "hazmat", "hazardous material", "hazardous materials", "cas", "sds", "msds",
+        "مادة", "ماده", "المواد الخطرة", "المواد الخطره", "المواد الكيميائية", "المواد الكيميائيه",
+        "الكيماويات", "كيماويات", "خام كيميائي", "تخزين الكيماويات", "توافق المواد"
+    ]) or (extract_chemical_info(question) is not None)
+
+    if has_hazmat_signal:
+        hazmat_tool_names = {
+            "add_chemical", "list_chemicals", "get_chemical_details", "get_chemical_compatibility",
+            "check_chemical_storage_safety", "get_chemical_emergency_guide", "get_msds_sheet",
+            "list_sds_records", "update_chemical", "update_chemical_stock", "delete_chemical"
+        }
+        current_names = {t.get("function", {}).get("name") for t in matched_tools}
+        for t in all_local_tools:
+            t_name = t.get("function", {}).get("name")
+            if t_name in hazmat_tool_names and t_name not in current_names:
+                matched_tools.append(t)
 
     # Check previous conversation context if history exists
     if history:
@@ -668,7 +777,7 @@ def _detect_and_execute_uncalled_mutation(
         "الحلى التامن", "الحي الثامن", "خط الإنتاج b", "خط الإنتاج c", "خط الانتاج b", "خط الانتاج c"
     ]) or (("zone" in question.lower() or "منطقة" in question or "مناطق" in question or "عنابر" in question) and ("sector" in question.lower() or "قطاع" in question or "department" in question.lower() or "قسم" in question))
 
-    if is_zones_query and not any(t.tool_name in ("list_zones", "list_departments") for t in traces):
+    if is_zones_query and not any(t.tool_name in ("list_zones", "list_departments", "get_db_schema", "run_read_only_query") for t in traces):
         is_auth, _ = check_tool_access(canonical_role, "list_zones")
         if is_auth:
             target_dept = None
@@ -1317,33 +1426,70 @@ def _detect_and_execute_uncalled_mutation(
                 args={"source": source_match},
                 result=result,
             ))
-    # 17.6 HazMat Chemical Creation Fast-Path Safeguard
-    is_add_chemical = (classified_intent == "ADD_CHEMICAL") or any(w in question.lower() for w in [
-        "مادة جديدة", "ماده جديده", "مادة خطرة", "ماده خطره", "مادة كيميائية", "ماده كيميائيه",
-        "اضافة مادة", "إضافة مادة", "اضف مادة", "أضف مادة", "حطلي مادة", "حط مادة", "سجل مادة", "تسجيل مادة",
-        "add chemical", "new chemical", "register chemical", "create chemical", "store chemical"
-    ]) and any(w in question.lower() for w in ["اضف", "أضف", "إضافة", "اضافة", "حط", "سجل", "add", "new", "create", "register", "insert", "store"])
+    # 17.6 HazMat Chemical Creation & Management Fast-Path Safeguards
+    from app.nlp.chemical_library import extract_chemical_info, search_chemical_catalog
+    chem_match_q = extract_chemical_info(question)
 
-    if is_add_chemical and not any(t.tool_name == "add_chemical" for t in traces):
+    is_add_chem_action = any(w in question.lower() for w in [
+        "add", "new", "create", "register", "insert", "store",
+        "اضف", "أضف", "إضافة", "اضافة", "سجل", "تسجيل", "حط", "حطلي", "ادخل", "أدخل"
+    ])
+    is_add_chem_target = any(w in question.lower() for w in [
+        "hazardous materials", "hazardous material", "hazmat", "chemical", "chemicals",
+        "المواد الخطرة", "المواد الخطره", "المواد الكيميائية", "المواد الكيميائيه", "الكيماويات", "كيماويات",
+        "مادة جديدة", "ماده جديده", "مادة خطرة", "ماده خطره", "مادة كيميائية", "ماده كيميائيه"
+    ]) or (chem_match_q is not None)
+
+    is_add_chemical = (classified_intent == "ADD_CHEMICAL") or (is_add_chem_action and is_add_chem_target)
+
+    if is_add_chemical and not any(t.tool_name in ("add_chemical", "update_chemical_stock") for t in traces):
         is_auth, _ = check_tool_access(canonical_role, "add_chemical")
         if is_auth:
-            # Extract possible CAS, quantity, or name from question
-            m_cas = re.search(r'\b(\d{2,7}-\d{2}-\d)\b', question)
-            cas_val = m_cas.group(1) if m_cas else "64-17-5"
-
-            m_qty = re.search(r'(\d+(?:\.\d+)?)\s*(?:liter|litre|liters|litres|l|kg|لتر|كجم|كيلو|برميل|براميل)', question, re.IGNORECASE)
+            # Extract quantity
+            m_qty = re.search(r'(\d+(?:\.\d+)?)\s*(?:liter|litre|liters|litres|l|kg|لتر|كجم|كيلو|برميل|براميل|طن|ton|drums)', question, re.IGNORECASE)
             qty_val = float(m_qty.group(1)) if m_qty else 100.0
 
-            # Extract chemical name if mentioned after keyword
+            unit_val = "KG" if any(w in question.lower() for w in ["kg", "كجم", "كيلو", "طن", "ton"]) else "Liters"
+
             trade_val = None
-            for pat in [
-                r'(?:مادة|ماده|chemical|name)\s*(?:جديدة|جديده)?\s*[:\-=]\s*([^\s,;]+(?:\s+[^\s,;]+)?)',
-                r'(?:أضف|اضف|سجل|حطلي|add)\s*(?:مادة|ماده|chemical)?\s*[:\s]*([^\s,;]+(?:\s+[^\s,;]+)?)',
-            ]:
-                m_name = re.search(pat, question, re.IGNORECASE)
-                if m_name and m_name.group(1).strip() not in ("جديدة", "جديده", "خطرة", "خطره", "كيميائية", "كيميائيه", "في", "المواد", "المواد الخطرة", "المواد الخطره"):
-                    trade_val = m_name.group(1).strip()
-                    break
+            cas_val = "64-17-5"
+            ghs_val = "Toxic / Hazardous Material"
+            st_class_val = "Class 6 Toxic"
+
+            if chem_match_q:
+                trade_val = chem_match_q.get("trade_name") or chem_match_q.get("chemical_name")
+                cas_val = chem_match_q.get("cas_number") or cas_val
+                ghs_val = ", ".join(chem_match_q.get("ghs_classes", [])) if isinstance(chem_match_q.get("ghs_classes"), list) else str(chem_match_q.get("ghs_classes", ghs_val))
+                st_class_val = chem_match_q.get("storage_class") or st_class_val
+                if "SOLID" in str(st_class_val).upper() or "POWDER" in str(st_class_val).upper() or "CYANIDE" in str(trade_val).upper():
+                    unit_val = "KG"
+            else:
+                for pat in [
+                    r'(?:add|register|insert|create|store)\s+([a-zA-Z0-9\s\-]+?)\s+(?:to|into|in)\s+(?:the\s+)?(?:hazardous materials|hazmat|chemicals|inventory)',
+                    r'(?:أضف|اضف|سجل|تسجيل|إضافة|اضافة|حط|حطلي)\s+([^\d,;]+?)\s+(?:إلى|الى|في|بـ|بالمواد)\s+(?:المواد الخطرة|المواد الخطره|المواد الكيميائية|الكيماويات|المخزون)',
+                    r'(?:مادة|ماده|chemical|name)\s*(?:جديدة|جديده)?\s*[:\-=]\s*([^\s,;]+(?:\s+[^\s,;]+)?)',
+                    r'(?:أضف|اضف|سجل|حطلي|add)\s*(?:مادة|ماده|chemical)?\s*[:\s]*([^\s,;]+(?:\s+[^\s,;]+)?)',
+                ]:
+                    m_name = re.search(pat, question, re.IGNORECASE)
+                    if m_name:
+                        candidate = m_name.group(1).strip()
+                        candidate = re.sub(r'^(?:مادة\s+كيميائية|ماده\s+كيميائيه|مادة|ماده|خام|مركب|عنصر)\s+', '', candidate, flags=re.IGNORECASE).strip()
+                        if candidate not in ("جديدة", "جديده", "خطرة", "خطره", "كيميائية", "كيميائيه", "في", "المواد", "المواد الخطرة", "المواد الخطره", "the"):
+                            chem_match_cand = extract_chemical_info(candidate)
+                            if chem_match_cand:
+                                trade_val = chem_match_cand.get("trade_name") or candidate
+                                cas_val = chem_match_cand.get("cas_number") or cas_val
+                                ghs_val = ", ".join(chem_match_cand.get("ghs_classes", [])) if isinstance(chem_match_cand.get("ghs_classes"), list) else str(chem_match_cand.get("ghs_classes", ghs_val))
+                                st_class_val = chem_match_cand.get("storage_class") or st_class_val
+                                if "SOLID" in str(st_class_val).upper() or "POWDER" in str(st_class_val).upper() or "CYANIDE" in str(trade_val).upper():
+                                    unit_val = "KG"
+                            else:
+                                trade_val = candidate
+                            break
+
+                m_cas = re.search(r'\b(\d{2,7}-\d{2}-\d)\b', question)
+                if m_cas:
+                    cas_val = m_cas.group(1)
 
             if not trade_val:
                 trade_val = "مادة كيميائية صناعية"
@@ -1355,15 +1501,75 @@ def _detect_and_execute_uncalled_mutation(
                 chemical_name=trade_val,
                 cas_number=cas_val,
                 quantity=qty_val,
-                unit="Liters",
-                ghs_classes="Flammable Liquid",
+                unit=unit_val,
+                ghs_classes=ghs_val,
                 zone_id=9,
+                storage_class=st_class_val,
             )
             traces.append(ToolCallTrace(
                 tool_name="add_chemical",
-                query_summary=f"add_chemical ({trade_val}, CAS: {cas_val}, Qty: {qty_val} L, Zone: 9)",
+                query_summary=f"add_chemical ({trade_val}, CAS: {cas_val}, Qty: {qty_val} {unit_val}, Zone: 9)",
                 rows_returned=1 if result.get("success") else 0,
                 args={"trade_name": trade_val, "cas_number": cas_val, "quantity": qty_val, "zone_id": 9},
+                result=result,
+            ))
+            return result
+
+    # 17.7 HazMat Storage Safety Audit Fast-Path Safeguard
+    is_storage_safety = (classified_intent == "CHECK_CHEMICAL_STORAGE") or any(w in question.lower() for w in [
+        "سلامة تخزين الكيماويات", "فحص مستودع الكيماويات", "توافق التخزين الكيميائي", "مطابقة تخزين المواد الخطرة",
+        "توافق المواد الخطرة", "فصل المواد الكيميائية", "فحص أمان تخزين المواد الخطرة", "أمان تخزين الكيماويات",
+        "check chemical storage", "chemical storage safety", "chemical compatibility audit", "hazmat segregation"
+    ])
+    if is_storage_safety and not any(t.tool_name == "check_chemical_storage_safety" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "check_chemical_storage_safety")
+        if is_auth:
+            handler = HANDLERS["check_chemical_storage_safety"]
+            result = handler(db=db, zone_id=9)
+            traces.append(ToolCallTrace(
+                tool_name="check_chemical_storage_safety",
+                query_summary="check_chemical_storage_safety (Zone: 9)",
+                rows_returned=result.get("chemicals_stored_count", 0),
+                args={"zone_id": 9},
+                result=result,
+            ))
+            return result
+
+    # 17.8 HazMat MSDS Sheet Fast-Path Safeguard
+    is_msds_request = (classified_intent == "GET_MSDS") or any(w in question.lower() for w in [
+        "msds", "sds", "safety data sheet", "صحيفة بيانات السلامة", "نشرة السلامة", "ملف msds", "ورقة msds"
+    ])
+    if is_msds_request and not any(t.tool_name == "get_msds_sheet" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_msds_sheet")
+        if is_auth:
+            target_q = (chem_match_q.get("trade_name") if chem_match_q else question).strip()
+            handler = HANDLERS["get_msds_sheet"]
+            result = handler(db=db, query=target_q)
+            traces.append(ToolCallTrace(
+                tool_name="get_msds_sheet",
+                query_summary=f"get_msds_sheet ({target_q})",
+                rows_returned=1 if result.get("success") else 0,
+                args={"query": target_q},
+                result=result,
+            ))
+            return result
+
+    # 17.9 HazMat Emergency Guide Fast-Path Safeguard
+    is_emergency_guide = (classified_intent == "EMERGENCY_GUIDE") or any(w in question.lower() for w in [
+        "دليل طوارئ المواد الخطرة", "مكافحة انسكاب المواد", "إسعافات أولية للمواد الكيميائية", "طوارئ الكيماويات",
+        "إرشادات الانسكاب الكيميائي", "chemical emergency guide", "spill response guide", "first aid chemical"
+    ])
+    if is_emergency_guide and not any(t.tool_name == "get_chemical_emergency_guide" for t in traces):
+        is_auth, _ = check_tool_access(canonical_role, "get_chemical_emergency_guide")
+        if is_auth:
+            target_chem = (chem_match_q.get("trade_name") if chem_match_q else question).strip()
+            handler = HANDLERS["get_chemical_emergency_guide"]
+            result = handler(db=db, chemical_name=target_chem)
+            traces.append(ToolCallTrace(
+                tool_name="get_chemical_emergency_guide",
+                query_summary=f"get_chemical_emergency_guide ({target_chem})",
+                rows_returned=1 if result.get("success") else 0,
+                args={"chemical_name": target_chem},
                 result=result,
             ))
             return result

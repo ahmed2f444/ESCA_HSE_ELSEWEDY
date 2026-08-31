@@ -248,6 +248,14 @@ export function useVoiceAssistant({
           streamRef.current = null
         }
 
+        // Explicitly abort and clean up Web Speech recognizer to prevent ghost listening
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.abort()
+          } catch (e) {}
+          recognitionRef.current = null
+        }
+
         let transcribed = false
         if (audioBlob && audioBlob.size > 50) {
           setIsTranscribing(true)
@@ -273,6 +281,7 @@ export function useVoiceAssistant({
         }
 
         setIsListening(false)
+        setInterimTranscript('')
         if (onSpeechEnd) onSpeechEnd()
       }
 
@@ -390,12 +399,23 @@ export function useVoiceAssistant({
     }
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.stop()
+        recognitionRef.current.abort()
       } catch (e) {}
+      recognitionRef.current = null
     }
     setInterimTranscript('')
     setIsListening(false)
   }, [])
+
+  const clearInterimTranscript = useCallback(() => {
+    setInterimTranscript('')
+    if (recognitionRef.current && !isListening) {
+      try {
+        recognitionRef.current.abort()
+      } catch (e) {}
+      recognitionRef.current = null
+    }
+  }, [isListening])
 
   const toggleListening = useCallback(() => {
     if (isListening) {
@@ -414,6 +434,7 @@ export function useVoiceAssistant({
     activeSpeakingId,
     transcript,
     interimTranscript,
+    clearInterimTranscript,
     langMode,
     changeLangMode,
     availableLanguages: VOICE_LANGUAGES,

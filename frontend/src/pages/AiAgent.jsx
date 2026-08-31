@@ -277,7 +277,9 @@ export default function AiAgent() {
 
   const voice = useVoiceAssistant({
     onTranscript: (t) => {
-      setDraft((prev) => (prev ? `${prev.trim()} ${t}` : t))
+      if (t && t.trim()) {
+        setDraft(t.trim())
+      }
     },
     defaultLang: 'auto',
   })
@@ -1431,14 +1433,24 @@ export default function AiAgent() {
               {/* Dynamic Auto-Expanding Textarea */}
               <textarea
                 ref={textareaRef}
-                value={voice.interimTranscript ? (draft ? `${draft} ${voice.interimTranscript}` : voice.interimTranscript) : draft}
+                value={draft}
                 disabled={busy}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={(e) => {
+                  if (voice.isListening) {
+                    voice.stopListening()
+                  }
+                  if (voice.clearInterimTranscript) {
+                    voice.clearInterimTranscript()
+                  }
+                  setDraft(e.target.value)
+                }}
                 onKeyDown={handleKeyDown}
                 rows={1}
                 placeholder={
                   voice.isListening
-                    ? 'جارٍ الاستماع والتسجيل... اضغط زر الميكروفون مجدداً للإرسال'
+                    ? voice.interimTranscript
+                      ? `🎙️ ${voice.interimTranscript}`
+                      : 'جارٍ الاستماع والتسجيل... تحدث الآن، واضغط الميكروفون عند الانتهاء'
                     : voice.isTranscribing
                     ? 'جارٍ معالجة الصوت...'
                     : 'اسأل عن معايير السلامة، أو تحدث بالصوت… (Shift+Enter لسطر جديد)'

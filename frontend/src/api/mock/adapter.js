@@ -50,48 +50,6 @@ let dynamicAlerts = [...(db.dashboardAlerts || [
   { id: 'NTF-003', title: 'إجراء تصحيحي CAPA متأخر', body: 'إجراء تركيب حاجز حماية على ماكينة الجدل تجاوز الموعد المستهدف.', time: 'منذ ساعتين', color: 'var(--warn)', to: '/incidents', unread: true },
 ])]
 
-/* ---------------- route table ---------------- */
-/* [method, path pattern, handler(params, query, body)] */
-
-const routes = [
-  ['post', '/auth/login', (_p, _q, body) => {
-    // Usernames are case-insensitive and whitespace-tolerant: phone keyboards
-    // auto-capitalise the first letter and a trailing space survives a paste,
-    // and neither should read as a wrong password. The password itself is
-    // compared exactly, minus surrounding whitespace.
-    const username = String(body?.username ?? '').trim().toLowerCase()
-    const password = String(body?.password ?? '').trim()
-
-    const u = db.users.find((x) => x.username === username && x.password === password)
-    // One message for both cases on purpose — telling the caller which half was
-    // wrong hands an attacker a list of valid usernames.
-    if (!u) throw fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة')
-
-    // A correct password on a suspended account is still a refused login. The
-    // sheets mark both the account and its role assignment, and either one
-    // being non-active is enough to keep the holder out.
-    if (u.status !== 'ACTIVE' || (u.assignmentStatus && u.assignmentStatus !== 'ACTIVE')) {
-      throw fail(403, 'الحساب موقوف — كلّم إدارة السلامة والصحة المهنية')
-    }
-    const { password: _stored, ...safe } = u
-    // Shaped like a JWT so the console (and the Authorization header) behave the same.
-    const payload = btoa(JSON.stringify({ sub: u.username, role: u.role, exp: Date.now() + 288e5 }))
-    return { token: `mock.${payload}.sig`, user: safe }
-  }],
-  ['get', '/auth/me', () => {
-    const raw = localStorage.getItem('esca.hse.user')
-    if (!raw) throw fail(401, 'الجلسة غير صالحة')
-    return JSON.parse(raw)
-  }],
-
-  /* master data — the reference-data coverage sheet */
-  ['get', '/master-data/summary', () => ({
-    ...db.masterSummary,
-    sheets: db.sheetMeta,
-    departments: db.departments.flatMap((s) => s.zones),
-    zoneCount: db.departments.reduce((n, s) => n + s.zones.reduce((m, z) => m + z.zoneCount, 0), 0),
-  })],
-
 function evaluateCertificateExpirations() {
   const now = new Date()
   dynamicTrainingSchedule = dynamicTrainingSchedule.map((item) => {
@@ -138,6 +96,48 @@ function evaluateCertificateExpirations() {
     return item
   })
 }
+
+/* ---------------- route table ---------------- */
+/* [method, path pattern, handler(params, query, body)] */
+
+const routes = [
+  ['post', '/auth/login', (_p, _q, body) => {
+    // Usernames are case-insensitive and whitespace-tolerant: phone keyboards
+    // auto-capitalise the first letter and a trailing space survives a paste,
+    // and neither should read as a wrong password. The password itself is
+    // compared exactly, minus surrounding whitespace.
+    const username = String(body?.username ?? '').trim().toLowerCase()
+    const password = String(body?.password ?? '').trim()
+
+    const u = db.users.find((x) => x.username === username && x.password === password)
+    // One message for both cases on purpose — telling the caller which half was
+    // wrong hands an attacker a list of valid usernames.
+    if (!u) throw fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة')
+
+    // A correct password on a suspended account is still a refused login. The
+    // sheets mark both the account and its role assignment, and either one
+    // being non-active is enough to keep the holder out.
+    if (u.status !== 'ACTIVE' || (u.assignmentStatus && u.assignmentStatus !== 'ACTIVE')) {
+      throw fail(403, 'الحساب موقوف — كلّم إدارة السلامة والصحة المهنية')
+    }
+    const { password: _stored, ...safe } = u
+    // Shaped like a JWT so the console (and the Authorization header) behave the same.
+    const payload = btoa(JSON.stringify({ sub: u.username, role: u.role, exp: Date.now() + 288e5 }))
+    return { token: `mock.${payload}.sig`, user: safe }
+  }],
+  ['get', '/auth/me', () => {
+    const raw = localStorage.getItem('esca.hse.user')
+    if (!raw) throw fail(401, 'الجلسة غير صالحة')
+    return JSON.parse(raw)
+  }],
+
+  /* master data — the reference-data coverage sheet */
+  ['get', '/master-data/summary', () => ({
+    ...db.masterSummary,
+    sheets: db.sheetMeta,
+    departments: db.departments.flatMap((s) => s.zones),
+    zoneCount: db.departments.reduce((n, s) => n + s.zones.reduce((m, z) => m + z.zoneCount, 0), 0),
+  })],
 
   /* dashboard & notifications */
   ['get', '/dashboard/summary', () => db.dashboardSummary],
@@ -292,6 +292,16 @@ function evaluateCertificateExpirations() {
     }
     dynamicPermits = [item, ...dynamicPermits]
     return item
+  }],
+  ['put', '/permits/:id', (p, _q, body) => {
+    let updated = null
+    dynamicPermits = dynamicPermits.map((item) => {
+      if (item.id !== p.id) return item
+      updated = { ...item, ...body, id: item.id }
+      return updated
+    })
+    if (!updated) throw fail(404, `لا يوجد تصريح بالرقم ${p.id}`)
+    return updated
   }],
   ['post', '/permits/:id/suspend', (p) => {
     dynamicPermits = dynamicPermits.map((x) => (x.id === p.id ? { ...x, rawStatus: 'SUSPENDED', status: 'موقوف', statusTone: 'cr' } : x))

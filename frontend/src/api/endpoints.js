@@ -302,12 +302,36 @@ export const training = {
 }
 
 export const hazmat = {
-  list: (params) => get('/hazmat/chemicals', params),
-  byId: (id) => get(`/hazmat/chemicals/${id}`),
-  create: (body) => post('/hazmat/chemicals', body),
-  update: (id, body) => api.put(`/hazmat/chemicals/${id}`, body).then((r) => r.data),
-  delete: (id) => api.delete(`/hazmat/chemicals/${id}`).then((r) => r.data),
-  stats: () => get('/hazmat/stats'),
+  list: (params) =>
+    agent
+      .get('/api/v1/hazmat/chemicals', { params })
+      .then((r) => r.data)
+      .catch(() => get('/hazmat/chemicals', params)),
+  byId: (id) =>
+    agent
+      .get(`/api/v1/hazmat/chemicals/${id}`)
+      .then((r) => r.data)
+      .catch(() => get(`/hazmat/chemicals/${id}`)),
+  create: (body) =>
+    agent
+      .post('/api/v1/hazmat/chemicals', body)
+      .then((r) => r.data)
+      .catch(() => post('/hazmat/chemicals', body)),
+  update: (id, body) =>
+    agent
+      .put(`/api/v1/hazmat/chemicals/${id}`, body)
+      .then((r) => r.data)
+      .catch(() => api.put(`/hazmat/chemicals/${id}`, body).then((r) => r.data)),
+  delete: (id) =>
+    agent
+      .delete(`/api/v1/hazmat/chemicals/${id}`)
+      .then((r) => r.data)
+      .catch(() => api.delete(`/hazmat/chemicals/${id}`).then((r) => r.data)),
+  stats: () =>
+    agent
+      .get('/api/v1/hazmat/stats')
+      .then((r) => r.data)
+      .catch(() => get('/hazmat/stats')),
   compatibility: () => get('/hazmat/compatibility'),
   sdsList: (params) => get('/hazmat/sds', params),
   createSds: (body) => post('/hazmat/sds', body),

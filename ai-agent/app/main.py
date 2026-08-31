@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import engine, get_db
-from app.routers import chat
+from app.routers import chat, hazmat
 from app.security import (
     SecurityHeadersMiddleware,
     RequestSizeLimitMiddleware,
@@ -107,6 +107,7 @@ app.add_middleware(
 
 # Include Chat & Agent Routes
 app.include_router(chat.router)
+app.include_router(hazmat.router)
 
 
 @app.get("/health", tags=["Health"])

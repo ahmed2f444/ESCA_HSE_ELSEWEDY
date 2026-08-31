@@ -26,6 +26,7 @@ const Integrations = lazy(() => import('./pages/Integrations.jsx'))
 const Security = lazy(() => import('./pages/Security.jsx'))
 const Architecture = lazy(() => import('./pages/Architecture.jsx'))
 const Reports = lazy(() => import('./pages/Reports.jsx'))
+const Profile = lazy(() => import('./pages/Profile.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 
 function PageFallback() {
@@ -56,6 +57,14 @@ export default function App() {
           </RequireAuth>
         }
       >
+        <Route
+          path="profile"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <Profile />
+            </Suspense>
+          }
+        />
         <Route index element={<Dashboard />} />
         <Route
           path="master-data"

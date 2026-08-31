@@ -177,7 +177,7 @@ const PROBABILITY = ['نادر 1', 'ضعيف 2', 'ممكن 3', 'مرجح 4', 'ش
  * filters the register below it.
  */
 export function RiskMatrix({ hazards = [], selected, onSelect }) {
-  const count = (p, s) => hazards.filter((h) => h.probability === p && h.severity === s).length
+  const count = (p, s) => (Array.isArray(hazards) ? hazards : []).filter((h) => Number(h.probability) === p && Number(h.severity) === s).length
 
   return (
     <div className="overflow-x-auto">

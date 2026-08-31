@@ -31,14 +31,19 @@ const ACTION_TONE = (a) =>
 export default function Security() {
   const [q, setQ] = useState('')
   const [term, setTerm] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const log = useApi(() => secApi.auditLog({ q: term }), [term])
-  const roles = useApi(() => secApi.roles(), [])
-  const sessions = useApi(() => secApi.sessions(), [])
+  const log = useApi(() => secApi.auditLog({ q: term }), [term, reloadKey])
+  const roles = useApi(() => secApi.roles(), [reloadKey])
+  const sessions = useApi(() => secApi.sessions(), [reloadKey])
 
   return (
     <>
-      <PageHeader title="الأمن وسجل التدقيق" meta="rbac · append-only audit trail" />
+      <PageHeader title="الأمن وسجل التدقيق" meta="rbac · append-only audit trail">
+        <Btn size="sm" icon="refresh" onClick={() => setReloadKey((k) => k + 1)}>
+          تحديث السجل
+        </Btn>
+      </PageHeader>
 
       <Grid cols={2} className="mb-3.5">
         <Card>

@@ -5,6 +5,9 @@ Tests handlers, definitions, RBAC, NLP parser, and database transactions against
 import sys
 import os
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Set working path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -160,9 +163,13 @@ def test_all_15_modules_crud(db):
     jsa_up = HANDLERS["update_jsa"](db=db, jsa_id=created_ids["jsa_id"], status="APPROVED")
     print(f"update_jsa: {jsa_up}")
 
+    import time
+    import uuid
+    uid = uuid.uuid4().hex[:6].upper()
+
     # ── Module 9: Training & Certificates
     print("\n--- 9. Training & Competency ---")
-    course_res = HANDLERS["create_training_course"](db=db, name_ar="دورة السلامة الكيميائية المتقدمة", name_en="Advanced Chemical Safety", validity_months=24)
+    course_res = HANDLERS["create_training_course"](db=db, name_ar=f"دورة السلامة المتقدمة QA {uid}", name_en=f"Advanced Safety QA {uid}", validity_months=24)
     print(f"create_training_course: {course_res}")
     assert course_res.get("success") is True
     created_ids["course_id"] = course_res["course_id"]
@@ -177,7 +184,7 @@ def test_all_15_modules_crud(db):
 
     # ── Module 10: PPE Management
     print("\n--- 10. PPE Management ---")
-    ppe_res = HANDLERS["add_ppe_item"](db=db, item_code="GLV-CHEM-QA", name_ar="قفازات مقاومة للمواد الكيميائية", category="HAND", balance_qty=100.0)
+    ppe_res = HANDLERS["add_ppe_item"](db=db, item_code=f"GLV-QA-{uid}", name_ar=f"قفازات كيميائية QA {uid}", category="HAND", balance_qty=100.0)
     print(f"add_ppe_item: {ppe_res}")
     assert ppe_res.get("success") is True
     created_ids["ppe_item_id"] = ppe_res["ppe_item_id"]
@@ -197,14 +204,14 @@ def test_all_15_modules_crud(db):
     print(f"log_fire_inspection: {fire_insp}")
     assert fire_insp.get("success") is True
 
-    fixed_res = HANDLERS["add_fixed_safety_asset"](db=db, asset_name="QA Emergency Eyewash Station 5", asset_type="EYEWASH", total_qty=1, operational_qty=1)
+    fixed_res = HANDLERS["add_fixed_safety_asset"](db=db, asset_name=f"QA Eyewash {uid}", asset_type="EYEWASH", total_qty=1, operational_qty=1)
     print(f"add_fixed_safety_asset: {fixed_res}")
     assert fixed_res.get("success") is True
     created_ids["asset_summary_id"] = fixed_res["asset_summary_id"]
 
     # ── Module 12: HazMat & Chemicals
     print("\n--- 12. HazMat & Chemicals ---")
-    chem_res = HANDLERS["add_chemical"](db=db, trade_name="QA Isopropyl Alcohol 99%", chemical_name="أيزوبروبانول عالي النقاء", cas_number="67-63-0", quantity=200.0, zone_id=4)
+    chem_res = HANDLERS["add_chemical"](db=db, trade_name=f"QA Isopropyl {uid}", chemical_name=f"أيزوبروبانول {uid}", cas_number="67-63-0", quantity=200.0, zone_id=4)
     print(f"add_chemical: {chem_res}")
     assert chem_res.get("success") is True
     created_ids["chemical_id"] = chem_res["chemical_id"]

@@ -4,6 +4,8 @@ import Icon from './Icon.jsx'
 import MarkdownRenderer from './MarkdownRenderer.jsx'
 import { assistant } from '../api/endpoints.js'
 import { useAuth } from '../hooks.jsx'
+import { useVoiceAssistant } from '../useVoiceAssistant.js'
+import VoiceSoundWave from './VoiceSoundWave.jsx'
 
 /**
  * Floating AI Safety Assistant Dock with modern glassmorphic aesthetics and model switching.
@@ -24,6 +26,13 @@ export default function AgentDock() {
   const [busy, setBusy] = useState(false)
   const bodyRef = useRef(null)
   const textareaRef = useRef(null)
+
+  const voice = useVoiceAssistant({
+    onTranscript: (t) => {
+      setDraft(t)
+    },
+    defaultLang: 'ar-EG',
+  })
 
   useEffect(() => {
     if (!open || suggestions.length) return
@@ -97,7 +106,23 @@ export default function AgentDock() {
         role: m.role,
         text: m.text,
       }))
-      const res = await assistant.ask(q, historyContext, modelMode)
+      const activeUserRole =
+        user?.role ||
+        user?.role_name ||
+        (user?.username === 'mostafa'
+          ? 'HSE_MANAGER'
+          : user?.username === 'admin'
+          ? 'ADMIN'
+          : user?.username === 'department.manager' || user?.username === 'esca.user03'
+          ? 'PRODUCTION_SUPERVISOR'
+          : 'WORKER')
+      const res = await assistant.ask(
+        q, 
+        historyContext, 
+        modelMode, 
+        activeUserRole, 
+        user?.username || user?.employeeId || 'USR-DEV'
+      )
       
       const cleanText = (res.answer || '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
@@ -392,6 +417,249 @@ export default function AgentDock() {
         window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
       }
 
+      // Check if Electronic Permit to Work (ePTW) / SIMOPS action was executed
+      const permitCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_permit' ||
+          t.name === 'create_permit' ||
+          t.tool_name === 'update_permit_status' ||
+          t.name === 'update_permit_status' ||
+          t.tool_name === 'update_permit' ||
+          t.name === 'update_permit' ||
+          t.tool_name === 'delete_permit' ||
+          t.name === 'delete_permit' ||
+          t.tool_name === 'close_all_permits' ||
+          t.name === 'close_all_permits' ||
+          t.tool_name === 'delete_all_permits' ||
+          t.name === 'delete_all_permits' ||
+          t.tool_name === 'check_simops_conflicts' ||
+          t.name === 'check_simops_conflicts'
+      )
+      if (permitCall) {
+        const tName = permitCall.tool_name || permitCall.name || ''
+        const result = permitCall.result || permitCall.output || {}
+        const args = permitCall.args || permitCall.arguments || {}
+        const isDelete = tName.includes('delete')
+        const isSimops = tName.includes('simops')
+        const pCode = result.permit_code || `PTW-${result.permit_id || args.permit_id || ''}`
+
+        const notifObj = {
+          id: 'NTF-PTW-' + (result.permit_id || Date.now()),
+          notificationId: result.permit_id || Date.now(),
+          title: isSimops
+            ? `فحص تعارضات العمليات المتزامنة SIMOPS (${result.conflicts_count || 0} تعارض)`
+            : isDelete
+            ? `حذف / إلغاء تصريح العمل (${pCode})`
+            : `تصريح عمل إلكتروني ePTW: ${pCode}`,
+          body: result.message || 'تم تحديث سجل تصاريح العمل الإلكترونية ePTW وإدارة المخاطر بنجاح.',
+          time: 'الآن (مباشر)',
+          color: isDelete ? 'var(--crit)' : isSimops ? 'var(--warn)' : 'var(--safe)',
+          type: 'PERMIT',
+          to: '/permits',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if Risk Assessment (HIRA) action was executed
+      const riskCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_risk_assessment' ||
+          t.name === 'create_risk_assessment' ||
+          t.tool_name === 'update_risk_assessment' ||
+          t.name === 'update_risk_assessment'
+      )
+      if (riskCall) {
+        const result = riskCall.result || riskCall.output || {}
+        const args = riskCall.args || riskCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-RISK-' + (result.risk_id || Date.now()),
+          notificationId: result.risk_id || Date.now(),
+          title: `تقييم المخاطر الميدانية (HIRA #${result.risk_id || ''})`,
+          body: result.message || `تم تسجيل تقييم الخطر (${result.hazard || args.hazard || 'مخاطر تشغيلية'}) وتحديث مصفوفة المخاطر.`,
+          time: 'الآن (مباشر)',
+          color: result.risk_level === 'HIGH' || result.risk_level === 'CRITICAL' ? 'var(--crit)' : 'var(--warn)',
+          type: 'RISK_ASSESSMENT',
+          to: '/risk',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if Job Safety Analysis (JSA) action was executed
+      const jsaCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_jsa' ||
+          t.name === 'create_jsa' ||
+          t.tool_name === 'update_jsa' ||
+          t.name === 'update_jsa'
+      )
+      if (jsaCall) {
+        const result = jsaCall.result || jsaCall.output || {}
+        const args = jsaCall.args || jsaCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-JSA-' + (result.jsa_id || Date.now()),
+          notificationId: result.jsa_id || Date.now(),
+          title: `تحليل سلامة المهام (JSA #${result.jsa_id || ''})`,
+          body: result.message || `تم اعتماد وثيقة تحليل سلامة المهمة (${result.task_name || args.task_name || 'مهمة عمل'}) بنجاح.`,
+          time: 'الآن (مباشر)',
+          color: 'var(--safe)',
+          type: 'JSA',
+          to: '/jsa',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if HazMat / Chemicals action was executed
+      const hazmatCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'add_chemical' ||
+          t.name === 'add_chemical' ||
+          t.tool_name === 'update_chemical' ||
+          t.name === 'update_chemical' ||
+          t.tool_name === 'update_chemical_stock' ||
+          t.name === 'update_chemical_stock'
+      )
+      if (hazmatCall) {
+        const result = hazmatCall.result || hazmatCall.output || {}
+        const args = hazmatCall.args || hazmatCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-HAZ-' + (result.chemical_id || Date.now()),
+          notificationId: result.chemical_id || Date.now(),
+          title: `سجل المواد الكيميائية والخطرة: ${result.trade_name || args.trade_name || 'مادة كيميائية'}`,
+          body: result.message || 'تم تحديث بيانات صحيفة السلامة (MSDS) والتوافق الكيميائي للمادة بنجاح.',
+          time: 'الآن (مباشر)',
+          color: 'var(--warn)',
+          type: 'HAZMAT',
+          to: '/hazmat',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if Occupational Health / Medical Exam action was executed
+      const healthCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'record_medical_exam' ||
+          t.name === 'record_medical_exam' ||
+          t.tool_name === 'schedule_medical_exam' ||
+          t.name === 'schedule_medical_exam' ||
+          t.tool_name === 'update_medical_exam' ||
+          t.name === 'update_medical_exam'
+      )
+      if (healthCall) {
+        const result = healthCall.result || healthCall.output || {}
+        const args = healthCall.args || healthCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-HLT-' + (result.exam_id || Date.now()),
+          notificationId: result.exam_id || Date.now(),
+          title: `الصحة المهنية والفحص الطبي: ${result.employee_name || args.employee_name || 'موظف'}`,
+          body: result.message || 'تم توثيق نتيجة الفحص الطبي وتحديث سجل الكفاءة والملائمة الصحية.',
+          time: 'الآن (مباشر)',
+          color: result.fitness_result === 'UNFIT' ? 'var(--crit)' : 'var(--safe)',
+          type: 'OCCUPATIONAL_HEALTH',
+          to: '/occupational-health',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if AI Vision & IoT Monitoring action was executed
+      const iotCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'add_iot_sensor' ||
+          t.name === 'add_iot_sensor' ||
+          t.tool_name === 'update_iot_sensor' ||
+          t.name === 'update_iot_sensor' ||
+          t.tool_name === 'log_ai_event' ||
+          t.name === 'log_ai_event'
+      )
+      if (iotCall) {
+        const result = iotCall.result || iotCall.output || {}
+        const args = iotCall.args || iotCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-IOT-' + (result.sensor_id || result.event_id || Date.now()),
+          notificationId: result.sensor_id || result.event_id || Date.now(),
+          title: `المراقبة الآلية والحساسات البيئية (${result.sensor_tag || args.sensor_tag || 'حساس ذكي'})`,
+          body: result.message || 'تم تسجيل بيانات الحساس الذكي وتحديث منظومة المراقبة الآلية الحية.',
+          time: 'الآن (مباشر)',
+          color: 'var(--info)',
+          type: 'IOT_MONITORING',
+          to: '/ai-iot',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if CAPA action was executed
+      const capaCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_capa' ||
+          t.name === 'create_capa' ||
+          t.tool_name === 'update_capa_status' ||
+          t.name === 'update_capa_status'
+      )
+      if (capaCall) {
+        const result = capaCall.result || capaCall.output || {}
+        const args = capaCall.args || capaCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-CAPA-' + (result.capa_id || Date.now()),
+          notificationId: result.capa_id || Date.now(),
+          title: `إجراء تصحيحي ووقائي (CAPA #${result.capa_id || ''})`,
+          body: result.message || `تم تحديث خطة الإجراءات التصحيحية (${result.title || args.title || 'إجراء سلامة'}).`,
+          time: 'الآن (مباشر)',
+          color: 'var(--warn)',
+          type: 'CAPA',
+          to: '/reports',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
+      // Check if Master Data / Employee / Superuser action was executed
+      const masterCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_employee' ||
+          t.name === 'create_employee' ||
+          t.tool_name === 'update_employee' ||
+          t.name === 'update_employee' ||
+          t.tool_name === 'delete_record' ||
+          t.name === 'delete_record' ||
+          t.tool_name === 'cancel_entity' ||
+          t.name === 'cancel_entity' ||
+          t.tool_name === 'execute_database_dml' ||
+          t.name === 'execute_database_dml'
+      )
+      if (masterCall) {
+        const tName = masterCall.tool_name || masterCall.name || ''
+        const result = masterCall.result || masterCall.output || {}
+        const args = masterCall.args || masterCall.arguments || {}
+        const isDelete = tName.includes('delete') || tName.includes('cancel')
+        const notifObj = {
+          id: 'NTF-ADM-' + Date.now(),
+          notificationId: Date.now(),
+          title: isDelete
+            ? `إجراء إداري: حذف / إلغاء سجل (${args.table_name || args.entity_type || 'قاعدة البيانات'})`
+            : `البيانات المرجعية والموظفين: ${result.display_name || args.display_name || 'تحديث البيانات'}`,
+          body: result.message || 'تم تحديث البيانات المركزية وقيد العملية في سجل التدقيق غير القابل للتعديل.',
+          time: 'الآن (مباشر)',
+          color: isDelete ? 'var(--crit)' : 'var(--safe)',
+          type: 'MASTER_DATA',
+          to: '/departments',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+      }
+
       setMessages((m) => [
         ...m,
         {
@@ -473,6 +741,16 @@ export default function AgentDock() {
             </div>
 
             <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={voice.toggleAutoSpeak}
+                title={voice.autoSpeak ? 'القراءة الصوتية التلقائية مفعلة (انقر للتعطيل)' : 'تفعيل القراءة الصوتية التلقائية'}
+                className={`p-1.5 rounded-md transition-colors flex items-center gap-1 ${
+                  voice.autoSpeak ? 'bg-safe/15 text-safe border border-safe/30' : 'text-txt-3 hover:text-txt hover:bg-steel-3'
+                }`}
+              >
+                <Icon name={voice.autoSpeak ? 'volume' : 'volume-off'} size={15} />
+              </button>
               <Link
                 to="/ai-agent"
                 onClick={() => setOpen(false)}
@@ -551,6 +829,23 @@ export default function AgentDock() {
                   )}
                   <span>·</span>
                   <span>{m.timestamp}</span>
+
+                  {m.role === 'agent' && !m.error && (
+                    <button
+                      type="button"
+                      onClick={() => voice.speak(m.text, m.id || i)}
+                      title={voice.activeSpeakingId === (m.id || i) && voice.isSpeaking ? 'إيقاف الصوت' : 'استمع للإجابة'}
+                      className="ms-1 p-0.5 rounded text-txt-3 hover:text-hi transition-colors flex items-center gap-1"
+                    >
+                      <Icon
+                        name={voice.activeSpeakingId === (m.id || i) && voice.isSpeaking ? 'stop' : 'volume'}
+                        size={12}
+                      />
+                      {voice.activeSpeakingId === (m.id || i) && voice.isSpeaking && (
+                        <VoiceSoundWave isSpeaking={true} size="sm" />
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div
@@ -606,15 +901,41 @@ export default function AgentDock() {
             </div>
           )}
 
-          {/* Input Footer with Auto-Expanding Textarea */}
+          {/* Live Voice Listening Banner */}
+          {voice.isListening && (
+            <div className="px-3.5 py-1.5 bg-crit/10 border-t border-crit/30 flex items-center justify-between text-xs text-crit animate-pulse">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-crit animate-ping" />
+                <span className="font-semibold text-[11.5px]">جارٍ الاستماع لصوتك...</span>
+                <VoiceSoundWave isListening={true} size="sm" />
+              </div>
+              <span className="text-[10px] text-txt-3 font-mono">تحدث الآن بالعربية أو الإنجليزية</span>
+            </div>
+          )}
+
+          {/* Input Footer with Auto-Expanding Textarea & Voice Mic */}
           <div className="border-t border-line p-3 bg-steel-3/80">
-            <div className="flex items-end gap-2 bg-steel-2 border border-line focus-within:border-hi/70 rounded-xl p-1.5 transition-all">
+            <div className="flex items-end gap-1.5 bg-steel-2 border border-line focus-within:border-hi/70 rounded-xl p-1.5 transition-all">
+              <button
+                type="button"
+                onClick={voice.toggleListening}
+                title={voice.isListening ? 'إيقاف التسجيل الصوتي' : 'تحدث بالصوت (Voice Assistant)'}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+                  voice.isListening
+                    ? 'mic-btn-active text-white'
+                    : 'bg-steel-3 text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
+                }`}
+                aria-label="تسجيل صوتي"
+              >
+                <Icon name="mic" size={15} />
+              </button>
+
               <textarea
                 ref={textareaRef}
                 className="flex-1 bg-transparent text-xs text-txt placeholder:text-txt-3 focus:outline-none resize-none px-2 py-1 leading-relaxed max-h-[120px]"
                 style={{ minHeight: '38px' }}
-                placeholder="اكتب سؤالك للوكيل الذكي… (Shift+Enter لسطر جديد)"
-                value={draft}
+                placeholder={voice.isListening ? 'جارٍ الاستماع والتفريغ الصوتي…' : 'اكتب سؤالك أو استخدم الميكروفون… (Shift+Enter لسطر جديد)'}
+                value={voice.interimTranscript ? (draft ? `${draft} ${voice.interimTranscript}` : voice.interimTranscript) : draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={busy}

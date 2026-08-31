@@ -28,13 +28,7 @@ public class WorkflowController {
         return service.transition("incidents", id, "CLOSED", body);
     }
 
-    @PatchMapping("/jsa/{id}/approve")
-    public Map<String, Object> approveJsa(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {
-        if (SecurityUtils.isAuthenticated()) {
-            SecurityUtils.requireAnyRole("HSE_MANAGER", "HSE_OFFICER", "SYSTEM_ADMINISTRATOR");
-        }
-        return service.transition("jsa", id, "APPROVED", body);
-    }
+    // JSA lifecycle transitions are handled by JsaController.java
 
     @PatchMapping("/inspections/{id}/complete")
     public Map<String, Object> completeInspection(@PathVariable String id, @RequestBody(required = false) Map<String, Object> body) {

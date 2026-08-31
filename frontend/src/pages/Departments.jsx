@@ -11,7 +11,31 @@ import tc, { toneColors } from '../themeColors.js'
 export default function Departments() {
   const toast = useToast()
   const [zone, setZone] = useState(null)
+  const [showAdd, setShowAdd] = useState(false)
+  const [form, setForm] = useState({ name_ar: '', name_en: '', department_id: '', max_occupancy: 0 })
   const sectors = useApi(() => deptApi.list(), [])
+  const rawDepartments = useApi(() => deptApi.rawList(), [])
+
+  const handleAddZone = async (e) => {
+    e.preventDefault()
+    try {
+      await deptApi.createZone({
+        name_ar: form.name_ar,
+        name_en: form.name_en,
+        department_id: Number(form.department_id),
+        max_occupancy: Number(form.max_occupancy) || 0,
+        active_flag: true,
+        zone_type: 'GENERAL',
+        risk_class_id: 1,
+      })
+      toast('تمت إضافة المنطقة بنجاح', 'ok')
+      setShowAdd(false)
+      setForm({ name_ar: '', name_en: '', department_id: '', max_occupancy: 0 })
+      sectors.reload()
+    } catch (err) {
+      toast(err.message || 'حدث خطأ أثناء الإضافة', 'cr')
+    }
+  }
 
   return (
     <>
@@ -19,7 +43,7 @@ export default function Departments() {
         <Btn icon="pin" onClick={() => toast('خريطة المصنع التفاعلية ضمن نطاق المرحلة القادمة', 'in')}>
           خريطة المصنع
         </Btn>
-        <Btn variant="pri" icon="plus" onClick={() => toast('إضافة منطقة تتم من خدمة Departments', 'in')}>
+        <Btn variant="pri" icon="plus" onClick={() => setShowAdd(true)}>
           إضافة منطقة
         </Btn>
       </PageHeader>
@@ -98,6 +122,61 @@ export default function Departments() {
             </div>
             <p className="text-xs text-txt-2 leading-8">{zone.hazard}</p>
           </div>
+        </Modal>
+      )}
+      {showAdd && (
+        <Modal open onClose={() => setShowAdd(false)} title="إضافة منطقة جديدة" width={520}>
+          <form onSubmit={handleAddZone}>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs text-txt-3 block mb-1">اسم المنطقة (العربية)</label>
+                <input
+                  required
+                  className="w-full bg-steel-3 border border-line rounded-md px-3 py-2 outline-none focus:border-hi text-sm"
+                  value={form.name_ar}
+                  onChange={(e) => setForm({ ...form, name_ar: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-txt-3 block mb-1">اسم المنطقة (English)</label>
+                <input
+                  required
+                  className="w-full bg-steel-3 border border-line rounded-md px-3 py-2 outline-none focus:border-hi text-sm"
+                  value={form.name_en}
+                  onChange={(e) => setForm({ ...form, name_en: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-txt-3 block mb-1">القسم / القطاع</label>
+                <select
+                  required
+                  className="w-full bg-steel-3 border border-line rounded-md px-3 py-2 outline-none focus:border-hi text-sm"
+                  value={form.department_id}
+                  onChange={(e) => setForm({ ...form, department_id: e.target.value })}
+                >
+                  <option value="">-- اختر القسم --</option>
+                  {rawDepartments.data?.map(dept => (
+                    <option key={dept.department_id} value={dept.department_id}>{dept.name_ar}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-txt-3 block mb-1">عدد العاملين (Max Occupancy)</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  className="w-full bg-steel-3 border border-line rounded-md px-3 py-2 outline-none focus:border-hi text-sm"
+                  value={form.max_occupancy}
+                  onChange={(e) => setForm({ ...form, max_occupancy: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="pt-3 border-t border-line mt-1 flex justify-end gap-2">
+                <Btn variant="txt" type="button" onClick={() => setShowAdd(false)}>إلغاء</Btn>
+                <Btn variant="pri" type="submit">إضافة</Btn>
+              </div>
+            </div>
+          </form>
         </Modal>
       )}
     </>

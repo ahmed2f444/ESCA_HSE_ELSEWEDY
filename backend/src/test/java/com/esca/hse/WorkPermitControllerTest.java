@@ -80,6 +80,13 @@ class WorkPermitControllerTest {
                 .andExpect(jsonPath("$.permit.permitId").value(permitId))
                 .andExpect(jsonPath("$.permit.status").value("ACTIVE"));
 
+        // 2b. GET APPROVALS WORKFLOW & DIGITAL SIGNATURES
+        mvc.perform(get("/api/v1/permits/" + permitId + "/approvals"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.steps", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(jsonPath("$.signature.hash").exists());
+
         // 3. UPDATE
         String updatePayload = """
                 {

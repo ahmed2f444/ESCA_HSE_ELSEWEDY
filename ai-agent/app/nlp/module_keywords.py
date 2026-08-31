@@ -136,11 +136,48 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
         "الاقسام", "الأقسام", "قائمة الاقسام", "قطاعات المصنع", "هيكل المصنع", "مدراء الاقسام", "عرض الاقسام",
         "اقسام", "عنابر", "العنابر", "مناطق", "المناطق", "مصنع", "اقسام المصنع", "هيكل الشركة", "قطاعات الإنتاج"
     ],
+    "GET_DEPARTMENT_DETAILS": [
+        "department details", "department profile", "department zones", "department manager",
+        "تفاصيل القسم", "بيانات القسم", "معلومات القسم", "مدير القسم", "عنابر القسم"
+    ],
+    "GET_DEPARTMENT_ZONES_SUMMARY": [
+        "department zones summary", "zones by department", "zones per department", "sectors zones breakdown",
+        "ملخص المناطق لكل قسم", "ملخص المناطق", "توزيع المناطق على الاقسام", "سعة الأقسام والمناطق"
+    ],
+    "CREATE_DEPARTMENT": [
+        "create department", "add department", "new department", "register sector",
+        "اضافة قسم", "إضافة قسم جديد", "انشاء قطاع", "تسجيل قسم جديد"
+    ],
+    "UPDATE_DEPARTMENT": [
+        "update department", "modify department", "edit department",
+        "تعديل قسم", "تحديث بيانات القسم", "تغيير اسم القسم"
+    ],
+    "DELETE_DEPARTMENT": [
+        "delete department", "remove department",
+        "حذف قسم", "مسح قسم"
+    ],
     "LIST_ZONES": [
         "plant zones", "list zones", "all zones", "work zones", "show zones", "production areas",
         "cable plant lines", "substations", "chemical stores", "drum yard", "copper drawing line",
         "المناطق", "العنابر", "قائمة المناطق", "عنابر الانتاج", "مناطق العمل", "مناطق المصنع", "عرض المناطق",
         "عنبر", "منطقة", "خطوط الانتاج", "عنابر الكابلات", "ساحة الطبول", "محطة الكهرباء", "المستودع الرئيسي"
+    ],
+    "GET_ZONE_DETAILS": [
+        "zone details", "zone profile", "zone capacity", "fire equipment in zone",
+        "تفاصيل المنطقة", "بيانات العنبر", "معلومات المنطقة", "سعة المنطقة", "معدات الحريق في المنطقة"
+    ],
+    "CREATE_ZONE": [
+        "create zone", "add zone", "new zone", "register zone", "add production zone", "create area", "new area",
+        "إضافة منطقة", "اضافة منطقة", "إنشاء منطقة", "انشاء منطقة", "منطقة جديدة", "أضف منطقة", "اضف منطقة",
+        "تسجيل منطقة", "عنبر جديد", "أضف عنبر", "اضف عنبر", "إضافة عنبر", "اضافة عنبر", "انشاء عنبر جديد"
+    ],
+    "UPDATE_ZONE": [
+        "update zone", "modify zone", "edit zone", "change zone occupancy", "rename zone",
+        "تعديل منطقة", "تحديث المنطقة", "تعديل سعة المنطقة", "تغيير اسم المنطقة", "تحديث بيانات المنطقة"
+    ],
+    "DELETE_ZONE": [
+        "delete zone", "remove zone", "deactivate zone",
+        "حذف منطقة", "إلغاء منطقة", "الغاء منطقة", "مسح منطقة", "امسح منطقة", "حذف عنبر"
     ],
     "LIST_EMPLOYEES": [
         "list employees", "all employees", "all workers", "staff list", "personnel list", "worker directory",
@@ -489,12 +526,28 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
         "تقييم مخاطر", "تحليل سلامة العمل", "تسجيل خطر", "خطر جديد", "اضافة خطر", "تحديد المخاطر", "تقييم مخاطر جديد", "انشاء تقييم خطر"
     ],
     "LIST_RISK": [
-        "list risks", "show risk register", "risk matrix", "high risks", "risks list", "hazards", "extreme risks", "risk register",
-        "قائمة المخاطر", "سجل تقييم المخاطر", "سجل المخاطر العام", "سجل المخاطر", "مصفوفة المخاطر", "مصفوفة الخطر", "المخاطر العالية", "سجل الخطر", "المخاطر الحرجة", "عرض المخاطر"
+        "list risks", "show risk register", "risk matrix", "high risks", "risks list", "hazards", "extreme risks", "risk register", "all hazards",
+        "قائمة المخاطر", "سجل تقييم المخاطر", "سجل المخاطر العام", "سجل المخاطر", "مصفوفة المخاطر", "مصفوفة الخطر", "المخاطر العالية", "سجل الخطر", "المخاطر الحرجة", "عرض المخاطر", "سجل hira", "سجل مخاطر"
+    ],
+    "GET_HIGH_RISK_HAZARDS": [
+        "high risk hazards", "critical risks", "top risks", "most dangerous hazards", "severe risks",
+        "أخطر المخاطر", "المخاطر الشديدة", "المخاطر الحرجة", "اعلى المخاطر", "أعلى المخاطر المسجلة"
+    ],
+    "CALCULATE_RESIDUAL_RISK": [
+        "calculate residual risk", "risk reduction", "hierarchy of controls calculation",
+        "حساب الخطر المتبقي", "نسبة تقليل الخطر", "حساب اثر التحكم"
+    ],
+    "GET_RISK_DETAILS": [
+        "risk details", "hazard profile", "risk assessment details",
+        "تفاصيل الخطر", "بيانات تقييم الخطر", "معلومات الخطر"
     ],
     "UPDATE_RISK": [
         "update risk", "modify risk controls", "residual risk", "re-assess hazard",
         "تحديث تقييم المخاطر", "تعديل التحكم", "الخطر المتبقي", "إعادة تقييم الخطر"
+    ],
+    "DELETE_RISK": [
+        "delete risk", "remove hazard", "purge risk",
+        "حذف خطر", "مسح الخطر من السجل", "إلغاء الخطر"
     ],
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -507,12 +560,28 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
         "تحليل سلامة المهام", "تحليل مخاطر العمل", "انشاء تحليل مهام", "انشئ تحليل", "بيان طريقة العمل الآمنة"
     ],
     "LIST_JSAS": [
-        "list jsa", "show jsas", "jsa catalog", "task analysis", "jsas list", "approved jsas", "jsa list", "list jsas",
-        "قائمة jsa", "سجل تحليل المهام", "نماذج jsa", "تحليلات السلامة", "سجل jsa", "وثائق تحليل سلامة المهام", "قائمة نماذج تحليل سلامة المهام", "قائمة نماذج jsa"
+        "list jsa", "show jsas", "jsa catalog", "task analysis", "jsas list", "approved jsas", "jsa list", "list jsas", "all jsas",
+        "قائمة jsa", "سجل تحليل المهام", "نماذج jsa", "تحليلات السلامة", "سجل jsa", "وثائق تحليل سلامة المهام", "قائمة نماذج تحليل سلامة المهام", "قائمة نماذج jsa", "تحاليل سلامة المهام", "تحاليل المهام"
+    ],
+    "GET_JSA_DETAILS": [
+        "jsa details", "jsa steps", "task steps breakdown", "jsa hazard steps",
+        "تفاصيل jsa", "خطوات المهمة", "خطوات تحليل سلامة المهام", "بيانات jsa"
+    ],
+    "MANAGE_JSA_STEPS": [
+        "add jsa step", "update jsa step", "delete jsa step", "jsa steps",
+        "اضافة خطوة jsa", "تعديل خطوة في jsa", "حذف خطوة من jsa"
+    ],
+    "LINK_JSA_PERMIT": [
+        "link jsa permit", "link permit to jsa", "unlink jsa permit",
+        "ربط jsa بتصريح", "ربط تصريح العمل بـ jsa", "فك ربط jsa"
     ],
     "UPDATE_JSA": [
         "update jsa", "approve jsa", "modify task controls", "revise jsa",
         "تحديث jsa", "اعتماد تحليل المهام", "تعديل اجراءات jsa", "اعتماد jsa", "مراجعة تحليل المهام"
+    ],
+    "DELETE_JSA": [
+        "delete jsa", "remove jsa", "purge jsa",
+        "حذف jsa", "مسح تحليل سلامة المهام"
     ],
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -667,8 +736,24 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
         "تسجيل مادة كيميائية جديدة", "اضافة مادة جديدة"
     ],
     "LIST_CHEMICALS": [
-        "list chemicals", "chemical inventory", "ghs classes", "hazmat", "chemical compatibility", "chemicals", "sds library",
-        "قائمة المواد الكيميائية", "المواد الخطرة", "توافق المواد الكيميائية", "تصنيفات ghs", "المواد الكيميائية", "سجل الكيماويات", "المواد الكيميائية الخطرة"
+        "list chemicals", "chemical inventory", "ghs classes", "hazmat", "chemical compatibility", "chemicals", "sds library", "all chemicals",
+        "قائمة المواد الكيميائية", "المواد الخطرة", "توافق المواد الكيميائية", "تصنيفات ghs", "المواد الكيميائية", "سجل الكيماويات", "المواد الكيميائية الخطرة", "المواد الكيميائية الخطرة المسجلة", "سجل المواد الخطرة"
+    ],
+    "GET_CHEMICAL_DETAILS": [
+        "chemical details", "sds sheet", "ghs hazards", "chemical profile", "cas number lookup",
+        "تفاصيل المادة الكيميائية", "بيانات المادة", "بطاقة السلامة الكيميائية", "معلومات المادة الكيميائية"
+    ],
+    "CHECK_CHEMICAL_STORAGE": [
+        "check chemical storage", "chemical storage safety", "nfpa 400 audit", "segregation safety", "storage compliance",
+        "سلامة تخزين الكيماويات", "فحص مستودع الكيماويات", "توافق التخزين الكيميائي", "مطابقة تخزين المواد الخطرة"
+    ],
+    "GET_MSDS": [
+        "msds", "sds", "safety data sheet", "msds sheet", "chemical sds",
+        "صحيفة بيانات السلامة", "نشرة السلامة", "ملف msds", "ورقة msds", "بيانات msds"
+    ],
+    "DELETE_CHEMICAL": [
+        "delete chemical", "remove chemical", "purge hazmat",
+        "حذف مادة كيميائية", "مسح المادة من السجل"
     ],
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -707,8 +792,36 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
     # MODULE 15: GOVERNANCE, RAG STANDARDS & SECURITY
     # ══════════════════════════════════════════════════════════════════════════
     "LIST_SECURITY_ROLES": [
-        "security roles", "rbac matrix", "user permissions", "integrations", "system access", "rbac",
-        "ادوار المستخدمين", "صلاحيات النظام", "مصفوفة الصلاحيات", "التكاملات والربط", "مستويات الوصول", "صلاحيات rbac"
+        "security roles", "rbac matrix", "user permissions", "system access", "rbac",
+        "ادوار المستخدمين", "صلاحيات النظام", "مصفوفة الصلاحيات", "مستويات الوصول", "صلاحيات rbac"
+    ],
+    "MANAGE_USERS": [
+        "list users", "user accounts", "user details", "assign role", "user profile", "active users",
+        "المستخدمين", "قائمة المستخدمين", "حسابات المستخدمين", "بيانات المستخدم", "تعيين صلاحية", "ملف المستخدم"
+    ],
+    "MANAGE_INTEGRATIONS": [
+        "integrations", "integration status", "sync integration", "erp sync", "sap connector", "external systems", "integration connectors", "outbox sync",
+        "التكاملات", "الربط والتكامل", "أنظمة الربط", "حالة الربط", "مزامنة الربط", "ربط sap", "تكامل erp", "أنظمة التكامل الخارجية", "سجلات المزامنة"
+    ],
+    "GET_SYSTEM_ARCHITECTURE": [
+        "system architecture", "system topology", "services status", "database metrics", "api catalog", "microservices", "tech stack", "architecture",
+        "معمارية النظام", "هيكلية النظام", "الخدمات المشغلة", "مخطط النظام", "معمارية المنظومة", "الخدمات والمنافذ", "فهرس api", "حالة السيرفرات"
+    ],
+    "GET_SERVICE_HEALTH": [
+        "service health", "health check", "system health", "database health", "server status",
+        "صحة الخدمات", "فحص النظام", "حالة السيرفر", "سلامة النظام", "كفاءة المنظومة"
+    ],
+    "GET_TRIR_METRICS": [
+        "trir", "ltifr", "total recordable incident rate", "lost time injury rate", "osha metrics", "incident rate",
+        "معدل trir", "معدل ltifr", "معدل تكرار الإصابات", "معدل الحوادث القاتلة", "مؤشر trir", "مؤشر ltifr", "حساب معدل الاصابات"
+    ],
+    "VERIFY_AUDIT_LOG": [
+        "verify audit log", "audit chain integrity", "tamper evident", "audit hash chain", "verify logs",
+        "التحقق من سجل التدقيق", "صحة audit log", "نزاهة السجل المشفر", "التحقق من سجل التعديلات"
+    ],
+    "GET_SECURITY_AUDIT_SUMMARY": [
+        "security audit summary", "security health", "mfa adoption", "security overview",
+        "ملخص أمان النظام", "ملخص الأمان", "تقرير أمان المستخدمين", "احصائيات الامان"
     ],
     "SEARCH_RAG_KNOWLEDGE": [
         "osha standard", "osha", "iso 45001", "iso", "golden rules", "gas limits", "pel", "lel", "confined space rules",
@@ -724,64 +837,96 @@ HSE_INTENTS_KEYWORDS: Dict[str, List[str]] = {
 # ==============================================================================
 
 INTENT_TO_MODULE_MAP: Dict[str, int] = {
-    # Module 1
-    "LIST_DEPARTMENTS": 1, "LIST_ZONES": 1, "LIST_EMPLOYEES": 1, "CREATE_EMPLOYEE": 1, "UPDATE_EMPLOYEE": 1, "GET_EMPLOYEE_INFO": 1,
-    # Module 2
-    "GET_DASHBOARD_SUMMARY": 2, "REFRESH_DASHBOARD": 2, "GET_MONTHLY_KPIS": 2, "GET_SAFETY_SCORES": 2, "LIST_AUDIT_LOGS": 2,
+    # Module 1: Master Data
+    "LIST_DEPARTMENTS": 1, "GET_DEPARTMENT_DETAILS": 1, "CREATE_DEPARTMENT": 1, "UPDATE_DEPARTMENT": 1, "DELETE_DEPARTMENT": 1,
+    "LIST_ZONES": 1, "GET_ZONE_DETAILS": 1, "CREATE_ZONE": 1, "UPDATE_ZONE": 1, "DELETE_ZONE": 1, "GET_DEPARTMENT_ZONES_SUMMARY": 1,
+    "LIST_EMPLOYEES": 1, "CREATE_EMPLOYEE": 1, "UPDATE_EMPLOYEE": 1, "GET_EMPLOYEE_INFO": 1,
+
+    # Module 2: Dashboard & KPIs
+    "GET_DASHBOARD_SUMMARY": 2, "REFRESH_DASHBOARD": 2, "GET_MONTHLY_KPIS": 2, "GET_SAFETY_SCORES": 2, "GET_TRIR_METRICS": 2,
+    "LIST_AUDIT_LOGS": 2, "VERIFY_AUDIT_LOG": 2, "GET_SECURITY_AUDIT_SUMMARY": 2,
     "EXPORT_REPORTS_EXCEL": 2, "EXPORT_REPORTS_PDF": 2, "SEND_REPORT_TO_MANAGEMENT": 2, "GENERATE_CUSTOM_REPORT": 2, "OPEN_READY_REPORT": 2, "SCHEDULE_REPORT": 2,
-    # Module 3
+
+    # Module 3: Incidents
     "CREATE_INCIDENT": 3, "LOG_SAFETY_OBSERVATION": 3, "LIST_INCIDENTS": 3, "GET_INCIDENT_DETAILS": 3, "UPDATE_INCIDENT": 3,
     "EXPORT_INCIDENTS_EXCEL": 3, "GENERATE_REPORT_TEMPLATE": 3, "MANAGE_RCA": 3, "GET_ROOT_CAUSES": 3,
-    # Module 4
+
+    # Module 4: Permits
     "CREATE_PERMIT": 4, "APPROVE_PERMIT": 4, "SUSPEND_PERMIT": 4, "CLOSE_PERMIT": 4, "CLOSE_ALL_PERMITS": 4,
     "LIST_PERMITS": 4, "GET_PERMIT_DETAILS": 4, "UPDATE_PERMIT": 4, "DELETE_PERMIT": 4, "CHECK_SIMOPS": 4,
-    "LIST_PERMITS": 4, "GET_PERMIT_DETAILS": 4, "UPDATE_PERMIT": 4, "DELETE_PERMIT": 4, "CHECK_SIMOPS": 4,
-    # Module 5
+
+    # Module 5: Inspections
     "SCHEDULE_INSPECTION": 5, "SUBMIT_INSPECTION_WALK": 5, "LIST_INSPECTIONS": 5, "GET_INSPECTION_DETAILS": 5,
     "GET_INSPECTION_STATS": 5, "CREATE_INSPECTION_FINDING": 5, "UPDATE_INSPECTION": 5, "UPDATE_INSPECTION_FINDING": 5,
     "DELETE_INSPECTION": 5, "DELETE_INSPECTION_FINDING": 5, "GENERATE_INSPECTION_CHECKLIST": 5,
-    # Module 6
+
+    # Module 6: CAPA
     "CREATE_CAPA": 6, "LIST_CAPAS": 6, "UPDATE_CAPA": 6,
-    # Module 7
-    "CREATE_RISK": 7, "LIST_RISK": 7, "UPDATE_RISK": 7,
-    # Module 8
-    "CREATE_JSA": 8, "LIST_JSAS": 8, "UPDATE_JSA": 8,
-    # Module 9
+
+    # Module 7: Risk Register (HIRA)
+    "CREATE_RISK": 7, "LIST_RISK": 7, "GET_RISK_DETAILS": 7, "UPDATE_RISK": 7, "DELETE_RISK": 7,
+    "CALCULATE_RESIDUAL_RISK": 7, "GET_HIGH_RISK_HAZARDS": 7,
+
+    # Module 8: JSA
+    "CREATE_JSA": 8, "LIST_JSAS": 8, "GET_JSA_DETAILS": 8, "UPDATE_JSA": 8, "DELETE_JSA": 8,
+    "MANAGE_JSA_STEPS": 8, "LINK_JSA_PERMIT": 8,
+
+    # Module 9: Training
     "RENEW_CERTIFICATE": 9, "CREATE_CERTIFICATE": 9, "LIST_CERTIFICATES": 9, "CREATE_TRAINING_COURSE": 9,
-    # Module 10
+
+    # Module 10: PPE
     "CREATE_PPE_SUPPLY_ORDER": 10, "ISSUE_PPE": 10, "DELETE_PPE_TRANSACTION": 10, "ADD_PPE_ITEM": 10,
     "UPDATE_PPE_ITEM": 10, "DELETE_PPE_ITEM": 10, "LIST_PPE": 10, "UPDATE_PPE_STOCK": 10, "DELETE_PPE_MATRIX_RULE": 10,
-    # Module 11
+
+    # Module 11: Fire Safety
     "LOG_FIRE_INSPECTION": 11, "INSPECT_FIXED_SAFETY_ASSET": 11, "ADD_FIRE_EQUIPMENT": 11,
     "LIST_FIRE_EQUIPMENT": 11, "DELETE_FIXED_SAFETY_ASSET": 11,
     "SERVICE_FIRE_EQUIPMENT": 11, "GET_FIRE_READINESS_REPORT": 11, "GET_FIRE_INSPECTION_SCHEDULE": 11,
     "GET_FIRE_EQUIPMENT_DETAIL": 11, "GET_FIRE_ATTENTION_LIST": 11, "GET_FIRE_COVERAGE_BY_ZONE": 11,
     "GET_FIRE_EQUIPMENT_STATS": 11,
-    # Module 12
-    "ADD_CHEMICAL": 12, "LIST_CHEMICALS": 12,
-    # Module 13
+
+    # Module 12: Hazmat
+    "ADD_CHEMICAL": 12, "LIST_CHEMICALS": 12, "GET_CHEMICAL_DETAILS": 12, "DELETE_CHEMICAL": 12,
+    "CHECK_CHEMICAL_STORAGE": 12, "GET_MSDS": 12,
+
+    # Module 13: Medical
     "RECORD_MEDICAL_EXAM": 13, "LIST_MEDICAL_EXAMS": 13,
-    # Module 14
+
+    # Module 14: AI & IoT
     "ADD_IOT_SENSOR": 14, "LIST_AI_IOT": 14,
-    # Module 15
-    "LIST_SECURITY_ROLES": 15, "SEARCH_RAG_KNOWLEDGE": 15,
+
+    # Module 15: Security & System Architecture
+    "LIST_SECURITY_ROLES": 15, "MANAGE_USERS": 15, "MANAGE_INTEGRATIONS": 15,
+    "GET_SYSTEM_ARCHITECTURE": 15, "GET_SERVICE_HEALTH": 15, "SEARCH_RAG_KNOWLEDGE": 15,
 }
 
 INTENT_TO_TOOL_MAP: Dict[str, List[str]] = {
     # Module 1: Master Data
-    "LIST_DEPARTMENTS": ["list_departments", "list_zones"],
-    "LIST_ZONES": ["list_zones", "list_departments"],
+    "LIST_DEPARTMENTS": ["list_departments", "list_zones", "get_department_details", "get_department_zones_summary"],
+    "GET_DEPARTMENT_DETAILS": ["get_department_details", "list_departments", "list_zones"],
+    "CREATE_DEPARTMENT": ["create_department", "list_departments"],
+    "UPDATE_DEPARTMENT": ["update_department", "list_departments"],
+    "DELETE_DEPARTMENT": ["delete_department", "list_departments"],
+    "LIST_ZONES": ["list_zones", "list_departments", "get_zone_details"],
+    "GET_ZONE_DETAILS": ["get_zone_details", "list_zones", "list_departments"],
+    "CREATE_ZONE": ["create_zone", "list_zones", "list_departments"],
+    "UPDATE_ZONE": ["update_zone", "list_zones"],
+    "DELETE_ZONE": ["delete_zone", "list_zones"],
+    "GET_DEPARTMENT_ZONES_SUMMARY": ["get_department_zones_summary", "list_departments", "list_zones"],
     "LIST_EMPLOYEES": ["list_employees", "get_employee_info"],
     "CREATE_EMPLOYEE": ["create_employee", "list_employees"],
     "UPDATE_EMPLOYEE": ["update_employee", "list_employees"],
     "GET_EMPLOYEE_INFO": ["get_employee_info", "list_certificates"],
 
     # Module 2: Dashboard & Reports
-    "GET_DASHBOARD_SUMMARY": ["get_dashboard_summary", "get_monthly_kpis"],
+    "GET_DASHBOARD_SUMMARY": ["get_dashboard_summary", "get_monthly_kpis", "get_safety_scores"],
     "REFRESH_DASHBOARD": ["refresh_dashboard", "get_dashboard_summary", "get_safety_scores"],
     "GET_MONTHLY_KPIS": ["get_monthly_kpis", "get_dashboard_summary"],
     "GET_SAFETY_SCORES": ["get_safety_scores", "list_zones"],
-    "LIST_AUDIT_LOGS": ["list_audit_logs"],
+    "GET_TRIR_METRICS": ["get_trir_ltifr_metrics", "get_dashboard_summary", "get_monthly_kpis"],
+    "LIST_AUDIT_LOGS": ["list_audit_logs", "verify_audit_log_chain"],
+    "VERIFY_AUDIT_LOG": ["verify_audit_log_chain", "list_audit_logs"],
+    "GET_SECURITY_AUDIT_SUMMARY": ["get_security_audit_summary", "list_audit_logs", "list_users"],
     "EXPORT_REPORTS_EXCEL": ["export_reports_excel", "get_dashboard_summary", "get_monthly_kpis"],
     "EXPORT_REPORTS_PDF": ["export_reports_pdf", "get_dashboard_summary"],
     "SEND_REPORT_TO_MANAGEMENT": ["send_report_to_management", "export_reports_excel", "get_dashboard_summary"],
@@ -832,13 +977,21 @@ INTENT_TO_TOOL_MAP: Dict[str, List[str]] = {
 
     # Module 7: Risk Register
     "CREATE_RISK": ["create_risk_assessment", "list_risk_register"],
-    "LIST_RISK": ["list_risk_register", "get_risk_matrix"],
+    "LIST_RISK": ["list_risk_register", "get_risk_matrix", "get_high_risk_hazards"],
+    "GET_RISK_DETAILS": ["get_risk_assessment_details", "list_risk_register"],
     "UPDATE_RISK": ["update_risk_assessment", "list_risk_register"],
+    "DELETE_RISK": ["delete_risk_assessment", "list_risk_register"],
+    "CALCULATE_RESIDUAL_RISK": ["calculate_residual_risk", "get_risk_matrix"],
+    "GET_HIGH_RISK_HAZARDS": ["get_high_risk_hazards", "list_risk_register", "get_risk_matrix"],
 
     # Module 8: JSA
     "CREATE_JSA": ["create_jsa", "list_jsas"],
     "LIST_JSAS": ["list_jsas", "get_jsa_details"],
+    "GET_JSA_DETAILS": ["get_jsa_details", "list_jsas"],
     "UPDATE_JSA": ["update_jsa", "list_jsas"],
+    "DELETE_JSA": ["delete_jsa", "list_jsas"],
+    "MANAGE_JSA_STEPS": ["add_jsa_step", "update_jsa_step", "delete_jsa_step", "get_jsa_details"],
+    "LINK_JSA_PERMIT": ["link_jsa_permit", "unlink_jsa_permit", "list_available_permits_for_jsa"],
 
     # Module 9: Training
     "RENEW_CERTIFICATE": ["update_certificate_status", "update_certificate", "list_certificates"],
@@ -873,7 +1026,11 @@ INTENT_TO_TOOL_MAP: Dict[str, List[str]] = {
 
     # Module 12: Chemicals
     "ADD_CHEMICAL": ["add_chemical", "list_chemicals"],
-    "LIST_CHEMICALS": ["list_chemicals", "get_chemical_compatibility"],
+    "LIST_CHEMICALS": ["list_chemicals", "get_chemical_details", "get_chemical_compatibility"],
+    "GET_CHEMICAL_DETAILS": ["get_chemical_details", "list_chemicals", "get_msds_sheet"],
+    "DELETE_CHEMICAL": ["delete_chemical", "list_chemicals"],
+    "CHECK_CHEMICAL_STORAGE": ["check_chemical_storage_safety", "get_chemical_compatibility", "list_chemicals"],
+    "GET_MSDS": ["get_msds_sheet", "get_chemical_details"],
 
     # Module 13: Medical
     "RECORD_MEDICAL_EXAM": ["record_medical_exam", "schedule_medical_exam", "list_medical_exams", "get_employee_info", "update_medical_exam"],
@@ -883,8 +1040,12 @@ INTENT_TO_TOOL_MAP: Dict[str, List[str]] = {
     "ADD_IOT_SENSOR": ["add_iot_sensor", "list_iot_sensors"],
     "LIST_AI_IOT": ["list_iot_sensors", "get_recent_sensor_alerts", "list_cameras", "get_recent_ai_events"],
 
-    # Module 15: Security & RAG
-    "LIST_SECURITY_ROLES": ["list_security_roles", "list_integrations"],
+    # Module 15: Security, Architecture & Governance
+    "LIST_SECURITY_ROLES": ["list_security_roles", "get_role_permissions", "list_users"],
+    "MANAGE_USERS": ["list_users", "get_user_details", "create_user_role_assignment", "update_user_role"],
+    "MANAGE_INTEGRATIONS": ["list_integrations", "get_integration_status", "sync_integration_connector", "test_integration_connection", "update_integration_config", "get_integration_sync_logs"],
+    "GET_SYSTEM_ARCHITECTURE": ["get_system_architecture", "get_service_health_status", "get_database_metrics", "get_api_endpoints_catalog"],
+    "GET_SERVICE_HEALTH": ["get_service_health_status", "get_database_metrics"],
     "SEARCH_RAG_KNOWLEDGE": ["search_hse_knowledge"],
 }
 

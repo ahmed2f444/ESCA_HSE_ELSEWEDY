@@ -22,6 +22,7 @@ export default defineConfig({
     // Proxying keeps the browser on one origin so we don't fight CORS during integration week.
     proxy: {
       '/api': { target: 'http://localhost:8080', changeOrigin: true },
+      '/uploads': { target: 'http://localhost:8080', changeOrigin: true },
       '/agent': {
         target: 'http://localhost:8000',
         changeOrigin: true,

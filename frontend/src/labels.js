@@ -233,15 +233,24 @@ const AR = {
 /** Roles carry a description in the sheet; the Arabic label is ours. */
 export const ROLE_AR = {
   HSE_MANAGER: 'مدير السلامة والصحة المهنية',
-  HSE_OFFICER: 'أخصائي سلامة',
+  HSE_OFFICER: 'أخصائي سلامة ميداني',
   OCCUPATIONAL_DOCTOR: 'طبيب الصحة المهنية',
-  DEPARTMENT_MANAGER: 'مدير قسم',
-  SHIFT_SUPERVISOR: 'مشرف وردية',
+  DEPARTMENT_MANAGER: 'مدير قسم / قطاع',
+  SHIFT_SUPERVISOR: 'مشرف وردية / إنتاج',
+  PRODUCTION_SUPERVISOR: 'مشرف إنتاج (Production Supervisor)',
+  OPERATIONS_MANAGER: 'مدير العمليات والتشغيل',
+  MAINTENANCE_ENGINEER: 'مهندس صيانة',
   MAINTENANCE_TECHNICIAN: 'فني صيانة',
-  WORKER: 'عامل',
-  CONTRACTOR: 'مقاول',
-  AUDITOR: 'مدقّق',
-  AUTOMATION_SERVICE: 'خدمة الأتمتة',
+  ELECTRICAL_ENGINEER: 'مهندس كهرباء',
+  QUALITY_ENGINEER: 'مهندس جودة',
+  WAREHOUSE_SUPERVISOR: 'مشرف مستودعات ومخازن',
+  TRAINING_COORDINATOR: 'منسق التدريب والتأهيل',
+  WORKER: 'عامل تشغيل',
+  CONTRACTOR: 'مقاول خارجي',
+  AUDITOR: 'مدقّق سلامة',
+  ADMIN: 'مدير النظام (System Administrator)',
+  SYSTEM_ADMINISTRATOR: 'مدير النظام (System Administrator)',
+  AUTOMATION_SERVICE: 'خدمة الأتمتة الذكية',
 }
 
 /** Translate a coded value. Unknown codes come back unchanged, on purpose. */

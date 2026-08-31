@@ -390,3 +390,41 @@ CREATE TABLE IF NOT EXISTS fixed_safety_assets (
     status VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    employee_id VARCHAR(30),
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    status_id INT NOT NULL DEFAULT 1,
+    mfa_enabled TINYINT(1) DEFAULT 0,
+    last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_avatars (
+    user_id INT PRIMARY KEY,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS mfa_codes (
+    mfa_code_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    code_hash VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    used_flag BOOLEAN DEFAULT FALSE,
+    attempt_count INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS profile_edit_history (
+    history_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    field_name VARCHAR(80) NOT NULL,
+    old_value VARCHAR(1000),
+    new_value VARCHAR(1000),
+    modified_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+

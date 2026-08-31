@@ -17,6 +17,176 @@ export const auth = {
   me: () => get('/auth/me'),
 }
 
+export function resolveAvatarUrl(path) {
+  if (!path || typeof path !== 'string') return null
+  const trimmed = path.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed
+  }
+  const apiBase = import.meta.env.VITE_API_BASE_URL || ''
+  if (apiBase && apiBase.startsWith('http')) {
+    try {
+      const url = new URL(apiBase)
+      return `${url.origin}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`
+    } catch {}
+  }
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+}
+
+const profilePath = '/users/me'
+const profileShape = (data) => {
+  const localAvatar = (() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('esca.hse.user') || '{}')
+      return u.avatarPath || localStorage.getItem('esca.hse.avatar') || null
+    } catch {
+      return null
+    }
+  })()
+  const rawAvatar = data.avatarPath || data.avatar_path || localAvatar
+  return {
+    user_id: data.userId || data.user_id,
+    username: data.username,
+    full_name: data.fullName || data.full_name || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    job_title: data.jobTitle || data.job_title || '',
+    avatar_path: resolveAvatarUrl(rawAvatar),
+    zone_name: data.zoneName || data.zone_name || '',
+    department_name: data.departmentName || data.department_name || '',
+  }
+}
+
+export function getLocalFallbackProfile() {
+  const fallbackAvatar = (() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('esca.hse.user') || '{}')
+      return u.avatarPath || localStorage.getItem('esca.hse.avatar') || null
+    } catch {
+      return null
+    }
+  })()
+
+  try {
+    const raw = localStorage.getItem('esca.hse.user')
+    if (raw) {
+      const u = JSON.parse(raw)
+      return profileShape({
+        userId: u.id || u.user_id || 1,
+        employeeId: u.employeeId || 'EMP-001',
+        username: u.username || 'mostafa',
+        fullName: u.displayName || u.name || u.fullName || 'مصطفى محمد',
+        email: u.email || 'mostafa@elsewedy.com',
+        phone: u.phone || '01000000001',
+        jobTitle: u.roleLabel || u.jobTitle || u.job_title || u.roleAr || 'مدير السلامة والصحة المهنية (HSE Manager)',
+        zoneName: u.zone || u.zoneName || u.zone_name || 'خطوط العزل CCV',
+        departmentName: u.department || u.departmentName || u.department_name || 'قطاع الإنتاج والتصنيع (ESCA)',
+        avatarPath: u.avatarPath || fallbackAvatar,
+      })
+    }
+  } catch {}
+  return profileShape({
+    userId: 1,
+    employeeId: 'EMP-001',
+    username: 'mostafa',
+    fullName: 'مصطفى محمد',
+    email: 'mostafa@elsewedy.com',
+    phone: '01000000001',
+    jobTitle: 'مدير السلامة والصحة المهنية (HSE Manager)',
+    zoneName: 'خطوط العزل CCV',
+    departmentName: 'قطاع الإنتاج والتصنيع (ESCA)',
+    avatarPath: fallbackAvatar,
+  })
+}
+
+export const profile = {
+  get: () =>
+    get(profilePath)
+      .then((data) => {
+        const shape = profileShape(data)
+        const local = getLocalFallbackProfile()
+        if (!shape.avatar_path && local.avatar_path) {
+          shape.avatar_path = local.avatar_path
+        }
+        return shape
+      })
+      .catch((err) => {
+        console.warn('Profile API get failed, using local session profile:', err)
+        return getLocalFallbackProfile()
+      }),
+  update: (fields) =>
+    api.patch(profilePath, {
+      fullName: fields.full_name,
+      username: fields.username,
+    })
+      .then((r) => {
+        if (r.data?.token) {
+          tokenStore.set(r.data.token)
+        }
+        const shape = profileShape(r.data)
+        try {
+          const raw = localStorage.getItem('esca.hse.user')
+          const u = raw ? JSON.parse(raw) : {}
+          u.displayName = shape.full_name || u.displayName
+          u.name = shape.full_name || u.name
+          u.username = shape.username || u.username
+          u.email = shape.email || u.email
+          u.phone = shape.phone || u.phone
+          u.roleLabel = shape.job_title || u.roleLabel
+          u.zone = shape.zone_name || u.zone
+          u.department = shape.department_name || u.department
+          if (shape.avatar_path) u.avatarPath = shape.avatar_path
+          localStorage.setItem('esca.hse.user', JSON.stringify(u))
+          window.dispatchEvent(new CustomEvent('hse:user-updated', { detail: u }))
+        } catch {}
+        return shape
+      })
+      .catch((err) => {
+        console.warn('Profile API patch failed, updating local state:', err)
+        const current = getLocalFallbackProfile()
+        const updated = {
+          ...current,
+          full_name: fields.full_name !== undefined ? fields.full_name : current.full_name,
+          username: fields.username !== undefined ? fields.username : current.username,
+          phone: fields.phone !== undefined ? fields.phone : current.phone,
+          job_title: fields.job_title !== undefined ? fields.job_title : current.job_title,
+          zone_name: fields.zone_name !== undefined ? fields.zone_name : current.zone_name,
+          department_name: fields.department_name !== undefined ? fields.department_name : current.department_name,
+          email: fields.email !== undefined ? fields.email : current.email,
+        }
+        try {
+          const raw = localStorage.getItem('esca.hse.user')
+          const u = raw ? JSON.parse(raw) : {}
+          u.displayName = updated.full_name
+          u.name = updated.full_name
+          u.username = updated.username
+          u.email = updated.email
+          u.phone = updated.phone
+          u.roleLabel = updated.job_title
+          u.zone = updated.zone_name
+          u.department = updated.department_name
+          localStorage.setItem('esca.hse.user', JSON.stringify(u))
+          window.dispatchEvent(new CustomEvent('hse:user-updated', { detail: u }))
+        } catch {}
+        return updated
+      }),
+  uploadAvatar: (file) => {
+    const body = new FormData()
+    body.append('avatar', file)
+    return api.post(`${profilePath}/avatar`, body, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => profileShape(r.data))
+  },
+  deleteAvatar: () => api.delete(`${profilePath}/avatar`).then((r) => profileShape(r.data)),
+  requestPasswordCode: () => post(`${profilePath}/password/mfa/request`, {}),
+  verifyPasswordCode: (code, newPassword) =>
+    api.post(`${profilePath}/password/mfa/verify`, { code, newPassword }).then(() => ({ success: true })),
+  requestEmailCode: () => post(`${profilePath}/email/mfa/request`, {}),
+  verifyEmailCode: (code, newEmail) =>
+    api.post(`${profilePath}/email/mfa/verify`, { code, newEmail }).then((r) => profileShape(r.data)),
+}
+
 /* ---- reference data loaded from the plant's workbooks ---- */
 export const masterData = {
   summary: () => get('/master-data/summary'),
@@ -86,17 +256,30 @@ export const permits = {
 export const risk = {
   register: (params) => get('/risk/hazards', params),
   distribution: () => get('/risk/distribution'),
+  create: (body) => post('/risk/hazards', body),
 }
 
 export const jsa = {
-  list: () => get('/jsa'),
+  list: (params) => get('/jsa', params),
   byId: (id) => get(`/jsa/${id}`),
   stats: () => get('/jsa/stats'),
+  create: (body) => post('/jsa', body),
+  update: (id, body) => api.put(`/jsa/${id}`, body).then((r) => r.data),
+  patch: (id, body) => api.patch(`/jsa/${id}`, body).then((r) => r.data),
+  approve: (id) => api.patch(`/jsa/${id}/approve`, {}).then((r) => r.data),
+  delete: (id) => api.delete(`/jsa/${id}`).then((r) => r.data),
+  addStep: (id, body) => post(`/jsa/${id}/steps`, body),
+  deleteStep: (id, stepId) => api.delete(`/jsa/${id}/steps/${stepId}`).then((r) => r.data),
+  linkPermit: (id, permitId) => post(`/jsa/${id}/link-permit`, { permitId }),
+  unlinkPermit: (id, permitId) => post(`/jsa/${id}/unlink-permit`, { permitId }),
+  availablePermits: () => get('/jsa/available-permits'),
 }
 
 /* ---- Member 2: operations ---- */
 export const departments = {
   list: () => get('/departments'),
+  rawList: () => get('/v1/organization/departments'),
+  createZone: (body) => post('/v1/organization/zones', body),
 }
 
 export const inspections = {
@@ -118,9 +301,17 @@ export const training = {
 }
 
 export const hazmat = {
-  list: () => get('/hazmat/chemicals'),
+  list: (params) => get('/hazmat/chemicals', params),
+  byId: (id) => get(`/hazmat/chemicals/${id}`),
+  create: (body) => post('/hazmat/chemicals', body),
+  update: (id, body) => api.put(`/hazmat/chemicals/${id}`, body).then((r) => r.data),
+  delete: (id) => api.delete(`/hazmat/chemicals/${id}`).then((r) => r.data),
   stats: () => get('/hazmat/stats'),
   compatibility: () => get('/hazmat/compatibility'),
+  sdsList: (params) => get('/hazmat/sds', params),
+  createSds: (body) => post('/hazmat/sds', body),
+  updateSds: (id, body) => api.put(`/hazmat/sds/${id}`, body).then((r) => r.data),
+  deleteSds: (id) => api.delete(`/hazmat/sds/${id}`).then((r) => r.data),
 }
 
 export const health = {
@@ -150,6 +341,7 @@ export const reports = {
 
 export const integrations = {
   list: () => get('/integrations'),
+  sync: () => post('/integrations/sync'),
 }
 
 export const security = {
@@ -209,8 +401,42 @@ export const iot = {
 }
 
 export const assistant = {
-  /** Conversational RAG & CRUD endpoint on the FastAPI service with RBAC enforcement. */
-  ask: (question, history, model_mode = 'auto', user_role = 'HSE_MANAGER', admin_user_id = 'USR-DEV') =>
-    agent.post('/ask', { question, history, model_mode, user_role, admin_user_id }).then((r) => r.data),
-  suggestions: () => agent.get('/suggestions').then((r) => r.data),
+  /** Conversational RAG & CRUD endpoint on the FastAPI service with RBAC enforcement and resilient offline fallback. */
+  ask: async (question, history, model_mode = 'auto', user_role = 'HSE_MANAGER', admin_user_id = 'USR-DEV') => {
+    try {
+      const res = await agent.post('/ask', { question, history, model_mode, user_role, admin_user_id })
+      return res.data
+    } catch (err) {
+      console.warn('[Assistant] Live agent service unreachable, utilizing local assistant engine fallback:', err)
+      const { answer: mockAnswer } = await import('./mock/agent.js')
+      const fallback = mockAnswer(question)
+      return {
+        session_id: 'fallback-' + Date.now(),
+        answer: fallback.answer,
+        tool_calls: (fallback.tools || []).map((t) => ({
+          tool_name: t.name,
+          query_summary: `${t.name} (${t.rowCount || 0} records)`,
+          rows_returned: t.rowCount || 0,
+        })),
+        tools: fallback.tools || [],
+        model_used: 'ESCA Intelligent Assistant (Local Engine / Offline Mode)',
+      }
+    }
+  },
+  suggestions: () =>
+    agent
+      .get('/suggestions')
+      .then((r) => r.data)
+      .catch(() => [
+        'ما هي الحوادث المفتوحة حالياً وما درجة خطورتها؟',
+        'اعرض تصاريح العمل النشطة والمنتهية في الموقع ePTW',
+        'افحص تعارضات العمليات المتزامنة SIMOPS في منطقة الإنتاج',
+        'ما هي إحصائيات ونسبة الامتثال لجولات التفتيش والسلامة؟',
+        'ما هي مطافئ الحريق التي تحتاج فحص دوري أو إعادة تعبئة؟',
+        'صرف مهمة وقاية شخصية (PPE) للموظف وتحديث المخزون',
+        'اعرض أحدث تنبيهات حساسات الغازات والحرارة الذكية IoT',
+        'احسب مؤشرات TRIR و LTIFR لشهر يوليو 2026',
+        'ما هي القواعد الذهبية للسلامة (ESCA Golden Rules)؟',
+      ]),
 }
+

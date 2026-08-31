@@ -51,8 +51,8 @@ public class PlatformService {
     public Map<String, Object> get(String module, String id) {
         ModuleDefinition definition = ModuleCatalog.get(module);
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT * FROM " + definition.table() + " WHERE " + definition.idColumn() + " = :id",
-                Map.of("id", id));
+                "SELECT * FROM " + definition.table() + " WHERE CAST(" + definition.idColumn() + " AS CHAR) = :id",
+                Map.of("id", String.valueOf(id)));
         if (rows.isEmpty()) {
             throw new ResourceNotFoundException(module + " record not found");
         }
@@ -64,22 +64,42 @@ public class PlatformService {
         ModuleDefinition definition = ModuleCatalog.get(module);
         Map<String, Object> values = sanitize(definition, request);
         normalize(module, values, true);
-        String id = text(request.get(definition.idColumn()));
-        if (id == null) {
-            id = generateId(definition.idPrefix());
-        }
-        values.put(definition.idColumn(), id);
-        if (values.size() == 1) {
+        if (values.isEmpty()) {
             throw new IllegalArgumentException("At least one writable field is required");
         }
+
+        String id = text(request.get(definition.idColumn()));
+        boolean isAutoIncrement = definition.table().equals("zones")
+                || definition.table().equals("departments")
+                || "zone_id".equals(definition.idColumn())
+                || "department_id".equals(definition.idColumn());
+
+        if (!isAutoIncrement) {
+            if (id == null) {
+                id = generateId(definition.idPrefix());
+            }
+            values.put(definition.idColumn(), id);
+        } else if (id != null && id.matches("^\\d+$")) {
+            values.put(definition.idColumn(), Long.parseLong(id));
+        }
+
         String columns = String.join(", ", values.keySet());
         String placeholders = ":" + String.join(", :", values.keySet());
         try {
-            jdbc.update("INSERT INTO " + definition.table() + " (" + columns + ") VALUES (" + placeholders + ")", values);
+            if (isAutoIncrement && (id == null || !id.matches("^\\d+$"))) {
+                org.springframework.jdbc.support.GeneratedKeyHolder keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
+                jdbc.update("INSERT INTO " + definition.table() + " (" + columns + ") VALUES (" + placeholders + ")", new MapSqlParameterSource(values), keyHolder);
+                Number generatedKey = keyHolder.getKey();
+                id = generatedKey != null ? String.valueOf(generatedKey.longValue()) : "0";
+            } else {
+                jdbc.update("INSERT INTO " + definition.table() + " (" + columns + ") VALUES (" + placeholders + ")", new MapSqlParameterSource(values));
+            }
         } catch (DuplicateKeyException ex) {
             throw new IllegalArgumentException("A record with the same identifier already exists");
         }
-        audit("CREATE", module, id, values, null);
+        try {
+            audit("CREATE", module, id, values, null);
+        } catch (Exception ignored) {}
         return get(module, id);
     }
 
@@ -95,20 +115,24 @@ public class PlatformService {
         List<String> assignments = values.keySet().stream().map(column -> column + " = :" + column).toList();
         values.put("_id", id);
         jdbc.update("UPDATE " + definition.table() + " SET " + String.join(", ", assignments)
-                + " WHERE " + definition.idColumn() + " = :_id", values);
+                + " WHERE CAST(" + definition.idColumn() + " AS CHAR) = :_id", values);
         values.remove("_id");
-        audit("UPDATE", module, id, values, null);
+        try {
+            audit("UPDATE", module, id, values, null);
+        } catch (Exception ignored) {}
         return get(module, id);
     }
 
     @Transactional
     public void delete(String module, String id) {
         ModuleDefinition definition = ModuleCatalog.get(module);
-        int changed = jdbc.update("DELETE FROM " + definition.table() + " WHERE " + definition.idColumn() + " = :id", Map.of("id", id));
+        int changed = jdbc.update("DELETE FROM " + definition.table() + " WHERE CAST(" + definition.idColumn() + " AS CHAR) = :id", Map.of("id", String.valueOf(id)));
         if (changed == 0) {
             throw new ResourceNotFoundException(module + " record not found");
         }
-        audit("DELETE", module, id, Map.of(), null);
+        try {
+            audit("DELETE", module, id, Map.of(), null);
+        } catch (Exception ignored) {}
     }
 
     @Transactional

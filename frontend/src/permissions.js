@@ -19,6 +19,7 @@ export const ALL_PAGES = '*'
 /** Which module each route needs access to. */
 const PAGE_MODULE = {
   '/': null, // dashboard: any authenticated role
+  '/profile': null, // profile: any authenticated role
   '/master-data': 'admin',
   '/departments': 'admin',
   '/incidents': 'incidents',

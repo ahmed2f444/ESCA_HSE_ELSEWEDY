@@ -8,10 +8,10 @@ public final class ModuleCatalog {
     private static final Map<String, ModuleDefinition> MODULES = new LinkedHashMap<>();
 
     static {
-        add("departments", "departments", "department_id", "DEP", "department_name",
-                "department_code", "department_name", "manager_employee_id", "hse_contact_id", "location", "active");
-        add("zones", "zones", "zone_id", "ZON", "zone_name",
-                "zone_code", "zone_name", "department_id", "risk_level", "restricted_access", "active");
+        add("departments", "departments", "department_id", "DEP", "name_ar",
+                "name_ar", "name_en", "department_type_id", "manager_employee_id", "hse_contact_id", "active_flag");
+        add("zones", "zones", "zone_id", "ZON", "name_ar",
+                "department_id", "name_ar", "name_en", "zone_type", "risk_class_id", "max_occupancy", "active_flag");
         add("employees", "employees", "employee_id", "EMP", "full_name",
                 "employee_code", "full_name", "email", "phone", "job_title", "department_id", "manager_id", "employment_type", "status", "hire_date");
         add("incidents", "incidents", "incident_id", "INC", "title",

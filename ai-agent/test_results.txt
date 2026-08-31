@@ -1,0 +1,40 @@
+
+==================== TEST: Master Data: Zones summary ====================
+Query: ما هي ملخص المناطق لكل قسم في المصنع؟
+Tool Executed: None
+Tools Called: None
+Model: Groq (openai/gpt-oss-120b)
+Answer Preview: ## ملخص المناطق لكل قسم في المصنع  
+
+| **القسم**                     | **عدد المناطق** | **السعة القصوى الإجمالية** |
+|------------------------------|----------------|----------------------------|
+| قطاع الإنتاج A               | 5              | 209                        |
+| قطاع الإنتاج B        
+
+==================== TEST: Risk: High risk hazards ====================
+Query: ما هي أخطر المخاطر المسجلة في سجل المخاطر HIRA؟
+ERROR: timed out
+
+==================== TEST: JSA: List & details ====================
+Query: اعرض لي قائمة تحاليل سلامة المهام JSA
+ERROR: timed out
+
+==================== TEST: Hazmat: Chemical details ====================
+Query: ما هي المواد الكيميائية الخطرة المسجلة؟
+ERROR: timed out
+
+==================== TEST: Integrations: Status ====================
+Query: ما هي حالة أنظمة الربط والتكامل الخارجية؟
+ERROR: timed out
+
+==================== TEST: Security: Audit summary ====================
+Query: اعرض لي ملخص أمان النظام والمستخدمين والـ Audit Log
+ERROR: timed out
+
+==================== TEST: Architecture: Topology ====================
+Query: ما هي معمارية النظام والخدمات المشغلة في المنظومة؟
+ERROR: timed out
+
+==================== TEST: Reports: TRIR & LTIFR ====================
+Query: احسب لي معدل تكرار الإصابات TRIR و LTIFR لمصنع السويدي
+ERROR: timed out

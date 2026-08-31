@@ -13,7 +13,9 @@ import {
   StatLine,
   Table,
 } from '../components/ui.jsx'
+import ExcelJS from 'exceljs'
 import { RiskMatrix, bandColor, bandLabel } from '../components/charts.jsx'
+import RiskForm from './parts/RiskForm.jsx'
 import { risk as riskApi } from '../api/endpoints.js'
 import { useApi, useToast } from '../hooks.jsx'
 import tc from '../themeColors.js'
@@ -24,19 +26,78 @@ export default function Risk() {
 
   const hazards = useApi(() => riskApi.register(), [])
   const dist = useApi(() => riskApi.distribution(), [])
+  const [formOpen, setFormOpen] = useState(false)
 
-  const all = hazards.data || []
+  const all = Array.isArray(hazards.data) ? hazards.data : []
   const filtered = cell
-    ? all.filter((h) => `${h.probability}x${h.severity}` === cell)
+    ? all.filter((h) => `${h?.probability}x${h?.severity}` === cell)
     : all
+
+  const handleExportExcel = async () => {
+    try {
+      toast('جاري تصدير سجل المخاطر (HIRA) إلى ملف Excel...', 'in')
+      const wb = new ExcelJS.Workbook()
+      wb.creator = 'ESCA HSE Management System'
+      wb.created = new Date()
+      
+      const ws = wb.addWorksheet('HIRA Register', { views: [{ rightToLeft: true }] })
+      
+      ws.columns = [
+        { header: 'الكود', key: 'code', width: 12 },
+        { header: 'المنطقة', key: 'zone', width: 25 },
+        { header: 'الخطر', key: 'hazard', width: 35 },
+        { header: 'النشاط', key: 'activity', width: 35 },
+        { header: 'الاحتمالية', key: 'probability', width: 12 },
+        { header: 'الشدة', key: 'severity', width: 10 },
+        { header: 'الدرجة الكلية', key: 'score', width: 15 },
+        { header: 'مستوى الخطر', key: 'level', width: 15 },
+        { header: 'ضوابط التحكم', key: 'controls', width: 45 },
+        { header: 'المخاطر المتبقية', key: 'residual', width: 15 },
+        { header: 'المسؤول', key: 'owner', width: 25 },
+      ]
+
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } }
+
+      all.forEach((row) => {
+        const score = (row.probability || 0) * (row.severity || 0)
+        ws.addRow({
+          code: row.code || '-',
+          zone: row.zone || '-',
+          hazard: row.hazard || '-',
+          activity: row.activity || '-',
+          probability: row.probability || 0,
+          severity: row.severity || 0,
+          score: score,
+          level: row.level || bandLabel(score),
+          controls: row.controls || '-',
+          residual: row.residual || 0,
+          owner: row.owner || '-',
+        })
+      })
+
+      const buf = await wb.xlsx.writeBuffer()
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Risk_Register_HIRA_${new Date().toISOString().split('T')[0]}.xlsx`
+      a.click()
+      window.URL.revokeObjectURL(url)
+      toast('تم تصدير سجل المخاطر بنجاح.', 'ok')
+    } catch (err) {
+      console.error('Export error:', err)
+      toast('حدث خطأ أثناء تصدير سجل المخاطر إلى Excel', 'cr')
+    }
+  }
 
   return (
     <>
       <PageHeader title="تقييم المخاطر" meta="risk assessment register · hira">
-        <Btn icon="download" onClick={() => toast('جاري تصدير سجل المخاطر', 'in')}>
+        <Btn icon="download" onClick={handleExportExcel}>
           تصدير السجل
         </Btn>
-        <Btn variant="pri" icon="plus" onClick={() => toast('نموذج التقييم الجديد يفتح بعد ربط خدمة HIRA', 'in')}>
+        <Btn variant="pri" icon="plus" onClick={() => setFormOpen(true)}>
           تقييم جديد
         </Btn>
       </PageHeader>
@@ -116,16 +177,20 @@ export default function Risk() {
                 head={['الكود', 'المنطقة', 'الخطر', 'النشاط', 'احتمالية', 'شدة', 'الدرجة', 'الضوابط', 'المتبقية', 'المسؤول']}
                 clickable={false}
               >
-                {filtered.map((h) => {
-                  const score = h.probability * h.severity
+                {filtered.map((h, idx) => {
+                  const prob = Number(h?.probability) || 1
+                  const sev = Number(h?.severity) || 1
+                  const score = Number(h?.score) || (prob * sev)
+                  const code = h?.code || `RSK-${idx + 1}`
+                  const residual = Number(h?.residual) || 1
                   return (
-                    <tr key={h.code}>
-                      <td className="mono">{h.code}</td>
-                      <td>{h.zone}</td>
-                      <td>{h.hazard}</td>
-                      <td>{h.activity}</td>
-                      <td className="mono">{h.probability}</td>
-                      <td className="mono">{h.severity}</td>
+                    <tr key={code}>
+                      <td className="mono">{code}</td>
+                      <td>{h?.zone || '-'}</td>
+                      <td>{h?.hazard || '-'}</td>
+                      <td>{h?.activity || '-'}</td>
+                      <td className="mono">{prob}</td>
+                      <td className="mono">{sev}</td>
                       <td>
                         <span
                           className="pill"
@@ -138,11 +203,11 @@ export default function Risk() {
                           {score} {bandLabel(score)}
                         </span>
                       </td>
-                      <td className="text-xs text-txt-2">{h.controls}</td>
+                      <td className="text-xs text-txt-2">{h?.controls || '-'}</td>
                       <td>
-                        <Pill tone={h.residual <= 4 ? 'ok' : h.residual <= 9 ? 'in' : 'wn'}>{h.residual}</Pill>
+                        <Pill tone={residual <= 4 ? 'ok' : residual <= 9 ? 'in' : 'wn'}>{residual}</Pill>
                       </td>
-                      <td className="text-xs">{h.owner}</td>
+                      <td className="text-xs">{h?.owner || '-'}</td>
                     </tr>
                   )
                 })}
@@ -151,6 +216,15 @@ export default function Risk() {
           }
         </Async>
       </Card>
+
+      <RiskForm 
+        open={formOpen} 
+        onClose={() => setFormOpen(false)} 
+        onSuccess={() => {
+          hazards.reload?.()
+          dist.reload?.()
+        }} 
+      />
     </>
   )
 }

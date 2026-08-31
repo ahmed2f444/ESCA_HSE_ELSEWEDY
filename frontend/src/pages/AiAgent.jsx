@@ -10,35 +10,40 @@ import { useAuth, useToast } from '../hooks.jsx'
 import { useTheme } from '../theme.jsx'
 import { Wordmark } from '../components/layout.jsx'
 import MarkdownRenderer from '../components/MarkdownRenderer.jsx'
+import { ROLE_AR } from '../labels.js'
+import { useVoiceAssistant } from '../useVoiceAssistant.js'
+import VoiceSoundWave from '../components/VoiceSoundWave.jsx'
 
 const PROMPT_TEMPLATES = [
-  // ── RAG Knowledge & Standards ──────────────────────────────────────────
+  // ── 1. Dashboard & Metrics (لوحة القيادة) ──────────────────────────────
   {
-    title: 'اشتراطات الأماكن المغلقة (OSHA)',
-    category: 'معايير السلامة',
-    icon: 'document',
-    prompt: 'ما هي اشتراطات الدخول للأماكن المغلقة وحدود فحص الغازات (O2, LEL, H2S, CO) حسب معايير OSHA 1910.146؟',
-    tone: 'in',
-    badge: 'RAG OSHA',
-  },
-  {
-    title: 'القواعد الذهبية للسلامة (ESCA)',
-    category: 'قواعد السويدي',
-    icon: 'reports',
-    prompt: 'ما هي القواعد الذهبية العشر للسلامة (ESCA Safety Golden Rules) المعتمدة في مصانع السويدي للكابلات؟',
+    title: 'ملخص مؤشرات السلامة العامة (Dashboard)',
+    category: 'لوحة القيادة',
+    icon: 'dashboard',
+    prompt: 'اعرض ملخص لوحة قيادة السلامة التنفيذية وساعات العمل الآمنة ومعدل الجاهزية ومعدلات الحوادث المفتوحة.',
     tone: 'safe',
-    badge: 'Golden Rules',
+    badge: 'Dashboard',
   },
   {
-    title: 'معادلة احتساب TRIR و LTIFR',
+    title: 'معادلة ومؤشرات TRIR و LTIFR',
     category: 'مؤشرات الأداء',
     icon: 'reports',
     prompt: 'ما هي المعادلة المعتمدة لحساب مؤشرات TRIR و LTIFR والأيام المتبقية لنفاد مخزون المهمات (Days Until Stockout)؟',
     tone: 'safe',
     badge: 'KPIs',
   },
+
+  // ── 2. Reports & ISO 45001 Analytics (التقارير والتحليلات) ─────────────
   {
-    title: 'بنود مواصفة ISO 45001',
+    title: 'تصدير تقرير السلامة الشهري Excel',
+    category: 'التقارير والتحليلات',
+    icon: 'reports',
+    prompt: 'قم بتصدير مصنف تقارير السلامة والامتثال لمواصفة ISO 45001 لشهر يوليو 2026 إلى ملف Excel.',
+    tone: 'in',
+    badge: 'Report Export',
+  },
+  {
+    title: 'متطلبات بنود ISO 45001',
     category: 'الأيزو الدولية',
     icon: 'document',
     prompt: 'اشرح متطلبات البند 6 (Planning & HIRA) والبند 10 (CAPA) في المواصفة القياسية الدولية ISO 45001:2018.',
@@ -46,68 +51,102 @@ const PROMPT_TEMPLATES = [
     badge: 'ISO 45001',
   },
 
-  // ── Live Database Queries ──────────────────────────────────────────────
+  // ── 3. Incidents & Reporting (الحوادث والبلاغات) ─────────────────────────
   {
-    title: 'الحوادث المفتوحة والخطورة',
-    category: 'استعلام مباشر',
+    title: 'تسجيل بلاغ حادث فوري',
+    category: 'الحوادث والبلاغات',
     icon: 'incident',
-    prompt: 'ما هي الحوادث المفتوحة حالياً في قاعدة البيانات وما هي درجات خطورتها والإجراءات المتخذة؟',
+    prompt: 'سجل بلاغ حادث جديد: العنوان "تسريب زيت هيدروليكي"، الوصف "تسريب زيت في خط سحب الكابلات رقم 3 دون إصابات"، المنطقة 2، درجة الخطورة MODERATE، نوع الحادث UNSAFE_CONDITION.',
     tone: 'cr',
-    badge: 'Live DB',
+    badge: 'CRUD Incident',
   },
   {
-    title: 'تصاريح العمل النشطة ePTW',
-    category: 'استعلام مباشر',
-    icon: 'permit',
-    prompt: 'اعرض تصاريح العمل النشطة والمنتهية المسجلة حالياً في قاعدة بيانات الموقع.',
+    title: 'تحليل السبب الجذري RCA (5 Whys)',
+    category: 'الحوادث والبلاغات',
+    icon: 'incident',
+    prompt: 'اعرض تحليل السبب الجذري RCA وملخص الأسباب الجذرية لحوادث الانسكابات الكيميائية في مصنع الكابلات.',
     tone: 'wn',
-    badge: 'ePTW',
+    badge: 'RCA Analysis',
+  },
+
+  // ── 4. Risk Assessment - HIRA (تقييم المخاطر) ───────────────────────────
+  {
+    title: 'تسجيل تقييم مخاطر HIRA جديد',
+    category: 'تقييم المخاطر',
+    icon: 'risk',
+    prompt: 'سجل تقييم مخاطر جديد (HIRA) لنشاط "تغيير بكرات خط العزل CCV"، الخطر المحتمل "سقوط أحمال ثقيلة"، مستوى الخطر MEDIUM مع إجراءات التحكم الوقائية.',
+    tone: 'wn',
+    badge: 'HIRA Risk',
+  },
+
+  // ── 5. Work Permits - PTW (تصاريح العمل) ────────────────────────────────
+  {
+    title: 'إصدار تصريح عمل ساخن ePTW',
+    category: 'تصاريح العمل',
+    icon: 'permit',
+    prompt: 'انشئ تصريح عمل إلكتروني جديد (Hot Work): لحام مسارات كابلات الجهد المتوسط في المنطقة 3، مدة 8 ساعات، مع فحص الغازات وإجراءات العزل.',
+    tone: 'safe',
+    badge: 'ePTW Permit',
   },
   {
-    title: 'مخزون المهمات تحت حد الطلب',
-    category: 'تنبؤ بالمخزون',
-    icon: 'ppe',
-    prompt: 'اعرض أصناف مهمات الوقاية الشخصية (PPE) التي انخفض رصيدها عن حد إعادة الطلب مع الأيام المتبقية للنفاد.',
+    title: 'فحص تعارضات العمليات المتزامنة SIMOPS',
+    category: 'تصاريح العمل',
+    icon: 'permit',
+    prompt: 'افحص تعارضات العمليات المتزامنة (SIMOPS) لجميع تصاريح العمل النشطة في منطقة الإنتاج رقم 2 واعرض تقرير الأمان.',
+    tone: 'cr',
+    badge: 'SIMOPS Check',
+  },
+
+  // ── 6. Job Safety Analysis - JSA (تحليل المهام) ──────────────────────────
+  {
+    title: 'إنشاء وثيقة تحليل سلامة المهام JSA',
+    category: 'تحليل المهام',
+    icon: 'jsa',
+    prompt: 'انشئ وثيقة تحليل سلامة مهمة (JSA) لعملية "صيانة الرافعات العلوية وتغيير المحركات" في المنطقة 1 مع متطلبات تصريح العمل وإجراءات السلامة.',
     tone: 'in',
-    badge: 'PPE Stock',
+    badge: 'JSA Create',
   },
+
+  // ── 7. Fire Safety Equipment (معدات الحريق) ─────────────────────────────
   {
-    title: 'مطافئ الحريق المنتهية الصلاحية',
-    category: 'معدات الطوارئ',
+    title: 'مطافئ الحريق المنتهية ومعدات الإطفاء',
+    category: 'معدات الحريق',
     icon: 'fire',
-    prompt: 'ما هي مطافئ الحريق ومعدات الإطفاء المنتهية الصلاحية أو التي تحتاج فحص دوري عاجل؟',
+    prompt: 'ما هي مطافئ الحريق ومعدات الإطفاء المنتهية الصلاحية أو التي تحتاج فحص دوري عاجل في جميع المناطق؟',
     tone: 'cr',
     badge: 'Fire Safety',
   },
   {
-    title: 'إحصائيات جولات التفتيش والامتثال',
-    category: 'استعلام مباشر',
-    icon: 'inspection',
-    prompt: 'ما هي إحصائيات ومعدل الامتثال لجولات التفتيش والسلامة ونسبة الملاحظات المفتوحة والمتأخرة؟',
-    tone: 'safe',
-    badge: 'Inspections',
-  },
-  {
-    title: 'قائمة فحص ISO 45001 لمنطقة الإنتاج',
-    category: 'معايير السلامة',
-    icon: 'inspection',
-    prompt: 'اقترح قائمة فحص مطابقة لمعيار ISO 45001 مخصصة لمنطقة خطوط العزل CCV مع تصنيف بنود التدقيق.',
+    title: 'أمر شغل صيانة لمعدة إطفاء',
+    category: 'معدات الحريق',
+    icon: 'fire',
+    prompt: 'سجل أمر شغل صيانة وإعادة تعبئة وضغط هيدروستاتيكي لطفاية البودرة الجافة كود FE-001.',
     tone: 'in',
-    badge: 'ISO Checklist',
+    badge: 'Fire Service',
   },
 
-  // ── CRUD Action Operations ─────────────────────────────────────────────
+  // ── 8. PPE Management (معدات الوقاية) ───────────────────────────────────
   {
-    title: 'تسجيل بلاغ حادث فوري',
-    category: 'عمليات CRUD',
-    icon: 'incident',
-    prompt: 'سجل بلاغ حادث جديد: العنوان "تسريب زيت هيدروليكي"، الوصف "تسريب زيت في خط سحب الكابلات رقم 3 دون إصابات"، المنطقة 2، درجة الخطورة MODERATE، نوع الحادث UNSAFE_CONDITION.',
+    title: 'رفع طلب توريد مهمات (Supply Order)',
+    category: 'معدات الوقاية',
+    icon: 'ppe',
+    prompt: 'ارفع طلب توريد رسمي عاجل لجميع أصناف مهمات الوقاية الشخصية التي انخفض رصيدها عن حد إعادة الطلب لسد عجز المخزن وتغطية الاستهلاك الشهري.',
     tone: 'cr',
-    badge: 'CRUD Create',
+    badge: 'PPE Reorder',
   },
   {
-    title: 'جدولة جولة تفتيش سلامة',
-    category: 'عمليات CRUD',
+    title: 'صرف مهمة وقاية شخصية PPE',
+    category: 'معدات الوقاية',
+    icon: 'ppe',
+    prompt: 'سجل حركة صرف مهمة وقاية شخصية: صرف عدد 2 خوذة أمان عازلة للموظف أحمد سامي وتحديث رصيد المخزن آلياً.',
+    tone: 'safe',
+    badge: 'PPE Transaction',
+  },
+
+  // ── 9. Inspections & Patrols (التفتيش والجولات) ─────────────────────────
+  {
+    title: 'جدولة جولة تفتيش سلامة دورية',
+    category: 'التفتيش والجولات',
     icon: 'inspection',
     prompt: 'جدول جولة تفتيش سلامة دورية جديدة لنظام LOTO والسلامة الكهربائية في عنبر 2 الأسبوع القادم.',
     tone: 'in',
@@ -115,81 +154,108 @@ const PROMPT_TEMPLATES = [
   },
   {
     title: 'تسجيل جولة ميدانية واعتماد نتيجتها',
-    category: 'عمليات CRUD',
+    category: 'التفتيش والجولات',
     icon: 'inspection',
     prompt: 'سجل جولة تفتيش ميدانية مكتملة في عنبر 1 بنسبة التزام 96% مع تسجيل ملاحظة عدم ارتداء نظارات واقية لعامل الصيانة.',
     tone: 'safe',
     badge: 'CRUD Walk',
   },
+
+  // ── 10. Hazardous Materials (المواد الخطرة) ──────────────────────────────
   {
-    title: 'اعتماد تصريح عمل ePTW',
-    category: 'عمليات CRUD',
-    icon: 'permit',
-    prompt: 'اعتمد تصريح العمل ePTW رقم 10 وضع ملاحظة الاعتماد "تمت مراجعة خطة العزل وإجراء فحص الغازات والموافقة على بدء العمل".',
-    tone: 'safe',
-    badge: 'CRUD Update',
-  },
-  {
-    title: 'إضافة إجراء تصحيحي CAPA',
-    category: 'عمليات CRUD',
-    icon: 'reports',
-    prompt: 'انشئ إجراء تصحيحي جديد CAPA: العنوان "تركيب حساسات حرارية إضافية للوحة التحكم"، الأولوية HIGH، موعد الاستحقاق خلال 5 أيام، وتعيين المسؤولية للمهندس المسؤول.',
+    title: 'فحص التوافق وصحائف سلامة المواد MSDS',
+    category: 'المواد الخطرة',
+    icon: 'hazmat',
+    prompt: 'اعرض قائمة المواد الكيميائية الخطرة بالموقع وافحص التوافق الكيميائي لمادة Acetone مع باقي المواد المخزنة.',
     tone: 'wn',
-    badge: 'CRUD Create',
+    badge: 'HazMat MSDS',
   },
+
+  // ── 11. Occupational Health (الصحة المهنية) ──────────────────────────────
   {
-    title: 'رفع طلب توريد مهمات (Supply Order)',
-    category: 'عمليات CRUD',
-    icon: 'ppe',
-    prompt: 'ارفع طلب توريد رسمي عاجل لجميع أصناف مهمات الوقاية الشخصية التي انخفض رصيدها عن حد إعادة الطلب لسد عجز المخزن وتغطية الاستهلاك الشهري.',
+    title: 'توثيق فحص طبي دوري للموظفين',
+    category: 'الصحة المهنية',
+    icon: 'health',
+    prompt: 'سجل نتيجة فحص طبي دوري (قياس السمع والوظائف الرئوية) للموظف رقم 2 بنتيجة FIT وتحديث السجل الصحي.',
+    tone: 'safe',
+    badge: 'Health Exam',
+  },
+
+  // ── 12. Training & Certification (التدريب والتأهيل) ──────────────────────
+  {
+    title: 'اعتماد وتجديد شهادة تدريبية',
+    category: 'التدريب والتأهيل',
+    icon: 'training',
+    prompt: 'سجل اعتماد وتجديد شهادة تدريب السلامة الكيميائية المتقدمة للموظف أحمد سامي لمدة عام كامل وتحديث مصفوفة الكفاءة.',
+    tone: 'safe',
+    badge: 'Training Cert',
+  },
+
+  // ── 13. Automated Monitoring & IoT (المراقبة الآلية) ─────────────────────
+  {
+    title: 'حساسات الغازات وقراءات IoT المباشرة',
+    category: 'المراقبة الآلية',
+    icon: 'iot',
+    prompt: 'اعرض أحدث تنبيهات حساسات الغازات والحرارة الذكية وقراءات كاميرات مراقبة مهمات الوقاية (AI Vision).',
     tone: 'cr',
-    badge: 'CRUD Reorder',
+    badge: 'IoT & Vision',
   },
+
+  // ── 14. System Integration & APIs (الربط والتكامل) ───────────────────────
   {
-    title: 'صرف / إرجاع مهمة وقاية PPE',
-    category: 'عمليات CRUD',
-    icon: 'ppe',
-    prompt: 'سجل حركة صرف مهمة وقاية شخصية: صرف عدد 2 خوذة أمان (Hard Hat) للموظف أحمد سامي وتحديث رصيد المخزون الفعلي.',
+    title: 'فحص حالة الربط والتكامل مع الأنظمة',
+    category: 'الربط والتكامل',
+    icon: 'integrations',
+    prompt: 'اعرض حالة تكامل الأنظمة الخارجية (ERP, SAP, SCADA, Access Control) وتدقيق سجلات المزامنة.',
     tone: 'in',
-    badge: 'CRUD Transaction',
+    badge: 'Integrations',
   },
+
+  // ── 15. Security & Audits (الأمن والتدقيق) ───────────────────────────────
   {
-    title: 'إضافة صنف وقاية جديد للمخزن',
-    category: 'عمليات CRUD',
-    icon: 'ppe',
-    prompt: 'أضف صنف وقاية جديد لمخزون السلامة: الكود "PPE-HLM-05"، الاسم "خوذة أمان عازلة للجهد الكهربائي"، الفئة HEAD، الرصيد 50، حد إعادة الطلب 15، ومعدل الاستهلاك 12 شهرياً.',
+    title: 'تدقيق سجلات العمليات والأمان (Audit Log)',
+    category: 'الأمن والتدقيق',
+    icon: 'security',
+    prompt: 'اعرض أحدث سجلات التدقيق غير القابلة للتعديل (Immutable Audit Log) لعمليات AI والتحقق من بصمات SHA-256.',
     tone: 'safe',
-    badge: 'CRUD Create',
+    badge: 'Audit Trail',
   },
+
+  // ── 16. Reference Data & Zones (البيانات المرجعية والمناطق) ──────────────
   {
-    title: 'فحص واختبار محطة غسيل العيون',
-    category: 'عمليات CRUD',
-    icon: 'fire',
-    prompt: 'سجل نتيجة الفحص والاختبار الدوري لمحطة غسيل العيون ودش الطوارئ بنتيجة PASS وتأكيد جاهزيتها التامة للعمل.',
-    tone: 'safe',
-    badge: 'CRUD Inspect',
+    title: 'استعلام الأقسام والمناطق وسجلات الموظفين',
+    category: 'البيانات المرجعية',
+    icon: 'departments',
+    prompt: 'اعرض قائمة أقسام المصنع ومناطق العمل والمسؤولين المعينين لكل منطقة مع نسب الإشغال والامتثال.',
+    tone: 'in',
+    badge: 'Master Data',
   },
 ]
 
 const AGENT_TOOLS = [
   { name: 'search_hse_knowledge', desc: 'استرجاع لوائح ISO 45001، معايير OSHA، وقواعد السويدي الذهبية', target: 'ISO 45001 / OSHA / ESCA SOPs', category: 'RAG' },
   { name: 'search_database_entities', desc: 'بحث ذكي شامل عبر الحوادث، التصاريح، المهمات، الموظفين، والمعدات', target: 'HSE Database Entities', category: 'RAG' },
-  { name: 'list_incidents / list_permits', desc: 'استعلام مباشر لسجلات الحوادث وتصاريح العمل الإلكترونية ePTW', target: 'incidents, permits', category: 'READ' },
-  { name: 'list_certificates / list_courses', desc: 'استعلام وتدقيق سجلات الشهادات والدورات التدريبية للموظفين', target: 'certificates, training_courses', category: 'READ' },
-  { name: 'get_ppe_stock_status', desc: 'تحليل أرصدة المخزون والتنبؤ بمعدلات الاستهلاك ونفاد الأصناف', target: 'ppe_inventory, transactions', category: 'READ' },
-  { name: 'create_ppe_supply_order', desc: 'رفع طلبات التوريد والشراء التلقائية للأصناف التي انخفض رصيدها عن الحد', target: 'ppe_inventory (REORDER)', category: 'CREATE' },
-  { name: 'create_ppe_transaction', desc: 'تسجيل حركات صرف وإرجاع مهمات الوقاية وتحديث رصيد المخزن آلياً', target: 'ppe_transactions (ISSUE/RETURN)', category: 'CREATE' },
-  { name: 'add_ppe_item / update_ppe_item', desc: 'إضافة وتعديل أصناف مهمات الوقاية ومعدات السلامة الثابتة', target: 'ppe_inventory, fixed_assets', category: 'CREATE' },
-  { name: 'record_fixed_safety_asset_inspection', desc: 'تسجيل واختبار فحص محطات غسيل العيون ودش الطوارئ وأجهزة AED', target: 'fixed_safety_assets (TEST)', category: 'UPDATE' },
-  { name: 'get_expired_fire_equipment', desc: 'فحص مطافئ الحريق المنتهية وجداول الاختبار الهيدروستاتيكي', target: 'fire_equipment, inspections', category: 'READ' },
-  { name: 'create_incident / create_permit', desc: 'تسجيل الحوادث الفورية وإصدار تصاريح العمل الإلكترونية', target: 'incidents, permits (INSERT)', category: 'CREATE' },
-  { name: 'delete_record / cancel_entity', desc: 'إلغاء التصاريح وحذف المسودات مع التوثيق الكامل في سجل التدقيق', target: 'audit_log + Allowed Tables (DELETE)', category: 'DELETE' },
+  { name: 'list_incidents / create_incident', desc: 'تسجيل واستعلام ومتابعة سجلات الحوادث وتوليد نماذج الإبلاغ الخارجية', target: 'incidents, rca (CRUD)', category: 'CREATE' },
+  { name: 'list_permits / create_permit', desc: 'إصدار واعتماد وتحديث تصاريح العمل الإلكترونية ePTW وفحص تعارضات SIMOPS', target: 'permits, simops (CRUD)', category: 'CREATE' },
+  { name: 'schedule_safety_inspection', desc: 'جدولة جولات التفتيش والسلامة الميدانية وتوليد قوائم الفحص الذكية', target: 'inspections, checklists (CRUD)', category: 'CREATE' },
+  { name: 'create_risk_assessment', desc: 'تسجيل وتحديث سجل تقييم المخاطر الميدانية ومصفوفة HIRA', target: 'risk_register (CRUD)', category: 'CREATE' },
+  { name: 'create_jsa / update_jsa', desc: 'إنشاء وتوثيق وثائق تحليل سلامة المهام والأنشطة الحرجة', target: 'jsa_records (CRUD)', category: 'CREATE' },
+  { name: 'get_expired_fire_equipment', desc: 'متابعة وفحص معدات الإطفاء وشبكة الحريق وأوامر شغل الصيانة', target: 'fire_equipment, fixed_assets (CRUD)', category: 'READ' },
+  { name: 'create_ppe_supply_order', desc: 'رفع طلبات التوريد الآلية وإدارة حركات صرف ومخزون مهمات الوقاية', target: 'ppe_inventory, transactions (CRUD)', category: 'CREATE' },
+  { name: 'add_chemical / list_chemicals', desc: 'إدارة سجل المواد الخطرة والتوافق الكيميائي وصحائف السلامة MSDS', target: 'chemicals_inventory (CRUD)', category: 'CREATE' },
+  { name: 'record_medical_exam', desc: 'تسجيل الفحوصات الطبية الدورية ومتابعة التعرضات المهنية', target: 'medical_exams, hygiene (CRUD)', category: 'CREATE' },
+  { name: 'create_certificate', desc: 'توثيق واعتماد شهادات التدريب والسلامة وتحديث مصفوفة الكفاءة', target: 'certificates, training_courses (CRUD)', category: 'CREATE' },
+  { name: 'add_iot_sensor / log_ai_event', desc: 'ربط الحساسات الذكية وتسجيل أحداث كاميرات الذكاء الاصطناعي', target: 'iot_sensors, ai_events (CRUD)', category: 'CREATE' },
+  { name: 'export_reports_excel / pdf', desc: 'تصدير وإرسال التقارير التنفيذية للإدارة وتفعيل الجدولة التلقائية', target: 'reports_engine, analytics (EXPORT)', category: 'ACTION' },
+  { name: 'list_audit_logs / roles', desc: 'مراجعة سجلات التدقيق المشفرة وتوزيع الصلاحيات وأدوار النظام', target: 'audit_log, security_roles (AUDIT)', category: 'READ' },
+  { name: 'delete_record / cancel_entity', desc: 'إلغاء التصاريح وحذف السجلات مع التوثيق الكامل في سجل التدقيق', target: 'audit_log + Railway DB (SUPERUSER)', category: 'DELETE' },
 ]
 
 export default function AiAgent() {
   const { user } = useAuth()
   const toast = useToast()
   const { mode } = useTheme()
+  const isWhiteLogo = mode !== 'light'
   const [modelMode, setModelMode] = useState('auto')
   const [copiedIndex, setCopiedIndex] = useState(null)
   
@@ -207,8 +273,32 @@ export default function AiAgent() {
   const chatMessagesRef = useRef(null)
   const textareaRef = useRef(null)
 
-  const activeUserRole = user?.role || user?.role_name || (user?.username === 'mostafa' ? 'HSE_MANAGER' : (user?.username === 'admin' ? 'ADMIN' : 'HSE_MANAGER'))
-  const isWhiteLogo = mode !== 'light'
+  const voice = useVoiceAssistant({
+    onTranscript: (t) => {
+      setDraft(t)
+    },
+    defaultLang: 'ar-EG',
+  })
+
+  const activeUserRole =
+    user?.role ||
+    user?.role_name ||
+    (user?.username === 'mostafa'
+      ? 'HSE_MANAGER'
+      : user?.username === 'admin'
+      ? 'ADMIN'
+      : user?.username === 'department.manager' || user?.username === 'esca.user03'
+      ? 'PRODUCTION_SUPERVISOR'
+      : 'WORKER')
+
+  const displayUserRole =
+    user?.roleAr ||
+    user?.roleLabel ||
+    user?.job_title ||
+    user?.jobTitle ||
+    ROLE_AR[activeUserRole] ||
+    ROLE_AR[user?.role] ||
+    activeUserRole
 
   // Dedicated container-only scroll to bottom without jumping the outer window
   const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -268,7 +358,7 @@ export default function AiAgent() {
         historyContext,
         modelMode,
         activeUserRole,
-        user?.username || user?.displayName || 'USR-DEV'
+        user?.username || user?.employeeId || 'USR-DEV'
       )
       
       const cleanText = (res.answer || '')
@@ -334,18 +424,362 @@ export default function AiAgent() {
         }
       }
 
-      // Check specifically for permit creation / approval
+      // Check specifically for permit creation / approval / status / delete / SIMOPS
       const permitCall = toolCalls.find(
         (t) =>
           t.tool_name === 'create_permit' ||
           t.name === 'create_permit' ||
           t.tool_name === 'update_permit_status' ||
-          t.name === 'update_permit_status'
+          t.name === 'update_permit_status' ||
+          t.tool_name === 'update_permit' ||
+          t.name === 'update_permit' ||
+          t.tool_name === 'delete_permit' ||
+          t.name === 'delete_permit' ||
+          t.tool_name === 'close_all_permits' ||
+          t.name === 'close_all_permits' ||
+          t.tool_name === 'delete_all_permits' ||
+          t.name === 'delete_all_permits' ||
+          t.tool_name === 'check_simops_conflicts' ||
+          t.name === 'check_simops_conflicts'
       )
       if (permitCall) {
+        const tName = permitCall.tool_name || permitCall.name || ''
+        const result = permitCall.result || permitCall.output || {}
+        const args = permitCall.args || permitCall.arguments || {}
+        const isDelete = tName.includes('delete')
+        const isSimops = tName.includes('simops')
+        const pCode = result.permit_code || `PTW-${result.permit_id || args.permit_id || ''}`
+
+        const notifObj = {
+          id: 'NTF-PTW-' + (result.permit_id || Date.now()),
+          notificationId: result.permit_id || Date.now(),
+          title: isSimops
+            ? `فحص تعارضات العمليات المتزامنة SIMOPS (${result.conflicts_count || 0} تعارض)`
+            : isDelete
+            ? `حذف / إلغاء تصريح العمل (${pCode})`
+            : `تصريح عمل إلكتروني ePTW: ${pCode}`,
+          body: result.message || 'تم تحديث سجل تصاريح العمل الإلكترونية ePTW وإدارة المخاطر بنجاح.',
+          time: 'الآن (مباشر)',
+          color: isDelete ? 'var(--crit)' : isSimops ? 'var(--warn)' : 'var(--safe)',
+          type: 'PERMIT',
+          to: '/permits',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
         window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
         window.dispatchEvent(new CustomEvent('hse:data-changed'))
-        toast('تم تحديث تصاريح العمل الإلكترونية ePTW بنجاح', 'ok')
+        toast(result.message || 'تم تحديث تصاريح العمل الإلكترونية ePTW بنجاح', 'ok')
+      }
+
+      // Check specifically for inspections & findings
+      const inspCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'schedule_safety_inspection' ||
+          t.name === 'schedule_safety_inspection' ||
+          t.tool_name === 'submit_inspection_walk' ||
+          t.name === 'submit_inspection_walk' ||
+          t.tool_name === 'create_inspection_finding' ||
+          t.name === 'create_inspection_finding' ||
+          t.tool_name === 'update_inspection_status' ||
+          t.name === 'update_inspection_status' ||
+          t.tool_name === 'update_inspection' ||
+          t.name === 'update_inspection' ||
+          t.tool_name === 'delete_inspection' ||
+          t.name === 'delete_inspection' ||
+          t.tool_name === 'update_inspection_finding' ||
+          t.name === 'update_inspection_finding' ||
+          t.tool_name === 'delete_inspection_finding' ||
+          t.name === 'delete_inspection_finding'
+      )
+      if (inspCall) {
+        const tName = inspCall.tool_name || inspCall.name || ''
+        const args = inspCall.args || inspCall.arguments || {}
+        const result = inspCall.result || inspCall.output || {}
+        const isDelete = tName.includes('delete')
+        const isFinding = tName.includes('finding')
+
+        const notifObj = {
+          id: 'NTF-INSP-' + (result.inspection_id || result.finding_id || Date.now()),
+          notificationId: result.inspection_id || result.finding_id || Date.now(),
+          title: isDelete
+            ? `حذف سجل #${result.inspection_id || result.finding_id || args.inspection_id || ''}`
+            : isFinding
+            ? `ملاحظات التفتيش وعدم المطابقة (${args.category || result.category || 'ميدانية'})`
+            : `جولات التفتيش: ${args.inspection_type || result.inspection_type || 'جولة سلامة'}`,
+          body: result.message || `تم تنفيذ العملية بنجاح وتحديث لوحة جولات السلامة والتفتيش.`,
+          time: 'الآن (مباشر)',
+          color: isDelete ? 'var(--crit)' : isFinding ? 'var(--warn)' : 'var(--safe)',
+          type: 'INSPECTION',
+          to: '/inspections',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث سجلات التفتيش والجولات بنجاح', 'ok')
+      }
+
+      // Check specifically for PPE & Safety Equipment
+      const ppeCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_ppe_supply_order' ||
+          t.name === 'create_ppe_supply_order' ||
+          t.tool_name === 'create_ppe_transaction' ||
+          t.name === 'create_ppe_transaction' ||
+          t.tool_name === 'delete_ppe_transaction' ||
+          t.name === 'delete_ppe_transaction' ||
+          t.tool_name === 'add_ppe_item' ||
+          t.name === 'add_ppe_item' ||
+          t.tool_name === 'update_ppe_item' ||
+          t.name === 'update_ppe_item' ||
+          t.tool_name === 'delete_ppe_item' ||
+          t.name === 'delete_ppe_item' ||
+          t.tool_name === 'update_ppe_stock' ||
+          t.name === 'update_ppe_stock' ||
+          t.tool_name === 'record_fixed_safety_asset_inspection' ||
+          t.name === 'record_fixed_safety_asset_inspection'
+      )
+      if (ppeCall) {
+        const tName = ppeCall.tool_name || ppeCall.name || ''
+        const result = ppeCall.result || ppeCall.output || {}
+        const args = ppeCall.args || ppeCall.arguments || {}
+        const isOrder = tName.includes('supply_order')
+        const isTx = tName.includes('transaction')
+        const isFixed = tName.includes('fixed_safety')
+
+        const notifObj = {
+          id: 'NTF-PPE-' + (result.transaction_id || result.order_reference || result.ppe_item_id || Date.now()),
+          notificationId: result.transaction_id || result.ppe_item_id || Date.now(),
+          title: isOrder
+            ? `طلب توريد مهمات الوقاية (${result.order_reference || 'PO-PPE'})`
+            : isTx
+            ? `حركة مهمات الوقاية: ${result.transaction_type_ar || 'صرف / إرجاع'}`
+            : isFixed
+            ? `فحص معدات السلامة: ${result.asset_name || 'معدة سلامة ثابتة'}`
+            : `تحديث مخزون الوقاية: ${result.item_code || result.name_ar || 'صنف مهمة'}`,
+          body: result.message || 'تم تحديث سجلات مهمات الوقاية الشخصية ومخزون السلامة بنجاح.',
+          time: 'الآن (مباشر)',
+          color: isOrder ? 'var(--info)' : 'var(--safe)',
+          type: 'PPE',
+          to: '/ppe',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث مهمات الوقاية ومخزون السلامة بنجاح', 'ok')
+      }
+
+      // Check specifically for Risk Assessment (HIRA)
+      const riskCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_risk_assessment' ||
+          t.name === 'create_risk_assessment' ||
+          t.tool_name === 'update_risk_assessment' ||
+          t.name === 'update_risk_assessment'
+      )
+      if (riskCall) {
+        const result = riskCall.result || riskCall.output || {}
+        const args = riskCall.args || riskCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-RISK-' + (result.risk_id || Date.now()),
+          notificationId: result.risk_id || Date.now(),
+          title: `تقييم المخاطر الميدانية (HIRA #${result.risk_id || ''})`,
+          body: result.message || `تم تسجيل تقييم الخطر (${result.hazard || args.hazard || 'مخاطر تشغيلية'}) وتحديث مصفوفة المخاطر.`,
+          time: 'الآن (مباشر)',
+          color: result.risk_level === 'HIGH' || result.risk_level === 'CRITICAL' ? 'var(--crit)' : 'var(--warn)',
+          type: 'RISK_ASSESSMENT',
+          to: '/risk',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث سجل تقييم المخاطر بنجاح', 'ok')
+      }
+
+      // Check specifically for Job Safety Analysis (JSA)
+      const jsaCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_jsa' ||
+          t.name === 'create_jsa' ||
+          t.tool_name === 'update_jsa' ||
+          t.name === 'update_jsa'
+      )
+      if (jsaCall) {
+        const result = jsaCall.result || jsaCall.output || {}
+        const args = jsaCall.args || jsaCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-JSA-' + (result.jsa_id || Date.now()),
+          notificationId: result.jsa_id || Date.now(),
+          title: `تحليل سلامة المهام (JSA #${result.jsa_id || ''})`,
+          body: result.message || `تم اعتماد وثيقة تحليل سلامة المهمة (${result.task_name || args.task_name || 'مهمة عمل'}) بنجاح.`,
+          time: 'الآن (مباشر)',
+          color: 'var(--safe)',
+          type: 'JSA',
+          to: '/jsa',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث وثيقة تحليل سلامة المهمة بنجاح', 'ok')
+      }
+
+      // Check specifically for HazMat / Chemicals
+      const hazmatCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'add_chemical' ||
+          t.name === 'add_chemical' ||
+          t.tool_name === 'update_chemical' ||
+          t.name === 'update_chemical' ||
+          t.tool_name === 'update_chemical_stock' ||
+          t.name === 'update_chemical_stock'
+      )
+      if (hazmatCall) {
+        const result = hazmatCall.result || hazmatCall.output || {}
+        const args = hazmatCall.args || hazmatCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-HAZ-' + (result.chemical_id || Date.now()),
+          notificationId: result.chemical_id || Date.now(),
+          title: `سجل المواد الكيميائية والخطرة: ${result.trade_name || args.trade_name || 'مادة كيميائية'}`,
+          body: result.message || 'تم تحديث بيانات صحيفة السلامة (MSDS) والتوافق الكيميائي للمادة بنجاح.',
+          time: 'الآن (مباشر)',
+          color: 'var(--warn)',
+          type: 'HAZMAT',
+          to: '/hazmat',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث سجل المواد الخطرة بنجاح', 'ok')
+      }
+
+      // Check specifically for Occupational Health / Medical Exam
+      const healthCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'record_medical_exam' ||
+          t.name === 'record_medical_exam' ||
+          t.tool_name === 'schedule_medical_exam' ||
+          t.name === 'schedule_medical_exam' ||
+          t.tool_name === 'update_medical_exam' ||
+          t.name === 'update_medical_exam'
+      )
+      if (healthCall) {
+        const result = healthCall.result || healthCall.output || {}
+        const args = healthCall.args || healthCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-HLT-' + (result.exam_id || Date.now()),
+          notificationId: result.exam_id || Date.now(),
+          title: `الصحة المهنية والفحص الطبي: ${result.employee_name || args.employee_name || 'موظف'}`,
+          body: result.message || 'تم توثيق نتيجة الفحص الطبي وتحديث سجل الكفاءة والملائمة الصحية.',
+          time: 'الآن (مباشر)',
+          color: result.fitness_result === 'UNFIT' ? 'var(--crit)' : 'var(--safe)',
+          type: 'OCCUPATIONAL_HEALTH',
+          to: '/occupational-health',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم توثيق بيانات الفحص الطبي بنجاح', 'ok')
+      }
+
+      // Check specifically for AI Vision & IoT Monitoring
+      const iotCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'add_iot_sensor' ||
+          t.name === 'add_iot_sensor' ||
+          t.tool_name === 'update_iot_sensor' ||
+          t.name === 'update_iot_sensor' ||
+          t.tool_name === 'log_ai_event' ||
+          t.name === 'log_ai_event'
+      )
+      if (iotCall) {
+        const result = iotCall.result || iotCall.output || {}
+        const args = iotCall.args || iotCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-IOT-' + (result.sensor_id || result.event_id || Date.now()),
+          notificationId: result.sensor_id || result.event_id || Date.now(),
+          title: `المراقبة الآلية والحساسات البيئية (${result.sensor_tag || args.sensor_tag || 'حساس ذكي'})`,
+          body: result.message || 'تم تسجيل بيانات الحساس الذكي وتحديث منظومة المراقبة الآلية الحية.',
+          time: 'الآن (مباشر)',
+          color: 'var(--info)',
+          type: 'IOT_MONITORING',
+          to: '/ai-iot',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث منظومة المراقبة الآلية والحساسات', 'ok')
+      }
+
+      // Check specifically for CAPA
+      const capaCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_capa' ||
+          t.name === 'create_capa' ||
+          t.tool_name === 'update_capa_status' ||
+          t.name === 'update_capa_status'
+      )
+      if (capaCall) {
+        const result = capaCall.result || capaCall.output || {}
+        const args = capaCall.args || capaCall.arguments || {}
+        const notifObj = {
+          id: 'NTF-CAPA-' + (result.capa_id || Date.now()),
+          notificationId: result.capa_id || Date.now(),
+          title: `إجراء تصحيحي ووقائي (CAPA #${result.capa_id || ''})`,
+          body: result.message || `تم تحديث خطة الإجراءات التصحيحية (${result.title || args.title || 'إجراء سلامة'}).`,
+          time: 'الآن (مباشر)',
+          color: 'var(--warn)',
+          type: 'CAPA',
+          to: '/reports',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تحديث سجل الإجراءات التصحيحية CAPA', 'ok')
+      }
+
+      // Check specifically for Master Data / Employee / Superuser
+      const masterCall = toolCalls.find(
+        (t) =>
+          t.tool_name === 'create_employee' ||
+          t.name === 'create_employee' ||
+          t.tool_name === 'update_employee' ||
+          t.name === 'update_employee' ||
+          t.tool_name === 'delete_record' ||
+          t.name === 'delete_record' ||
+          t.tool_name === 'cancel_entity' ||
+          t.name === 'cancel_entity' ||
+          t.tool_name === 'execute_database_dml' ||
+          t.name === 'execute_database_dml'
+      )
+      if (masterCall) {
+        const tName = masterCall.tool_name || masterCall.name || ''
+        const result = masterCall.result || masterCall.output || {}
+        const args = masterCall.args || masterCall.arguments || {}
+        const isDelete = tName.includes('delete') || tName.includes('cancel')
+        const notifObj = {
+          id: 'NTF-ADM-' + Date.now(),
+          notificationId: Date.now(),
+          title: isDelete
+            ? `إجراء إداري: حذف / إلغاء سجل (${args.table_name || args.entity_type || 'قاعدة البيانات'})`
+            : `البيانات المرجعية والموظفين: ${result.display_name || args.display_name || 'تحديث البيانات'}`,
+          body: result.message || 'تم تحديث البيانات المركزية وقيد العملية في سجل التدقيق غير القابل للتعديل.',
+          time: 'الآن (مباشر)',
+          color: isDelete ? 'var(--crit)' : 'var(--safe)',
+          type: 'MASTER_DATA',
+          to: '/departments',
+          unread: true,
+        }
+        window.dispatchEvent(new CustomEvent('hse:notification', { detail: notifObj }))
+        window.dispatchEvent(new CustomEvent('hse:notifications-changed'))
+        window.dispatchEvent(new CustomEvent('hse:data-changed'))
+        toast(result.message || 'تم تنفيذ الإجراء الإداري وتحديث البيانات', 'ok')
       }
 
       // Check specifically for fire equipment actions (inspections, service, add, update)
@@ -517,7 +951,9 @@ export default function AiAgent() {
         toast(result.message || 'تمت أتمتة إجراء التقارير بنجاح', 'ok')
       }
 
+      const msgId = 'msg-' + Date.now()
       const agentMsg = {
+        id: msgId,
         role: 'agent',
         text: cleanAnswer,
         tools: res.tool_calls || res.tools || [],
@@ -526,6 +962,10 @@ export default function AiAgent() {
       }
 
       setMessages((prev) => [...prev, agentMsg])
+
+      if (voice.autoSpeak) {
+        voice.speak(cleanAnswer, msgId)
+      }
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -645,6 +1085,21 @@ export default function AiAgent() {
             >
               <Icon name="bolt" size={13} />
               <span>تلقائي (Auto)</span>
+            </button>
+            {/* Voice Auto-Speak Toggle */}
+            <button
+              type="button"
+              onClick={voice.toggleAutoSpeak}
+              title={voice.autoSpeak ? 'القراءة الصوتية التلقائية مفعلة (انقر للتعطيل)' : 'تفعيل القراءة الصوتية التلقائية'}
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                voice.autoSpeak
+                  ? 'bg-safe/20 text-safe border border-safe/40 shadow-sm'
+                  : 'text-txt-2 hover:text-txt hover:bg-steel-3 border border-transparent'
+              }`}
+            >
+              <Icon name={voice.autoSpeak ? 'volume' : 'volume-off'} size={13} />
+              <span>{voice.autoSpeak ? 'الصوت التلقائي (مفعل)' : 'الصوت التلقائي'}</span>
+              {voice.isSpeaking && <VoiceSoundWave isSpeaking={true} size="sm" />}
             </button>
           </div>
 
@@ -792,7 +1247,7 @@ export default function AiAgent() {
                       )}
                     </div>
 
-                    {/* Message Actions (Copy text) */}
+                    {/* Message Actions (Copy & Read Aloud) */}
                     {!isUser && !m.error && (
                       <div className="flex items-center gap-2 mt-1.5 px-1">
                         <button
@@ -803,6 +1258,22 @@ export default function AiAgent() {
                         >
                           <Icon name={copiedIndex === i ? 'check' : 'document'} size={12} />
                           <span>{copiedIndex === i ? 'تم النسخ' : 'نسخ'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => voice.speak(m.text, m.id || i)}
+                          className={`inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-md transition-colors ${
+                            voice.activeSpeakingId === (m.id || i) && voice.isSpeaking
+                              ? 'bg-safe/15 text-safe font-semibold'
+                              : 'text-txt-3 hover:text-hi hover:bg-steel-3'
+                          }`}
+                          title={voice.activeSpeakingId === (m.id || i) && voice.isSpeaking ? 'إيقاف الصوت' : 'استمع للإجابة'}
+                        >
+                          <Icon name={voice.activeSpeakingId === (m.id || i) && voice.isSpeaking ? 'stop' : 'volume'} size={12} />
+                          <span>{voice.activeSpeakingId === (m.id || i) && voice.isSpeaking ? 'إيقاف' : 'استمع'}</span>
+                          {voice.activeSpeakingId === (m.id || i) && voice.isSpeaking && (
+                            <VoiceSoundWave isSpeaking={true} size="sm" />
+                          )}
                         </button>
                       </div>
                     )}
@@ -859,17 +1330,44 @@ export default function AiAgent() {
         {/* ── 4. Clean Docked Prompt Input Bar ─────────────────────────────── */}
         <div className="sticky bottom-0 z-20 p-3 sm:p-4 bg-steel-2/95 backdrop-blur-xl border-t border-line">
           <div className="max-w-3xl mx-auto w-full flex flex-col gap-1.5">
+            {/* Live Listening Banner */}
+            {voice.isListening && (
+              <div className="px-4 py-2 bg-crit/10 border border-crit/30 rounded-xl flex items-center justify-between text-xs text-crit animate-pulse">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-crit animate-ping" />
+                  <span className="font-semibold text-xs">جارٍ الاستماع لصوتك عبر الميكروفون...</span>
+                  <VoiceSoundWave isListening={true} size="md" />
+                </div>
+                <span className="text-[11px] text-txt-3 font-mono">تحدث الآن بلغتك الطبيعية</span>
+              </div>
+            )}
+
             {/* Input Box Wrapper */}
             <div className="relative flex items-end gap-2 bg-steel-3/90 border border-line focus-within:border-hi/70 focus-within:ring-2 focus-within:ring-hi/20 rounded-2xl p-2 sm:p-2.5 transition-all shadow-lg">
+              {/* Mic Voice Assistant Button */}
+              <button
+                type="button"
+                onClick={voice.toggleListening}
+                title={voice.isListening ? 'إيقاف التسجيل الصوتي' : 'تحدث بالصوت (Voice Assistant)'}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 mb-0.5 shadow-md ${
+                  voice.isListening
+                    ? 'mic-btn-active text-white'
+                    : 'bg-steel-2 text-txt-2 hover:text-hi hover:bg-steel active:scale-95'
+                }`}
+                aria-label="تسجيل صوتي"
+              >
+                <Icon name="mic" size={16} />
+              </button>
+
               {/* Dynamic Auto-Expanding Textarea */}
               <textarea
                 ref={textareaRef}
-                value={draft}
+                value={voice.interimTranscript ? (draft ? `${draft} ${voice.interimTranscript}` : voice.interimTranscript) : draft}
                 disabled={busy}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                placeholder="اسأل عن معايير السلامة (OSHA / ISO 45001)، استعلم عن الحوادث والمهمات، أو اطلب إجراء تعديل..."
+                placeholder={voice.isListening ? 'جارٍ الاستماع والتفريغ الصوتي الفوري…' : 'اسأل عن معايير السلامة (OSHA / ISO 45001)، أو استخدم الميكروفون للتحدث…'}
                 className="flex-1 bg-transparent text-xs sm:text-[13px] text-txt placeholder:text-txt-3 focus:outline-none resize-none px-2 py-1.5 max-h-[180px] leading-relaxed"
                 style={{ minHeight: '44px' }}
               />
@@ -908,7 +1406,7 @@ export default function AiAgent() {
                 اضغط <kbd className="px-1 py-0.5 rounded bg-steel-3 border border-line text-txt-2">Enter</kbd> للإرسال · <kbd className="px-1 py-0.5 rounded bg-steel-3 border border-line text-txt-2">Shift + Enter</kbd> لسطر جديد
               </span>
               <span className="hidden sm:inline">
-                الدور الحالي: <b className="text-hi">{activeUserRole}</b>
+                الدور الحالي: <b className="text-hi">{displayUserRole}</b>
               </span>
             </div>
           </div>

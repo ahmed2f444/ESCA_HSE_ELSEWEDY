@@ -13,6 +13,7 @@ import { USE_MOCK } from '../api/client.js'
 /** Nav order follows the plant's own priority: what gets someone hurt first. */
 export const NAV = [
   { to: '/', label: 'لوحة القيادة', icon: 'gauge', end: true },
+  { to: '/profile', label: 'الملف الشخصي', icon: 'user' },
   { to: '/master-data', label: 'البيانات المرجعية', icon: 'document' },
   { to: '/departments', label: 'الأقسام والمناطق', icon: 'zones' },
   { to: '/incidents', label: 'الحوادث والبلاغات', icon: 'incident', badge: 3 },
@@ -430,6 +431,16 @@ function UserChip() {
             }}
           >
             <Icon name="logout" size={14} /> تسجيل الخروج
+          </button>
+          <button
+            role="menuitem"
+            className="w-full text-start px-3.5 py-2.5 text-[12.5px] flex items-center gap-2 hover:bg-steel-3"
+            onClick={() => {
+              setOpen(false)
+              nav('/profile')
+            }}
+          >
+            <Icon name="user" size={14} /> الملف الشخصي
           </button>
         </div>
       )}

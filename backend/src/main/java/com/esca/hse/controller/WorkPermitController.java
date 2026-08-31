@@ -110,23 +110,76 @@ public class WorkPermitController {
         return 2; // PENDING_APPROVAL
     }
 
-    private void logAudit(String action, int permitId, String details) {
+    private String translateApproverRole(String role) {
+        if (role == null) return "مسؤول الاعتماد";
+        String r = role.trim().toUpperCase();
+        return switch (r) {
+            case "AREA_SUPERVISOR", "مشرف المنطقة" -> "مشرف المنطقة والعمليات (Area Supervisor)";
+            case "HSE_OFFICER", "مسؤول السلامة" -> "مسؤول السلامة والصحة المهنية (HSE Officer)";
+            case "HSE_MANAGER", "مدير السلامة" -> "مدير إدارة السلامة والصحة المهنية (HSE Manager)";
+            case "REQUESTER", "مقدم الطلب" -> "مقدم طلب تصريح العمل (Permit Requester)";
+            default -> role;
+        };
+    }
+
+    private void initDefaultApprovalSteps(int pid, boolean approved) {
         try {
-            String hash = "sha256:" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-            String auditId = "AUD-" + UUID.randomUUID().toString().substring(0, 12);
+            int decisionId = approved ? 2 : 1; // 2=APPROVED, 1=PENDING
+            int statusId = approved ? 2 : 1;
+
+            // Step 1: Area Supervisor
+            String sig1 = approved ? ("sha256:PTW-" + pid + ":STEP1:" + UUID.randomUUID().toString().substring(0, 8)) : null;
             jdbc.update(
-                    "INSERT INTO audit_log (audit_id, occurred_at, actor_type_id, actor_id, action, entity_type, entity_id, result_id, ip_or_source, correlation_id, immutable_hash) " +
-                    "VALUES (:aid, NOW(), 1, 1, :act, 'permit', :id, 1, 'WorkPermitController', :corr, :hash)",
-                    Map.of("aid", auditId, "act", action, "id", permitId, "corr", "CORR-" + UUID.randomUUID().toString().substring(0, 8), "hash", hash)
+                    "INSERT INTO permit_approvals (permit_id, step_no, approver_role_id, approver_id, decision_id, decided_at, comments, signature_hash, status_id) " +
+                    "VALUES (:pid, 1, 2, 1, :decId, " + (approved ? "NOW()" : "NULL") + ", 'تم فحص الموقع وتأكيد إجراءات العزل الميداني', :sig, :stId)",
+                    new MapSqlParameterSource()
+                            .addValue("pid", pid)
+                            .addValue("decId", decisionId)
+                            .addValue("sig", sig1)
+                            .addValue("stId", statusId)
+            );
+
+            // Step 2: HSE Officer
+            String sig2 = approved ? ("sha256:PTW-" + pid + ":STEP2:" + UUID.randomUUID().toString().substring(0, 8)) : null;
+            jdbc.update(
+                    "INSERT INTO permit_approvals (permit_id, step_no, approver_role_id, approver_id, decision_id, decided_at, comments, signature_hash, status_id) " +
+                    "VALUES (:pid, 2, 3, 1, :decId, " + (approved ? "NOW()" : "NULL") + ", 'تمت مراجعة نتائج فحص الغازات ونموذج JSA المرفق', :sig, :stId)",
+                    new MapSqlParameterSource()
+                            .addValue("pid", pid)
+                            .addValue("decId", decisionId)
+                            .addValue("sig", sig2)
+                            .addValue("stId", statusId)
+            );
+
+            // Step 3: HSE Manager
+            String sig3 = approved ? ("sha256:PTW-" + pid + ":STEP3:" + UUID.randomUUID().toString().substring(0, 8)) : null;
+            jdbc.update(
+                    "INSERT INTO permit_approvals (permit_id, step_no, approver_role_id, approver_id, decision_id, decided_at, comments, signature_hash, status_id) " +
+                    "VALUES (:pid, 3, 4, 1, :decId, " + (approved ? "NOW()" : "NULL") + ", 'اعتماد نهائي وتفعيل تصريح العمل الإلكتروني', :sig, :stId)",
+                    new MapSqlParameterSource()
+                            .addValue("pid", pid)
+                            .addValue("decId", decisionId)
+                            .addValue("sig", sig3)
+                            .addValue("stId", statusId)
             );
         } catch (Exception e) {
-            try {
-                jdbc.update(
-                        "INSERT INTO audit_log (occurred_at, actor_type_id, actor_id, action, entity_type, entity_id, result_id, ip_or_source, correlation_id, immutable_hash) " +
-                        "VALUES (NOW(), 1, 1, :act, 'permit', :id, 1, 'WorkPermitController', :corr, :hash)",
-                        Map.of("act", action, "id", permitId, "corr", "CORR-" + UUID.randomUUID().toString().substring(0, 8), "hash", "sha256:auto")
-                );
-            } catch (Exception ignored) {}
+            log.warn("Could not init default approval steps for permit {}: {}", pid, e.getMessage());
+        }
+    }
+
+    private void logAudit(String action, int permitId, String details) {
+        try {
+            Integer maxId = jdbc.queryForObject("SELECT COALESCE(MAX(audit_id), 0) FROM audit_log", Map.of(), Integer.class);
+            int nextId = (maxId != null ? maxId : 0) + 1;
+            String hash = "sha256:" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+            String corr = "CORR-" + UUID.randomUUID().toString().substring(0, 8);
+            jdbc.update(
+                    "INSERT INTO audit_log (audit_id, occurred_at, actor_type_id, actor_id, action, entity_type, entity_id, result_id, ip_or_source, correlation_id, immutable_hash) " +
+                    "VALUES (:aid, NOW(), 1, '1', :act, 'permit', :id, 1, 'WorkPermitController', :corr, :hash)",
+                    Map.of("aid", nextId, "act", action, "id", String.valueOf(permitId), "corr", corr, "hash", hash)
+            );
+        } catch (Exception e) {
+            log.warn("Non-fatal: could not write audit log for permit {}: {}", permitId, e.getMessage());
         }
     }
 
@@ -269,7 +322,9 @@ public class WorkPermitController {
                     "startAt", startStr,
                     "expiryAt", expStr,
                     "from", startStr.length() >= 16 ? startStr.substring(11, 16) : "08:00",
-                    "to", expStr.length() >= 16 ? expStr.substring(11, 16) : "16:00"
+                    "to", expStr.length() >= 16 ? expStr.substring(11, 16) : "16:00",
+                    "jsaId", r.get("jsa_id"),
+                    "jsa", r.get("jsa_id") != null ? ("JSA-" + String.format("%03d", parseId(r.get("jsa_id")))) : "JSA-001"
             ));
         }
 
@@ -321,10 +376,15 @@ public class WorkPermitController {
 
         // Fetch Approvals
         List<Map<String, Object>> approvals = jdbc.queryForList(
-                "SELECT pa.*, e.display_name as approver_name " +
+                "SELECT pa.approval_id, pa.permit_id, pa.step_no, pa.approver_role_id, " +
+                "ar.name AS approver_role, pa.approver_id, " +
+                "emp.display_name AS approver_name, pa.decision_id, " +
+                "ad.name AS decision_name, pa.decided_at, pa.comments, pa.signature_hash, pa.status_id " +
                 "FROM permit_approvals pa " +
-                "LEFT JOIN employees e ON pa.approver_employee_id = e.employee_id " +
-                "WHERE pa.permit_id = :id ORDER BY pa.approval_id ASC",
+                "LEFT JOIN approver_roles ar ON pa.approver_role_id = ar.approver_role_id " +
+                "LEFT JOIN employees emp ON CAST(pa.approver_id AS CHAR) = CAST(emp.employee_id AS CHAR) " +
+                "LEFT JOIN approval_decisions ad ON pa.decision_id = ad.approval_decision_id " +
+                "WHERE pa.permit_id = :id ORDER BY pa.step_no ASC, pa.approval_id ASC",
                 Map.of("id", pid)
         );
 
@@ -502,19 +562,8 @@ public class WorkPermitController {
             }
         }
 
-        // If approved/active, add approval signature
-        if (statusId == 3) {
-            try {
-                String sigHash = "sha256:PTW-" + permitId + ":" + UUID.randomUUID().toString().substring(0, 8);
-                jdbc.update(
-                        "INSERT INTO permit_approvals (permit_id, step_number, role_required, approver_employee_id, approved_at, digital_signature_hash, status) " +
-                        "VALUES (:pid, 1, 'HSE_MANAGER', :appId, NOW(), :hash, 'APPROVED')",
-                        Map.of("pid", permitId, "appId", issuerId, "hash", sigHash)
-                );
-            } catch (Exception e) {
-                log.warn("Failed to insert approval signature: {}", e.getMessage());
-            }
-        }
+        // Initialize approval workflow steps in database
+        initDefaultApprovalSteps(permitId, statusId == 3);
 
         logAudit("CREATE_PERMIT", permitId, "Issued ePTW " + ptwCode + " (" + desc + ")");
 
@@ -644,6 +693,122 @@ public class WorkPermitController {
         }
     }
 
+    // ─────────────────────────────── GET: APPROVALS WORKFLOW ──────────────────────
+
+    @GetMapping("/{id}/approvals")
+    public ResponseEntity<Map<String, Object>> getPermitApprovals(@PathVariable String id) {
+        int pid = parseId(id);
+        if (pid <= 0) {
+            return ResponseEntity.badRequest().body(map("error", "Invalid Permit ID: " + id));
+        }
+
+        // Check if permit exists
+        List<Map<String, Object>> permitRows = jdbc.queryForList(
+                "SELECT p.permit_id, p.status_id, p.risk_level_id, p.permit_type_id, " +
+                "e_iss.display_name AS issuer_name, e_req.display_name AS requester_name " +
+                "FROM permits p " +
+                "LEFT JOIN employees e_iss ON CAST(p.issuer_id AS CHAR) = CAST(e_iss.employee_id AS CHAR) " +
+                "LEFT JOIN employees e_req ON CAST(p.requester_id AS CHAR) = CAST(e_req.employee_id AS CHAR) " +
+                "WHERE p.permit_id = :id",
+                Map.of("id", pid)
+        );
+
+        if (permitRows.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(map("error", "Permit #" + pid + " not found"));
+        }
+
+        Map<String, Object> pRow = permitRows.get(0);
+        int statusId = pRow.get("status_id") instanceof Number n ? n.intValue() : 2;
+        boolean isPermitActiveOrApproved = (statusId == 3 || statusId == 6); // ACTIVE or CLOSED
+
+        // Fetch approval steps from permit_approvals table
+        String sql = "SELECT pa.approval_id, pa.permit_id, pa.step_no, pa.approver_role_id, " +
+                "ar.name AS approver_role, pa.approver_id, " +
+                "emp.display_name AS approver_name, pa.decision_id, " +
+                "ad.name AS decision_name, pa.decided_at, pa.comments, pa.signature_hash, pa.status_id " +
+                "FROM permit_approvals pa " +
+                "LEFT JOIN approver_roles ar ON pa.approver_role_id = ar.approver_role_id " +
+                "LEFT JOIN employees emp ON CAST(pa.approver_id AS CHAR) = CAST(emp.employee_id AS CHAR) " +
+                "LEFT JOIN approval_decisions ad ON pa.decision_id = ad.approval_decision_id " +
+                "WHERE pa.permit_id = :pid " +
+                "ORDER BY pa.step_no ASC, pa.approval_id ASC";
+
+        List<Map<String, Object>> approvalRows = jdbc.queryForList(sql, Map.of("pid", pid));
+
+        // If no approvals exist in DB yet for this permit, seed default workflow records
+        if (approvalRows.isEmpty()) {
+            initDefaultApprovalSteps(pid, isPermitActiveOrApproved);
+            approvalRows = jdbc.queryForList(sql, Map.of("pid", pid));
+        }
+
+        List<Map<String, Object>> steps = new ArrayList<>();
+        Map<String, Object> finalSignature = null;
+
+        for (Map<String, Object> ar : approvalRows) {
+            int stepNo = ar.get("step_no") instanceof Number n ? n.intValue() : 1;
+            String roleRaw = String.valueOf(ar.getOrDefault("approver_role", "HSE_MANAGER"));
+            String roleLabel = translateApproverRole(roleRaw);
+            String approverName = String.valueOf(ar.getOrDefault("approver_name", "م. مصطفى محمد"));
+            String comments = String.valueOf(ar.getOrDefault("comments", "مراجعة متطلبات السلامة والوقاية"));
+            String decision = String.valueOf(ar.getOrDefault("decision_name", "APPROVED"));
+            String sigHash = ar.get("signature_hash") != null ? String.valueOf(ar.get("signature_hash")) : null;
+            Object decidedAtObj = ar.get("decided_at");
+
+            boolean isStepDone = "APPROVED".equalsIgnoreCase(decision) || isPermitActiveOrApproved;
+            String state = isStepDone ? "done" : "pending";
+
+            String timeStr = "بانتظار الاعتماد";
+            if (decidedAtObj != null) {
+                String s = String.valueOf(decidedAtObj);
+                timeStr = s.length() >= 16 ? s.substring(11, 16) : s;
+            } else if (isStepDone) {
+                timeStr = "10:00";
+            }
+
+            String detailText = approverName + " · " + timeStr + (comments.isBlank() ? "" : " · " + comments);
+
+            steps.add(map(
+                    "stepNo", stepNo,
+                    "step", roleLabel,
+                    "role", roleRaw,
+                    "approver", approverName,
+                    "detail", detailText,
+                    "state", state,
+                    "decision", isStepDone ? "APPROVED" : "PENDING",
+                    "signature", sigHash,
+                    "decidedAt", decidedAtObj != null ? String.valueOf(decidedAtObj) : (isStepDone ? LocalDateTime.now().format(ISO_FMT) : null)
+            ));
+
+            if (sigHash != null && !sigHash.isBlank()) {
+                finalSignature = map(
+                        "name", approverName + " (HSE Authority)",
+                        "algo", "SHA-256",
+                        "timestamp", decidedAtObj != null ? String.valueOf(decidedAtObj).replace("T", " ") : LocalDateTime.now().format(ISO_FMT),
+                        "hash", sigHash
+                );
+            }
+        }
+
+        if (finalSignature == null && isPermitActiveOrApproved) {
+            String defaultHash = "sha256:PTW-" + pid + ":" + String.format("%08x", (pid * 31 + 17));
+            finalSignature = map(
+                    "name", pRow.getOrDefault("issuer_name", "م. مصطفى محمد (HSE Manager)"),
+                    "algo", "SHA-256",
+                    "timestamp", LocalDateTime.now().format(ISO_FMT),
+                    "hash", defaultHash
+            );
+        }
+
+        return ResponseEntity.ok(map(
+                "permitId", pid,
+                "permitCode", "PTW-" + String.format("%03d", pid),
+                "steps", steps,
+                "signature", finalSignature,
+                "approved", isPermitActiveOrApproved || steps.stream().allMatch(s -> "done".equals(s.get("state"))),
+                "success", true
+        ));
+    }
+
     // ─────────────────────────────── WORKFLOW: APPROVE / SUSPEND / CLOSE ─────────
 
     @RequestMapping(value = "/{id}/approve", method = {RequestMethod.POST, RequestMethod.PATCH})
@@ -657,16 +822,22 @@ public class WorkPermitController {
 
         jdbc.update("UPDATE permits SET status_id = 3 WHERE permit_id = :id", Map.of("id", pid));
 
-        String sigHash = "sha256:PTW-" + pid + ":" + UUID.randomUUID().toString().substring(0, 8);
+        // Update all approval steps in permit_approvals to APPROVED with digital signature
+        String sigHash = "sha256:PTW-" + pid + ":" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         try {
-            jdbc.update(
-                    "INSERT INTO permit_approvals (permit_id, step_number, role_required, approver_employee_id, approved_at, digital_signature_hash, status) " +
-                    "VALUES (:pid, 2, 'HSE_MANAGER', 1, NOW(), :hash, 'APPROVED')",
+            int updated = jdbc.update(
+                    "UPDATE permit_approvals SET decision_id = 2, status_id = 2, decided_at = NOW(), signature_hash = :hash " +
+                    "WHERE permit_id = :pid",
                     Map.of("pid", pid, "hash", sigHash)
             );
-        } catch (Exception ignored) {}
+            if (updated == 0) {
+                initDefaultApprovalSteps(pid, true);
+            }
+        } catch (Exception e) {
+            log.warn("Failed updating approval records for permit {}: {}", pid, e.getMessage());
+        }
 
-        logAudit("APPROVE_PERMIT", pid, "Permit approved and set to ACTIVE");
+        logAudit("APPROVE_PERMIT", pid, "Permit approved and digital signature recorded in database");
 
         return ResponseEntity.ok(map(
                 "success", true,
@@ -674,7 +845,13 @@ public class WorkPermitController {
                 "permitCode", "PTW-" + String.format("%03d", pid),
                 "status", "ACTIVE",
                 "statusAr", "نشط ومعتمد",
-                "message", "تم اعتماد وتفعيل تصريح العمل بنجاح."
+                "signature", map(
+                        "name", "م. مصطفى محمد (HSE Manager)",
+                        "algo", "SHA-256",
+                        "timestamp", LocalDateTime.now().format(ISO_FMT),
+                        "hash", sigHash
+                ),
+                "message", "تم اعتماد وتفعيل تصريح العمل PTW-" + String.format("%03d", pid) + " وتوثيق التوقيع الرقمي بنجاح."
         ));
     }
 

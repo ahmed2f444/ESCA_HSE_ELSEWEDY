@@ -103,14 +103,158 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "get_department_details",
+            "description": "Look up complete department profile: manager contact info, HSE officer, total headcount, and list of child zones.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Department ID or name (e.g. 1 or 'قطاع الإنتاج A')"}
+                },
+                "required": ["department_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_department",
+            "description": "CRUD CREATE: Add and register a new factory department or production sector.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name_ar": {"type": "string", "description": "Department name in Arabic (e.g. 'قطاع الكابلات الخاصة')"},
+                    "name_en": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Department name in English"},
+                    "manager_employee_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]},
+                    "hse_contact_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]}
+                },
+                "required": ["name_ar"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_department",
+            "description": "CRUD UPDATE: Update department title, manager, HSE officer, or active status.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Department ID or name to edit"},
+                    "name_ar": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "name_en": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "manager_employee_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]},
+                    "hse_contact_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]},
+                    "active_flag": {"anyOf": [{"type": "boolean"}, {"type": "integer"}, {"type": "null"}]}
+                },
+                "required": ["department_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_department",
+            "description": "CRUD DELETE: Delete or deactivate an organizational department.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Department ID or name to delete"}
+                },
+                "required": ["department_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_zone_details",
+            "description": "Look up comprehensive zone profile: risk class, occupancy, active work permits, recent incidents, and fire equipment.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Zone ID or name (e.g. 1 or 'خط الإنتاج B')"}
+                },
+                "required": ["zone_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_department_zones_summary",
+            "description": "Summary rollup of total zones, active areas, and headcount capacity grouped by department.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "list_zones",
             "description": "List factory production and utility zones, plant areas, risk classifications, and occupancy limits.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]},
-                    "limit": {"type": "integer", "default": 20}
+                    "limit": {"type": "integer", "default": 50}
                 }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_zone",
+            "description": "CRUD CREATE: Add and register a new factory zone or production area in a department in the live Railway MySQL database.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name_ar": {"type": "string", "description": "Zone name in Arabic (e.g. 'خط التجميع' or 'dept test')"},
+                    "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Parent department ID (e.g. 1) or department/sector name (e.g. 'Production Sector A' or 'قطاع الإنتاج A')"},
+                    "name_en": {"anyOf": [{"type": "string"}, {"type": "null"}], "description": "Zone name in English (e.g. 'dept test' or 'Assembly Bay')"},
+                    "zone_type": {"type": "string", "enum": ["PRODUCTION", "WORKSHOP", "WAREHOUSE", "LABORATORY", "ADMIN", "UTILITY", "LOGISTICS", "CHEMICAL_STORAGE", "SERVICE", "GENERAL"], "default": "GENERAL", "description": "Zone classification category"},
+                    "max_occupancy": {"type": "integer", "default": 30, "description": "Maximum occupancy headcount limit"},
+                    "risk_class_id": {"type": "integer", "default": 2, "description": "Risk class (1=Low, 2=Medium, 3=High, 4=Critical)"}
+                },
+                "required": ["name_ar", "department_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_zone",
+            "description": "CRUD UPDATE: Update zone details, occupancy, parent department, or active status.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Zone ID or name to update"},
+                    "name_ar": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "name_en": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "department_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]},
+                    "max_occupancy": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "zone_type": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "active_flag": {"anyOf": [{"type": "boolean"}, {"type": "integer"}, {"type": "null"}]}
+                },
+                "required": ["zone_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_zone",
+            "description": "CRUD DELETE: Delete or deactivate a factory zone.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Zone ID or name to delete"}
+                },
+                "required": ["zone_id"]
             }
         }
     },
@@ -1229,6 +1373,65 @@ TOOLS = [
             }
         }
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_risk_assessment_details",
+            "description": "Get detailed risk assessment record: hazard, activity, inherent vs residual scores, control hierarchy, and review dates.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "risk_id": {"type": "integer", "description": "Risk ID"}
+                },
+                "required": ["risk_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_risk_assessment",
+            "description": "CRUD DELETE: Delete a hazard entry from the Risk Register.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "risk_id": {"type": "integer", "description": "Risk ID to delete"}
+                },
+                "required": ["risk_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "calculate_residual_risk",
+            "description": "Calculate hierarchy-of-controls risk reduction percentage and new residual risk score.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "likelihood": {"type": "integer", "description": "Initial likelihood (1-5)", "default": 4},
+                    "severity": {"type": "integer", "description": "Initial severity (1-5)", "default": 4},
+                    "engineering_control": {"type": "boolean", "default": True},
+                    "administrative_control": {"type": "boolean", "default": True},
+                    "ppe_control": {"type": "boolean", "default": True}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_high_risk_hazards",
+            "description": "Query critical and high-risk hazards from the Risk Register requiring immediate mitigation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "min_score": {"type": "integer", "default": 10},
+                    "limit": {"type": "integer", "default": 10}
+                }
+            }
+        }
+    },
 
     # ── 9. Job Safety Analysis (JSA) Module ────────────────────────────────────
     {
@@ -1293,6 +1496,113 @@ TOOLS = [
                     "residual_score": {"anyOf": [{"type": "integer"}, {"type": "null"}]}
                 },
                 "required": ["jsa_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_jsa",
+            "description": "CRUD DELETE: Delete a JSA document and all its sequence steps.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "jsa_id": {"type": "integer", "description": "JSA ID to delete"}
+                },
+                "required": ["jsa_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_jsa_step",
+            "description": "CRUD CREATE: Add a sequential task step with hazards and controls to an existing JSA.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "jsa_id": {"type": "integer", "description": "JSA ID"},
+                    "step_description": {"type": "string", "description": "Description of the specific activity step"},
+                    "potential_hazards": {"type": "string", "description": "Hazards identified in this step"},
+                    "control_measures": {"type": "string", "description": "Mandatory safety control measures for this step"},
+                    "step_no": {"anyOf": [{"type": "integer"}, {"type": "null"}]}
+                },
+                "required": ["jsa_id", "step_description", "potential_hazards", "control_measures"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_jsa_step",
+            "description": "CRUD UPDATE: Edit a specific task step in a JSA.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "step_id": {"type": "integer", "description": "JSA Step ID"},
+                    "step_description": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "potential_hazards": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "control_measures": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+                },
+                "required": ["step_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_jsa_step",
+            "description": "CRUD DELETE: Delete a specific step from a JSA.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "step_id": {"type": "integer", "description": "JSA Step ID to remove"}
+                },
+                "required": ["step_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "link_jsa_permit",
+            "description": "Link a JSA document to an active Work Permit (ePTW).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "jsa_id": {"type": "integer", "description": "JSA ID"},
+                    "permit_id": {"type": "integer", "description": "Permit ID"}
+                },
+                "required": ["jsa_id", "permit_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "unlink_jsa_permit",
+            "description": "Unlink a JSA document from a Work Permit.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "jsa_id": {"type": "integer", "description": "JSA ID"},
+                    "permit_id": {"type": "integer", "description": "Permit ID"}
+                },
+                "required": ["jsa_id", "permit_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_available_permits_for_jsa",
+            "description": "List active work permits in a zone that require or can be linked to a JSA.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "limit": {"type": "integer", "default": 10}
+                }
             }
         }
     },
@@ -2026,6 +2336,61 @@ TOOLS = [
             }
         }
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_chemical_details",
+            "description": "Look up complete chemical profile: CAS number, quantity, GHS pictograms, emergency first aid, and storage location.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "chemical_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Chemical ID, trade name, or CAS number"}
+                },
+                "required": ["chemical_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_chemical",
+            "description": "CRUD DELETE: Delete a chemical record from HazMat inventory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "chemical_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "description": "Chemical ID or name to delete"}
+                },
+                "required": ["chemical_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "check_chemical_storage_safety",
+            "description": "Audit hazardous chemical storage compatibility and segregation in a factory zone according to NFPA 400 codes.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "string"}, {"type": "null"}]}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_msds_sheet",
+            "description": "Look up Material Safety Data Sheet (MSDS / SDS) 16-section guidelines (first aid, firefighting, spill control, PPE required).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Chemical trade name, scientific name, or CAS number"}
+                },
+                "required": ["query"]
+            }
+        }
+    },
 
     # ── 14. Occupational Health & Industrial Hygiene Module ────────────────────
     {
@@ -2233,12 +2598,108 @@ TOOLS = [
         }
     },
 
-    # ── 16. Security, Roles & Integrations ────────────────────────────────────
+    # ── 16. Security, Roles, Users & Integrations ─────────────────────────────
     {
         "type": "function",
         "function": {
             "name": "list_security_roles",
             "description": "List system RBAC roles, permission scopes, and sign-off authority matrix.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_role_permissions",
+            "description": "Inspect detailed granular permissions and module access for a given role ID or name.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "role_name_or_id": {"anyOf": [{"type": "string"}, {"type": "integer"}, {"type": "null"}]}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_users",
+            "description": "List user accounts, status, MFA adoption, and assigned roles.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 20}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_user_details",
+            "description": "Look up comprehensive user profile, assigned roles, zone scope, and recent audit activity.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user_id_or_username": {"anyOf": [{"type": "integer"}, {"type": "string"}]}
+                },
+                "required": ["user_id_or_username"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_user_role_assignment",
+            "description": "CRUD CREATE: Assign a security role or zone scope to a user account.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user_id": {"anyOf": [{"type": "integer"}, {"type": "string"}]},
+                    "role_id": {"anyOf": [{"type": "integer"}, {"type": "string"}], "default": 2},
+                    "zone_id": {"anyOf": [{"type": "integer"}, {"type": "null"}]}
+                },
+                "required": ["user_id", "role_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_user_role",
+            "description": "CRUD UPDATE: Modify user role assignment or active status.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "user_id": {"anyOf": [{"type": "integer"}, {"type": "string"}]},
+                    "role_id": {"anyOf": [{"type": "integer"}, {"type": "string"}]},
+                    "active_status": {"type": "boolean", "default": True}
+                },
+                "required": ["user_id", "role_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "verify_audit_log_chain",
+            "description": "Validate cryptographic SHA-256 integrity of the immutable audit log chain.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 20}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_security_audit_summary",
+            "description": "Executive security metrics: Active users, MFA adoption, role distributions, and recent audit events.",
             "parameters": {
                 "type": "object",
                 "properties": {}
@@ -2254,6 +2715,136 @@ TOOLS = [
                 "type": "object",
                 "properties": {
                     "limit": {"type": "integer", "default": 10}
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_integration_status",
+            "description": "Check live sync status, latency, pending events, and connection health for an enterprise integration connector.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "integration_id_or_name": {"anyOf": [{"type": "integer"}, {"type": "string"}]}
+                },
+                "required": ["integration_id_or_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sync_integration_connector",
+            "description": "Trigger an on-demand batch sync operation for an external integration connector.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "integration_id_or_name": {"anyOf": [{"type": "integer"}, {"type": "string"}]}
+                },
+                "required": ["integration_id_or_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "test_integration_connection",
+            "description": "Ping endpoint and test authentication handshake for an enterprise integration.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "integration_id_or_name": {"anyOf": [{"type": "integer"}, {"type": "string"}]}
+                },
+                "required": ["integration_id_or_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_integration_config",
+            "description": "CRUD UPDATE: Update integration connector endpoint or scheduling frequency.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "integration_id_or_name": {"anyOf": [{"type": "integer"}, {"type": "string"}]},
+                    "base_endpoint": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "frequency": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+                },
+                "required": ["integration_id_or_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_integration_sync_logs",
+            "description": "Retrieve recent integration transaction payloads and outbox processing queue.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 10}
+                }
+            }
+        }
+    },
+
+    # ── 17. System Architecture & Diagnostics ─────────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "get_system_architecture",
+            "description": "Get complete architectural topology: Microservices, ports, database layers, and IoT hardware pipeline.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_service_health_status",
+            "description": "Live health check of all microservices (FastAPI, Spring Boot, Vite React, MySQL DB, Groq LLM, Ollama).",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_database_metrics",
+            "description": "Query table volumes, records count across 137 database tables, and connection pool status in MySQL.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_api_endpoints_catalog",
+            "description": "Catalog of available REST API endpoints across all HSE modules.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_trir_ltifr_metrics",
+            "description": "Calculate OSHA Total Recordable Incident Rate (TRIR) and Lost Time Injury Frequency Rate (LTIFR) based on safe man-hours.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "year": {"anyOf": [{"type": "integer"}, {"type": "null"}]}
                 }
             }
         }

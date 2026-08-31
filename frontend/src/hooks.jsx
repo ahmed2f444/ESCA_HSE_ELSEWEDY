@@ -110,6 +110,19 @@ export function AuthProvider({ children }) {
     }
   })
 
+  useEffect(() => {
+    const handleSync = () => {
+      const raw = localStorage.getItem(USER_KEY)
+      if (raw) {
+        try {
+          setUser(JSON.parse(raw))
+        } catch {}
+      }
+    }
+    window.addEventListener('hse:user-updated', handleSync)
+    return () => window.removeEventListener('hse:user-updated', handleSync)
+  }, [])
+
   const login = useCallback(async (username, password) => {
     const res = await authApi.login(username, password)
     const token = res.token || res.access_token
@@ -165,24 +178,31 @@ export function ToastProvider({ children }) {
     ok: () => themeColor('--c-safe'),
     wn: () => themeColor('--c-warn'),
     cr: () => themeColor('--c-crit'),
+    er: () => themeColor('--c-crit'),
+    error: () => themeColor('--c-crit'),
     in: () => themeColor('--c-info'),
+  }
+
+  const getColor = (tone) => {
+    const fn = colors[tone] || colors.cr
+    return fn()
   }
 
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div className="fixed bottom-5 start-5 z-[999] flex flex-col gap-2 pointer-events-none no-print print:hidden">
+      <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none no-print print:hidden">
         {items.map((t) => (
           <div
             key={t.id}
             className="bg-steel-3 border rounded-md px-4 py-3 text-sm flex items-center gap-2.5 animate-fade"
             style={{
-              borderColor: colors[t.tone](),
+              borderColor: getColor(t.tone),
               borderInlineEndWidth: 4,
               boxShadow: '0 8px 26px rgba(0,0,0,.45)',
             }}
           >
-            <Icon name={t.tone === 'ok' ? 'check' : 'incident'} size={15} style={{ color: colors[t.tone]() }} />
+            <Icon name={t.tone === 'ok' ? 'check' : 'incident'} size={15} style={{ color: getColor(t.tone) }} />
             {t.message}
           </div>
         ))}

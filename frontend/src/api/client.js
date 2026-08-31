@@ -16,7 +16,8 @@ import mockAdapter from './mock/adapter.js'
  * var is the whole integration switch.
  */
 
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
+const viteEnv = import.meta.env ?? {}
+export const USE_MOCK = viteEnv.VITE_USE_MOCK !== 'false'
 
 const TOKEN_KEY = 'esca.hse.token'
 
@@ -70,5 +71,5 @@ function build(baseURL, timeout = 20000) {
   return instance
 }
 
-export const api = build(import.meta.env.VITE_API_BASE_URL || '/api', 25000)
-export const agent = build(import.meta.env.VITE_AGENT_BASE_URL || '/agent', 120000)
+export const api = build(viteEnv.VITE_API_BASE_URL || '/api', 25000)
+export const agent = build(viteEnv.VITE_AGENT_BASE_URL || '/agent', 120000)

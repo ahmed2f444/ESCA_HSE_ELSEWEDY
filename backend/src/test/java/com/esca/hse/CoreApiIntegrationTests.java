@@ -9,6 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -42,6 +44,18 @@ class CoreApiIntegrationTests {
                 .andExpect(jsonPath("$.status").value("OPEN"))
                 .andReturn().getResponse().getContentAsString();
         assertThat(response).contains("Emergency exit blocked");
+        Map<String, Object> storedIncident = jdbc.queryForMap(
+                "SELECT incident_type, title, severity, status FROM incidents WHERE title='Emergency exit blocked'"
+        );
+        assertThat(storedIncident)
+                .containsEntry("INCIDENT_TYPE", "OBSERVATION")
+                .containsEntry("TITLE", "Emergency exit blocked")
+                .containsEntry("SEVERITY", "HIGH")
+                .containsEntry("STATUS", "OPEN");
+        mvc.perform(get("/api/v1/incidents").param("q", "Emergency exit blocked"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Emergency exit blocked"))
+                .andExpect(jsonPath("$[0].rawStatus").value("OPEN"));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE action='CREATE' AND entity_type='INCIDENTS'", Integer.class)).isEqualTo(1);
     }
 

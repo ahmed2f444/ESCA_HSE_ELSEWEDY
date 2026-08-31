@@ -308,13 +308,14 @@ def parse_user_hse_prompt(text: str, base_date: Optional[date] = None) -> Parsed
             for t in INTENT_TO_TOOL_MAP[intent]:
                 if t not in tools:
                     tools.append(t)
-
+    
+    # Cap at max 4 tools to keep token footprint strictly under 1,500 tokens (well below Groq 8k TPM limits)
     return ParsedHsePrompt(
         raw_prompt=text,
         normalized_prompt=norm,
         primary_intent=primary_intent,
         all_intents=all_intents,
-        recommended_tools=tools,
+        recommended_tools=tools[:4],
         entity_ids=entity_ids,
         target_date=target_date,
         target_time=target_time,

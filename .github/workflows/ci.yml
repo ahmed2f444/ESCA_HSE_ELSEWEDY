@@ -36,10 +36,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Build & Test Backend
+      - name: Build & Package Backend
         run: |
           cd backend
-          mvn clean test-compile
+          mvn clean package -DskipTests
 
 
   check-ai-agent:

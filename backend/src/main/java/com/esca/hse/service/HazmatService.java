@@ -630,16 +630,5 @@ public class HazmatService {
         }
         return def;
     }
-
-    private void logAudit(String action, int entityId, String detail) {
-        try {
-            Long nextId = jdbc.getJdbcTemplate().queryForObject("SELECT COALESCE(MAX(audit_id), 0) + 1 FROM audit_log", Long.class);
-            if (nextId == null) nextId = 1L;
-            String sql = "INSERT INTO audit_log (audit_id, actor_type, actor_id, action, entity_type, entity_id, details_json, created_at) " +
-                         "VALUES (?, 'SYSTEM', 1, ?, 'CHEMICAL', ?, ?, CURRENT_TIMESTAMP)";
-            jdbc.getJdbcTemplate().update(sql, nextId, action, String.valueOf(entityId), "{\"message\":\"" + detail + "\"}");
-        } catch (Exception e) {
-            log.warn("Non-fatal: could not write audit log for chemical {}: {}", entityId, e.getMessage());
-        }
-    }
 }
+

@@ -23,7 +23,7 @@ $agentReady = $false
 $maxAttempts = 30
 $attempt = 0
 
-while ($attempt -lt $maxAttempts -and -not ($frontendReady -and $backendReady)) {
+while ($attempt -lt $maxAttempts -and -not ($frontendReady -and $backendReady -and $agentReady)) {
     Start-Sleep -Seconds 1
     $attempt++
 

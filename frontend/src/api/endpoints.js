@@ -435,16 +435,24 @@ export const assistant = {
       console.warn('[Assistant] Live agent service unreachable, utilizing local assistant engine fallback:', err)
       const { answer: mockAnswer } = await import('./mock/agent.js')
       const fallback = mockAnswer(question)
+      const isConnectionError =
+        err.code === 'ERR_NETWORK' ||
+        err.code === 'ECONNREFUSED' ||
+        !err.response ||
+        err.message?.includes('Network Error')
+      const notice = isConnectionError
+        ? '\n\n> ⚠️ **تنبيه:** خدمة المساعد الذكي الحية (AI Agent على المنفذ 8000) غير متصلة حالياً. لتشغيل الذكاء الاصطناعي واستدعاء الأدوات وقاعدة البيانات الحية، يرجى تشغيل `start-agent.bat` أو `Start-All.ps1`.'
+        : ''
       return {
         session_id: 'fallback-' + Date.now(),
-        answer: fallback.answer,
+        answer: fallback.answer + notice,
         tool_calls: (fallback.tools || []).map((t) => ({
           tool_name: t.name,
           query_summary: `${t.name} (${t.rowCount || 0} records)`,
           rows_returned: t.rowCount || 0,
         })),
         tools: fallback.tools || [],
-        model_used: 'ESCA Intelligent Assistant (Local Engine / Offline Mode)',
+        model_used: 'ESCA Intelligent Assistant (Offline Mode - Port 8000 Down)',
       }
     }
   },

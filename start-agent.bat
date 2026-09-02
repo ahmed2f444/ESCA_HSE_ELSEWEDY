@@ -1,6 +1,8 @@
 @echo off
 title ESCA HSE - AI Agent Service (Port 8000)
+echo =======================================================================
 echo Starting Python FastAPI AI Agent on http://localhost:8000 ...
+echo =======================================================================
 cd /d "%~dp0ai-agent"
 
 if not exist "venv\Scripts\python.exe" (
@@ -11,14 +13,16 @@ if not exist "venv\Scripts\python.exe" (
     ) else (
         python -m venv venv
     )
-    call "venv\Scripts\activate.bat"
     echo [INFO] Installing AI Agent dependencies...
-    python -m pip install -r requirements.txt
-) else (
-    call "venv\Scripts\activate.bat"
+    ".\venv\Scripts\python.exe" -m pip install -r requirements.txt
 )
 
 echo [INFO] Starting FastAPI server on port 8000...
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+".\venv\Scripts\python.exe" -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [ERROR] AI Agent server exited with code %ERRORLEVEL%.
+)
 pause
+
 

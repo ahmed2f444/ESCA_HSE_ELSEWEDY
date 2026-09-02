@@ -448,6 +448,20 @@ const routes = [
     dynamicPermits = [item, ...dynamicPermits]
     return item
   }],
+  ['put', '/permits/:id', (p, _q, body) => {
+    let target = dynamicPermits.find((x) => x.id === p.id)
+    if (!target) {
+      target = { id: p.id, ...body }
+      dynamicPermits.unshift(target)
+    } else {
+      Object.assign(target, body)
+    }
+    return target
+  }],
+  ['delete', '/permits/:id', (p) => {
+    dynamicPermits = dynamicPermits.filter((x) => x.id !== p.id)
+    return { success: true, id: p.id }
+  }],
   ['post', '/permits/:id/suspend', (p) => {
     dynamicPermits = dynamicPermits.map((x) => (x.id === p.id ? { ...x, rawStatus: 'SUSPENDED', status: 'موقوف', statusTone: 'cr' } : x))
     return { success: true, id: p.id, status: 'SUSPENDED' }
